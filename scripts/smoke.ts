@@ -382,10 +382,13 @@ try {
     if (!page.url().endsWith("/settings")) {
       await page.getByRole("link", { name: "설정으로" }).click();
       await page.waitForURL("**/settings");
+      await page.locator('.settings[data-page="root"] .slink').first().waitFor();
     }
     await page.locator(`[data-row="${row}"]`).click();
     await page.waitForURL(`**/settings/${path}`);
-    await page.locator(".settings .sgroup").first().waitFor();
+    // URL 이 먼저 바뀌고 화면은 그 뒤에 그려진다(react-router 의 전환) — 첫 화면에도 .sgroup 이 있어 그것을
+    // 기다리면 느린 러너에서 옛 화면을 읽었다. 그 하위 화면이 그려질 때까지.
+    await page.locator(`.settings[data-page="${path}"] .sgroup`).first().waitFor();
   };
   await page.locator(".rail__link", { hasText: "설정" }).click();
   await page.waitForURL("**/settings");
@@ -462,6 +465,7 @@ try {
   // 검색(첫 화면)은 하위 화면과 고급 층을 가리지 않고 찾고, 찾은 줄을 그 자리에서 보인다.
   await page.getByRole("link", { name: "설정으로" }).click();
   await page.waitForURL("**/settings");
+  await page.locator('.settings[data-page="root"] .slink').first().waitFor();
   await page.getByRole("searchbox", { name: "설정 검색" }).fill("hash_size");
   const filtered = await page.locator(".srow:not(.slink)").count();
   if (filtered !== 1) fail(`«hash_size» 검색이 한 줄로 좁혀지지 않습니다: ${filtered}줄`);

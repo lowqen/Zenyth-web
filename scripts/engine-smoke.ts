@@ -471,6 +471,7 @@ try {
   await goto("설정", "/settings", ".settings .slink");
   await page.locator('[data-row="page-engine"]').click();
   await page.waitForURL("**/settings/engine");
+  await page.locator('.settings[data-page="engine"] .sgroup').first().waitFor();
   await select.selectOption("simd");
   await page
     .waitForFunction(
@@ -506,6 +507,7 @@ try {
   await goto("설정", "/settings", ".settings .slink");
   await page.locator('[data-row="page-engine"]').click();
   await page.waitForURL("**/settings/engine");
+  await page.locator('.settings[data-page="engine"] .sgroup').first().waitFor();
   await select.selectOption("auto");
   await page
     .waitForFunction(
