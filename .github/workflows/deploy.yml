@@ -200,6 +200,23 @@ jobs:
             echo "- 프로덕션: https://$PROJECT.pages.dev"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # 새 프로젝트의 배포별 주소(<해시>.<프로젝트>.pages.dev)는 인증서가 몇 분 뒤에 선다 — 그 전의 검증은 TLS
+      # 핸드셰이크에서 떨어진다(curl 35, 2026-11-01 zenythweb 첫 배포 run 41320433238). curl 의 --retry 는 TLS
+      # 오류를 다시 하지 않으므로 여기서 기다린다. 이미 있던 프로젝트는 첫 시도에 지나간다.
+      - name: 배포 주소가 설 때까지
+        if: env.TARGET == 'cloudflare'
+        env:
+          BASE_URL: ${{ steps.cf.outputs.url }}
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -m 10 -w '%{http_code}' "$BASE_URL/" || true)
+            if [ "$code" = "200" ]; then echo "준비됨 — $i 번째"; exit 0; fi
+            echo "아직($code) — 10초 뒤 다시"
+            sleep 10
+          done
+          echo "::error::$BASE_URL 이 10분 안에 서지 않았습니다"
+          exit 1
+
       # 「올라갔다」와 「돈다」는 다르다. 배포된 주소에서 엔진을 실제로 띄워
       # 렌주로 착수·분석·정지까지 한 바퀴 돈다 — CI 안의 dist 가 아니라 CDN 이
       # 내주는 파일로. MIME(.wasm), 캐시 헤더, SPA 폴백이 여기서만 드러난다.
