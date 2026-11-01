@@ -187,6 +187,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ inputs.tag }}"
+          # engine-* 태그는 옮기거나 지울 수 없다(저장소 규칙 «engine tags: immutable», 2026-11-02 Z10) — 배포가
+          # ENGINE_TAG 로 고정해 받는 산출물이 몰래 바뀌지 않게. 같은 태그로 다시 내면 아래 delete 가 태그를 못 지워
+          # create 가 실패한다: 다시 낼 때는 새 태그(-a5 처럼 꼬리)를 쓴다. 만들기는 이 수동 실행(쓰기 권한)뿐이다.
+          if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG" > /dev/null 2>&1; then
+            echo "::error::태그 $TAG 가 이미 있습니다 — engine-* 태그는 불변입니다. 새 태그로 다시 내세요."
+            exit 1
+          fi
           gh release delete "$TAG" --yes --cleanup-tag 2> /dev/null || true
           # 태그는 빌드한 커밋에 — 기본값(기본 브랜치 HEAD)이면 feature 브랜치에서 낸 릴리스의 태그가 소스와 어긋난다.
           gh release create "$TAG" --target "${{ github.sha }}" \
