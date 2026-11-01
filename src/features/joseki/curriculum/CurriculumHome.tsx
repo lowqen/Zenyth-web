@@ -129,7 +129,7 @@ export function CurriculumHome() {
     <div className="cur" data-k="curriculum">
       <header className="cur__hero">
         <BooksArt />
-        <h2 className="cur__title">{t("공식 커리큘럼")}</h2>
+        {/* «공식 커리큘럼» 제목은 걷었다 — 페이지 제목(정석)과 바로 위 세그먼트가 이미 말한다(앱 M2). */}
         <p className="cur__lead">{t("정해진 차례대로 오프닝 정석을 배웁니다")}</p>
         {admin && (
           <button

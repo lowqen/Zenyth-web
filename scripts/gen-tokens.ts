@@ -36,6 +36,7 @@ import {
   RADIUS,
   MOTION,
   LAYOUT,
+  RHYTHM,
 } from "../src/core/design/tokens.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -66,6 +67,9 @@ function typeBlock(): string {
   for (const [k, v] of Object.entries(SPACE)) lines.push(`  --space-${k}: ${v}px;`);
   for (const [k, v] of Object.entries(RADIUS)) lines.push(`  --radius-${k}: ${v}px;`);
   for (const [k, v] of Object.entries(MOTION)) lines.push(`  --motion-${k}: ${v}ms;`);
+  // camelCase → kebab-case: screenPadding → --screen-padding
+  for (const [k, v] of Object.entries(RHYTHM))
+    lines.push(`  --${k.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase())}: ${v}px;`);
   lines.push(`  --reading-width: ${LAYOUT.readingWidth}px;`);
   lines.push(`  --wide-min: ${LAYOUT.wideMin}px;`);
   return lines.join("\n");

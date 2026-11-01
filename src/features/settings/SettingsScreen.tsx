@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useGameStore, type BoardMode } from "../board/gameStore";
 import { useBoardStore } from "../board/boardStore";
 import { useThemeStore, type ThemeMode } from "../../app/theme";
+import { PageTitle } from "../../app/PageTitle";
 import {
   HASH_CHOICES_MB,
   MAX_DEPTH_LIMIT,
@@ -590,6 +591,7 @@ export function SettingsScreen() {
 
   return (
     <div className="settings">
+      <PageTitle>{t("설정")}</PageTitle>
       <div className="settings__head">
         <div className="search">
           <svg className="icon search__icon" viewBox="0 0 24 24" aria-hidden="true">

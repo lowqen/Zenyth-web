@@ -23,6 +23,7 @@ import { useBoardStore } from "../board/boardStore";
 import { DB_FILE, useDbStore } from "./dbStore";
 import { dbCellTag, dbValueText } from "./dbTags";
 import { msg, t } from "../../i18n/i18n";
+import { PageTitle } from "../../app/PageTitle";
 
 /**
  * 데이터베이스(W8) — 엔진의 yixindb. 앱 `DatabaseScreen` · 데스크톱 `show_database` 의 이식.
@@ -130,6 +131,7 @@ export function DatabaseScreen() {
 
   return (
     <div className="review database">
+      <PageTitle>DB</PageTitle>
       <section className="panel" aria-label={t("데이터베이스")} aria-busy={s.busy}>
         <h2 className="panel__title">
           {t("데이터베이스")} (yixindb){" "}

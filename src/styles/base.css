@@ -131,13 +131,9 @@ a:focus-visible {
 .shell__content {
   flex: 1;
   min-height: 0;
-  padding: var(--space-xl);
+  /* 좁은 폭도 같은 여백이다(앱 screenPadding 16 — 예전 좁은 폭 8 은 카드가 화면 끝에 붙어 빽빽했다). */
+  padding: var(--screen-padding);
   overflow: auto;
-}
-@media (max-width: 640px) {
-  .shell__content {
-    padding: var(--space-m);
-  }
 }
 .shell[data-compact] {
   flex-direction: column;
@@ -286,6 +282,23 @@ a:focus-visible {
 .topbar__title {
   font: var(--type-title-medium);
   letter-spacing: var(--track-title-medium);
+  transition: opacity var(--motion-quick) ease-out;
+}
+/* 목록 화면의 큰 제목이 보이는 동안 — 지우지 않고 투명하게(위치를 말하는 글은 남는다). */
+.topbar[data-large-title] .topbar__title {
+  opacity: 0;
+}
+
+/* 목록 화면의 큰 제목(PageTitle, 앱 M2) — 34 ExtraBold, 위 여백 넉넉히. 스크롤하면 상단 바 한 줄로 접힌다. */
+.pagetitle {
+  margin: var(--space-xxl) 0 var(--space-s);
+  font: var(--type-headline-medium);
+  letter-spacing: var(--track-headline-medium);
+  color: var(--c-on-surface);
+}
+/* 코스 · 레슨 안에서는 판이 있다 — 큰 제목을 감춘다(그러면 상단 바 제목이 다시 보인다). */
+.josekiscreen:has(.lesson, .cur--course) .pagetitle {
+  display: none;
 }
 /* 아이콘 단추 — 누르는 자리는 40px, 휴대폰에서도 24px 이상(WCAG 2.5.8). */
 .themetoggle {
@@ -480,7 +493,7 @@ a:focus-visible {
 .boardscreen__side {
   display: flex;
   flex-direction: column;
-  gap: var(--space-m);
+  gap: var(--list-gap);
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
@@ -661,7 +674,7 @@ a:focus-visible {
    테두리 없이 페이지와 한 톤 다른 면으로 구획한다(앱 M1). 테두리를 두르면
    카드가 여덟 장 쌓이는 옆 칸이 격자처럼 시끄러워진다. */
 .panel {
-  padding: var(--space-xl);
+  padding: var(--card-padding);
   background: var(--c-card);
   border-radius: var(--radius-card);
 }
@@ -1176,30 +1189,27 @@ a:focus-visible {
 .settings {
   display: flex;
   flex-direction: column;
-  gap: var(--space-l);
+  gap: var(--list-gap);
   max-width: 860px;
   margin: 0 auto;
 }
 .settings__head {
   position: sticky;
-  top: calc(-1 * var(--space-xl));
+  top: calc(-1 * var(--screen-padding));
   z-index: 2;
   display: flex;
   flex-direction: column;
   gap: var(--space-m);
   /* 위로만 여백을 먹어 고정 위치가 스크롤 영역 맨 위에 붙게 한다. 옆은 카드 열과
      같은 폭 — 구분선이 카드보다 삐져나오지 않게. */
-  margin-top: calc(-1 * var(--space-xl));
-  padding: var(--space-xl) 0 var(--space-m);
+  margin-top: calc(-1 * var(--screen-padding));
+  padding: var(--screen-padding) 0 var(--space-m);
   background: var(--c-background);
   border-bottom: 1px solid var(--c-outline-variant);
 }
-@media (max-width: 640px) {
-  .settings__head {
-    top: calc(-1 * var(--space-m));
-    margin-top: calc(-1 * var(--space-m));
-    padding: var(--space-m) 0;
-  }
+/* 큰 제목 아래에 올 때는 맨 위가 아니다 — 끌어올리지 않는다(붙는 위치는 그대로). */
+.pagetitle + .settings__head {
+  margin-top: calc(-1 * var(--list-gap));
 }
 .search {
   display: flex;
@@ -1252,11 +1262,12 @@ a:focus-visible {
   overflow: hidden;
 }
 .sgroup__head {
-  padding: var(--space-l) var(--space-xl) var(--space-m);
+  padding: var(--row-padding-v) var(--row-padding-h) var(--space-m);
 }
+/* 섹션 머리 — 강조색 15 SemiBold(앱 ConnectedGroup 제목, M2). */
 .sgroup__title {
-  font: var(--type-title-medium);
-  letter-spacing: var(--track-title-medium);
+  font: var(--type-section-title);
+  color: var(--c-primary);
 }
 .sgroup__desc {
   margin-top: 2px;
@@ -1270,7 +1281,8 @@ a:focus-visible {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-m) var(--space-xl);
   align-items: center;
-  padding: var(--space-l) var(--space-xl);
+  min-height: var(--row-min-height);
+  padding: var(--row-padding-v) var(--row-padding-h);
   border-top: 1px solid var(--c-outline-variant);
 }
 .srow[data-wide] {
@@ -1283,8 +1295,10 @@ a:focus-visible {
   align-items: baseline;
   min-width: 0;
 }
+/* 행 제목 18 · 아래 줄 15(앱 RowTitleStyle · RowNoteStyle) — 행은 크기가, 페이지 제목은 굵기가 진다. */
 .srow__label {
-  font: var(--type-body-large);
+  font: var(--type-row-title);
+  letter-spacing: var(--track-row-title);
   color: var(--c-on-surface);
 }
 .srow__key {
@@ -1297,7 +1311,7 @@ a:focus-visible {
 }
 .srow__note {
   flex: 0 0 100%;
-  font: var(--type-body-small);
+  font: var(--type-row-note);
   color: var(--c-on-surface-variant);
 }
 .srow__control {
@@ -1957,6 +1971,7 @@ a:focus-visible {
   margin-top: var(--space-m);
 }
 .srow--panel {
+  min-height: 0;
   padding: var(--space-m) 0;
 }
 .srow--panel .srow__label {
@@ -2406,7 +2421,7 @@ button.theory__row:hover {
 .review {
   display: flex;
   flex-direction: column;
-  gap: var(--space-l);
+  gap: var(--list-gap);
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
@@ -3788,7 +3803,7 @@ button.theory__row:hover {
 .cur {
   display: flex;
   flex-direction: column;
-  gap: var(--space-l);
+  gap: var(--list-gap);
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
@@ -3805,10 +3820,6 @@ button.theory__row:hover {
   width: 112px;
   height: auto;
   margin-bottom: var(--space-s);
-}
-.cur__title {
-  font: var(--type-headline-medium);
-  letter-spacing: var(--track-headline-medium);
 }
 .cur__lead {
   font: var(--type-body-medium);

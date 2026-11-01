@@ -6,6 +6,7 @@ import { CurriculumHome } from "./curriculum/CurriculumHome";
 import { JosekiEditor } from "./JosekiEditor";
 import { JosekiList } from "./JosekiList";
 import { useJosekiStore } from "./josekiStore";
+import { PageTitle } from "../../app/PageTitle";
 
 /**
  * 정석 — 두 탭.
@@ -61,6 +62,8 @@ export function JosekiScreen() {
 
   return (
     <div className="josekiscreen">
+      {/* 목록에서만 — 코스 · 레슨 · 편집기는 판이 있어 한 줄 머리를 쓴다(앱 M2). 코스 · 레슨은 base.css 가 감춘다. */}
+      {!(tab === "mine" && open) && <PageTitle>{t("정석")}</PageTitle>}
       <div className="modetabs josekiscreen__tabs" role="tablist" aria-label={t("정석 보기")}>
         {(["official", "mine"] as const).map((x) => (
           <button
