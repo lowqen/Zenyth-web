@@ -376,17 +376,26 @@ try {
   if (fits.length === screens.length) console.log(`한 화면 핏: ${fits.join(" · ")}`);
   await page.setViewportSize({ width: 1440, height: 900 });
 
-  // ── 9. 설정 탭 ────────────────────────────────────────────────────
-  // 대국 설정·조작이 여기로 왔다. 레일 1클릭으로 닿고, 검색이 줄을 거르고,
-  // 대국 스모크가 이름으로 집는 칩들이 이 화면에 있어야 한다.
+  // ── 9. 설정 — 목록 → 하위 화면(Z5, 앱 M3) ───────────────────────────
+  // 첫 화면은 하위 화면 줄(디자인 · 일반 · 엔진) · 고급 사용자 모드 · 정보. 하위 화면은 /settings/<page>.
+  const settingsPage = async (row: string, path: string) => {
+    if (!page.url().endsWith("/settings")) {
+      await page.getByRole("link", { name: "설정으로" }).click();
+      await page.waitForURL("**/settings");
+    }
+    await page.locator(`[data-row="${row}"]`).click();
+    await page.waitForURL(`**/settings/${path}`);
+    await page.locator(".settings .sgroup").first().waitFor();
+  };
   await page.locator(".rail__link", { hasText: "설정" }).click();
   await page.waitForURL("**/settings");
-  await page.locator(".settings .sgroup").first().waitFor();
-  // 처음에는 「자주 쓰는 설정」 카드 하나와 고급 사용자 모드 스위치만 — 고급은 접혀 있다.
-  const basicGroups = await page.locator(".sgroup").count();
-  const basicRows = await page.locator(".srow").count();
-  if (basicGroups !== 1) fail(`고급을 접었는데 설정 카드가 하나가 아닙니다: ${basicGroups}`);
-  if (basicRows < 5 || basicRows > 9) fail(`자주 쓰는 설정이 엄선되지 않았습니다: ${basicRows}줄`);
+  await page.locator(".settings .slink").first().waitFor();
+  const links = await page
+    .locator(".settings .slink")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("data-row")));
+  for (const want of ["page-design", "page-general", "page-engine", "pro", "page-about"])
+    if (!links.includes(want)) fail(`설정 첫 화면에 «${want}» 줄이 없습니다: ${links.join(", ")}`);
+  if (links.includes("page-desktop")) fail("고급 사용자 모드가 꺼졌는데 PC 설정 줄이 있습니다");
   const advSwitch = page.getByRole("switch", { name: "고급 사용자 모드", exact: true });
   if ((await advSwitch.count()) !== 1) fail("고급 사용자 모드 스위치가 없습니다");
   // 대국·분석 설정은 보드 탭으로 갔다 — 여기에 남으면 같은 값의 조작부가 두 벌이다.
@@ -396,25 +405,18 @@ try {
   }
   if ((await page.getByRole("radiogroup", { name: "분석 시간" }).count()) !== 0)
     fail("설정 탭에 분석 시간이 아직 있습니다 — 보드의 분석 탭의 것입니다");
-  if ((await page.getByRole("button", { name: "보드 › 대국 탭" }).count()) !== 1)
-    fail("설정 탭에 대국·분석 설정의 길잡이가 없습니다");
+
+  // 엔진 화면 — 엔진 선택 · 스레드(고급 줄은 고급 사용자 모드에서만).
+  await settingsPage("page-engine", "engine");
   const engineSelect = page.getByRole("combobox", { name: "엔진 선택" });
   if ((await engineSelect.count()) !== 1)
-    fail("설정 탭의 「엔진」 줄에 엔진 선택이 하나가 아닙니다(상단 바에서는 빠졌다)");
+    fail("설정 ▸ 엔진에 엔진 선택이 하나가 아닙니다(상단 바에서는 빠졌다)");
   else {
     const opts = await engineSelect.locator("option").allInnerTexts();
     if (opts.length !== 4) fail(`엔진 선택 항목이 넷이 아닙니다: ${opts.join(" · ")}`);
     if ((await engineSelect.inputValue()) !== "auto")
       fail("엔진 선택의 기본이 「자동」이 아닙니다");
   }
-  if ((await page.getByRole("radiogroup", { name: "언어" }).count()) !== 1)
-    fail("설정 탭에 언어 선택이 없습니다(상단 바에서는 빠졌다)");
-  if (
-    (await page
-      .getByRole("switch", { name: "앱을 열면 엔진 시작" })
-      .getAttribute("aria-checked")) !== "true"
-  )
-    fail("「앱을 열면 엔진 시작」 이 기본으로 켜져 있지 않습니다");
   // 스레드 조절 — 격리된 곳이면 멀티 변형이 계획되고 스레드 선택이 켜져 있어야 한다.
   // 격리되지 않은 곳(SMOKE_ISOLATE=0)이면 단일로 계획되고 선택이 잠겨 있어야 한다.
   const isolated = (await page.evaluate("crossOriginIsolated")) as boolean;
@@ -431,33 +433,63 @@ try {
       fail(`스레드 수 선택이 ${ISOLATE ? "잠겨" : "열려"} 있습니다 (격리 ${ISOLATE})`);
     }
   }
+  if ((await page.locator('.srow[data-row="hash"]').count()) !== 0)
+    fail("고급 사용자 모드가 꺼졌는데 엔진 화면에 해시 줄이 있습니다");
 
-  // 검색은 접힌 고급 설정까지 찾는다.
+  // 일반 화면 — 언어(줄 + 체크 원) · 엔진 자동 시작 · 대국 · 분석 길잡이.
+  await settingsPage("page-general", "general");
+  if ((await page.getByRole("radiogroup", { name: "언어" }).count()) !== 1)
+    fail("설정 ▸ 일반에 언어 선택이 없습니다(상단 바에서는 빠졌다)");
+  if (
+    (await page
+      .getByRole("switch", { name: "앱을 열면 엔진 시작" })
+      .getAttribute("aria-checked")) !== "true"
+  )
+    fail("「앱을 열면 엔진 시작」 이 기본으로 켜져 있지 않습니다");
+  if ((await page.getByRole("button", { name: "보드 › 대국 탭" }).count()) !== 1)
+    fail("설정 ▸ 일반에 대국·분석 설정의 길잡이가 없습니다");
+
+  // 디자인 화면 — 테마는 아이콘 단추 셋(라디오), 검은 배경 스위치.
+  await settingsPage("page-design", "design");
+  const themeRadios = await page
+    .getByRole("radiogroup", { name: "테마" })
+    .getByRole("radio")
+    .count();
+  if (themeRadios !== 3) fail(`디자인 ▸ 테마 단추가 셋이 아닙니다: ${themeRadios}`);
+  if ((await page.getByRole("switch", { name: "검은 배경" }).count()) !== 1)
+    fail("디자인 화면에 검은 배경 스위치가 없습니다");
+
+  // 검색(첫 화면)은 하위 화면과 고급 층을 가리지 않고 찾고, 찾은 줄을 그 자리에서 보인다.
+  await page.getByRole("link", { name: "설정으로" }).click();
+  await page.waitForURL("**/settings");
   await page.getByRole("searchbox", { name: "설정 검색" }).fill("hash_size");
-  const filtered = await page.locator(".srow").count();
+  const filtered = await page.locator(".srow:not(.slink)").count();
   if (filtered !== 1) fail(`«hash_size» 검색이 한 줄로 좁혀지지 않습니다: ${filtered}줄`);
   // 옮겨 간 설정의 이름으로 찾으면 길잡이 줄이 나온다.
   await page.getByRole("searchbox", { name: "설정 검색" }).fill("착수 시간");
   const moved = await page.locator('.srow[data-row="boardTabs"]').count();
   if (moved !== 1) fail("«착수 시간» 검색이 대국·분석 길잡이 줄을 찾지 못합니다");
   await page.getByRole("searchbox", { name: "설정 검색" }).fill("");
-  // 고급을 펼치면 엔진·표시·시스템 카드가 이어지고, 레일에 DB 가 들어온다(고급 사용자 모드).
+
+  // 고급 사용자 모드 — 레일에 DB, 첫 화면에 PC 설정 줄, 엔진 화면에 해시 · 스타일 … 줄.
   await advSwitch.click();
   const railPro = await page.locator(".rail__link").allInnerTexts();
   if (railPro.length !== 6 || !railPro.some((r) => r.trim() === "DB"))
     fail(`고급 사용자 모드를 켰는데 레일이 DB 를 포함한 여섯이 아닙니다: ${railPro.join(", ")}`);
-  const groups = await page.locator(".sgroup").count();
-  const rows = await page.locator(".srow").count();
-  if (groups !== 4) fail(`고급을 펼쳤는데 설정 카드가 넷이 아닙니다: ${groups}`);
-  // 해시 크기를 바꾸면 새로고침 뒤에도 남는다(localStorage) — 고급 펼침도 함께.
+  if ((await page.locator('[data-row="page-desktop"]').count()) !== 1)
+    fail("고급 사용자 모드를 켰는데 PC 설정 줄이 없습니다");
+  await settingsPage("page-engine", "engine");
+  // 해시 크기를 바꾸면 새로고침 뒤에도 남는다(localStorage) — 고급 사용자 모드도 함께.
   await page.getByRole("radio", { name: "256", exact: true }).click();
   await page.reload({ waitUntil: "networkidle" });
   const kept = await page
     .getByRole("radio", { name: "256", exact: true })
     .getAttribute("aria-checked")
-    .catch(() => "없음(고급이 다시 접힘)");
+    .catch(() => "없음(고급 사용자 모드가 꺼짐)");
   if (kept !== "true") fail(`해시 크기가 새로고침 뒤 남지 않았습니다: aria-checked=${kept}`);
   await page.evaluate(() => localStorage.removeItem("rapfi.settings"));
+  // PC 설정 화면(고급 사용자 모드는 아직 이 탭의 메모리에 켜져 있다).
+  await settingsPage("page-desktop", "desktop");
 
   // W5b: 데스크톱 settings.txt 왕복 — 올리면 웹 값이 되고(해시는 웹 선택지로, 27행은 테마를
   // 고정), 곧바로 내보내면 **올린 바이트 그대로** 나와야 한다(웹이 깎은 해시 8192 도 지킨다).
@@ -478,12 +510,6 @@ try {
       await result.waitFor({ timeout: 5_000 });
       const said = await result.innerText();
       if (!said.includes("8192MB → 512MB")) fail(`가져오기가 해시를 말하지 않습니다: ${said}`);
-      if (
-        (await page
-          .getByRole("radio", { name: "512", exact: true })
-          .getAttribute("aria-checked")) !== "true"
-      )
-        fail("가져온 해시(→512)가 설정에 들어가지 않았습니다");
       if ((await page.evaluate("document.documentElement.dataset.theme")) !== "dark")
         fail("27행(다크)이 테마를 고정하지 않았습니다");
       const downloads: { name: string; text: string }[] = [];
@@ -508,6 +534,14 @@ try {
       if (back["settings.txt"] !== mainText) fail("내보낸 settings.txt 가 올린 파일과 다릅니다");
       if (back["settings_dev.txt"] !== devText)
         fail("내보낸 settings_dev.txt 가 올린 파일과 다릅니다");
+      // 가져온 해시(→512)는 엔진 화면의 해시 줄에 들어가 있어야 한다.
+      await settingsPage("page-engine", "engine");
+      if (
+        (await page
+          .getByRole("radio", { name: "512", exact: true })
+          .getAttribute("aria-checked")) !== "true"
+      )
+        fail("가져온 해시(→512)가 설정에 들어가지 않았습니다");
     }
     await page.evaluate(() => {
       for (const k of [
@@ -572,7 +606,7 @@ try {
       "스모크 통과 — 레일 5(고급 6) · 연구 탭 4 · 라우팅 · 토큰(라이트/다크) · 좁은 폭 전환\n" +
         `             자동 기동(${wantBoot}) · 상단 바 정리 · [분석]|[대국] 탭(기본 분석) · 탭 기억\n` +
         "             보드 2레이어 · 나무 렌더 · H8 착수 · 중복 착수 무시 · 다크 나무\n" +
-        `             보드 옆 칸 2장 · 퀵 바 · 평가 바(판 높이) · 설정 ${basicRows}+${rows - basicRows}줄(고급 스위치·검색·저장·좁은 폭) · 엔진 탭`,
+        "             보드 옆 칸 · 툴바 · 평가 바(판 높이) · 설정 하위 화면(엔진 · 일반 · 디자인 · PC)·검색·고급·저장·좁은 폭 · 엔진 탭",
     );
   }
 } finally {

@@ -796,8 +796,6 @@ export const EN: Readonly<Record<string, string>> = {
   "DB 기록 ({n})": "DB log ({n})",
 
   // ── 설정 ──
-  "자주 쓰는 설정": "Frequently used",
-  표시: "Display",
   "앱을 열면 엔진 시작": "Start engine when the app opens",
   "보드 › 대국 탭": "Board › Game tab",
   "보드 › 분석 탭": "Board › Analysis tab",
@@ -814,7 +812,6 @@ export const EN: Readonly<Record<string, string>> = {
   "평가 바 표시": "Show eval bar",
   "번호 매기기": "Move numbers",
   "금수 표시": "Show forbidden moves",
-  "다크 모드": "Dark mode",
   "검은 배경": "Black background",
   "어두운 테마에서 바탕을 검정으로": "Pure black page in the dark theme",
   언어: "Language",
@@ -847,8 +844,6 @@ export const EN: Readonly<Record<string, string>> = {
   "설정 검색": "Search settings",
   "「{q}」에 맞는 설정이 없습니다.": "No settings match “{q}”.",
   "고급 사용자 모드": "Advanced mode",
-  "해시 · 스타일 · 깊이 · 노드 · 표시": "Hash · style · depth · nodes · display",
-  "{n}개 숨김": "{n} hidden",
   "멀티스레드 · relaxed SIMD": "Multi thread · relaxed SIMD",
   멀티스레드: "Multi thread",
   "단일 스레드 · relaxed SIMD": "Single thread · relaxed SIMD",
@@ -1045,6 +1040,28 @@ export const EN: Readonly<Record<string, string>> = {
 
   // 설정 ▸ 정보(라이선스 고지)
   정보: "About",
+  디자인: "Design",
+  일반: "General",
+  "PC 설정": "PC settings",
+  테마: "Theme",
+  탐색: "Search",
+  동작: "Behaviour",
+  바탕: "Background",
+  "엔진 파라미터": "Engine parameters",
+  "설정 파일": "Settings files",
+  관리자: "Admin",
+  초기화: "Reset",
+  "테마 · 검은 배경 · 판 표시": "Theme, black background, board display",
+  "언어 · 엔진 자동 시작": "Language, engine at launch",
+  "엔진 · 스레드 · 해시 · 스타일 · 깊이 · 노드": "Engine, threads, hash, style, depth, nodes",
+  "엔진 · 스레드 수": "Engine, threads",
+  "DB 탭 · 엔진 콘솔 · 엔진 파라미터 · PC 설정":
+    "DB tab, engine console, engine parameters, PC settings",
+  "데스크톱 설정 파일 · 관리자 도구 · 초기화": "Desktop settings files, admin tools, reset",
+  "Zenyth Web · 라이선스": "Zenyth Web, licences",
+  밝은: "Light",
+  어두운: "Dark",
+  설정으로: "Back to settings",
   "Zenyth Web 은 자유 소프트웨어입니다. GNU 일반 공중 사용 허가서(GPL) 3판 또는 그 이후 판의 조건에 따라 다시 배포하거나 고칠 수 있습니다.":
     "Zenyth Web is free software. You can redistribute it and modify it under the terms of the GNU General Public License, version 3 or any later version.",
   "이 프로그램은 쓸모 있기를 바라며 배포되지만, 상품성이나 특정 목적 적합성에 대한 묵시적 보증을 포함해 어떠한 보증도 하지 않습니다.":

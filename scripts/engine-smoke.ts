@@ -468,7 +468,9 @@ try {
   await page.getByRole("button", { name: "엔진 분석", exact: true }).click();
   await page.locator('.panel__badge[data-status="searching"]').waitFor({ timeout: 10_000 });
   const tSwap = Date.now();
-  await goto("설정", "/settings", ".settings .sgroup");
+  await goto("설정", "/settings", ".settings .slink");
+  await page.locator('[data-row="page-engine"]').click();
+  await page.waitForURL("**/settings/engine");
   await select.selectOption("simd");
   await page
     .waitForFunction(
@@ -501,7 +503,9 @@ try {
   // 찾기와 누르기를 한 번에 — 그 사이 분석이 끝나 버튼이 바뀌면 click() 이 30초 기다린다.
   await page.evaluate(STOP_AND_READ_BEST);
   await page.locator('.panel__badge[data-status="ready"]').waitFor({ timeout: 15_000 });
-  await goto("설정", "/settings", ".settings .sgroup");
+  await goto("설정", "/settings", ".settings .slink");
+  await page.locator('[data-row="page-engine"]').click();
+  await page.waitForURL("**/settings/engine");
   await select.selectOption("auto");
   await page
     .waitForFunction(

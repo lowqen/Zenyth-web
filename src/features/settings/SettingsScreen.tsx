@@ -1,9 +1,13 @@
 import { useMemo, useRef, useState, type ComponentType } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { useGameStore, type BoardMode } from "../board/gameStore";
 import { useBoardStore } from "../board/boardStore";
 import { useThemeStore, type ThemeMode } from "../../app/theme";
 import { PageTitle } from "../../app/PageTitle";
+import { useProMode } from "../../app/proMode";
+import { Icon } from "../../components/icons";
+import { ICON } from "../../components/icon-paths";
+import { MiniBoard } from "../../components/MiniBoard";
 import {
   HASH_CHOICES_MB,
   MAX_DEPTH_LIMIT,
@@ -23,40 +27,45 @@ import { ALL_SPECS } from "../../core/settings/desktop-settings";
 import { msg, pick, setLang, t, useLang, type Lang } from "../../i18n/i18n";
 
 /**
- * 설정 — 두 층.
+ * 설정 — 앱 UI 개편 2차 M3: **목록 → 하위 화면**.
  *
- * **자주 쓰는 설정** 카드 하나가 늘 펼쳐져 있다: 엔진 선택 · 스레드 수 · 자동 기동 ·
- * 다크 모드, 그리고 대국·분석 설정이 어디로 갔는지 알려 주는 길잡이 줄.
+ * 첫 화면은 큰 제목 · 알약 검색 · 아이콘 + 제목 + 부제 + 꺾쇠 줄이다: 디자인 · 일반 · 엔진 / 고급 사용자 모드(스위치)
+ * · PC 설정(고급 모드만) / 정보. 줄을 누르면 하위 화면(`/settings/<page>` — 브라우저 «뒤로»가 첫 화면으로)이 원형
+ * 뒤로 단추 + 큰 제목 + 섹션 머리 + 연결 그룹으로 열린다.
  *
- * **대국과 분석의 설정은 보드의 두 탭으로 옮겼다.** 컴퓨터 색 · 착수 시간 · 레벨 · 개시는
- * [대국] 탭, 분석 시간 · 후보 수 · 정지하면 최선수 두기는 [분석] 탭에 있다 — 대국을
- * 시작하거나 분석을 돌리는 바로 그 자리다. 같은 조작부를 여기에도 두면 어느 쪽이 참인지
- * 되묻게 되어 뺐다(값의 주인은 그대로 `gameStore`·설정 스토어다). 검색은 그 이름들을
- * 길잡이 줄로 찾아 준다.
+ * **대국과 분석의 설정은 보드의 두 탭에 있다.** 컴퓨터 색 · 착수 시간 · 레벨 · 개시는 [대국] 탭, 분석 시간 · 후보 수
+ * · 정지하면 최선수 두기는 [분석] 탭 — 대국을 시작하거나 분석을 돌리는 바로 그 자리다. 같은 조작부를 여기에도 두면
+ * 어느 쪽이 참인지 되묻게 된다. 검색은 그 이름들을 길잡이 줄로 찾아 준다.
  *
- * 그 밑의 **고급 설정** 스위치를 켜야 엔진 탐색 파라미터(해시·스타일·깊이·노드·위협
- * 확인)와 표시·초기화가 나온다. 켜 둔 상태는 저장된다(`showAdvanced`). 검색은 층을
- * 가리지 않는다 — 이름이나 INFO 키를 아는 사람이 스위치부터 찾게 하지 않는다.
+ * 엔진 탐색 파라미터(해시 · 스타일 · 깊이 · 노드 · 위협 확인)와 PC 설정은 **고급 사용자 모드**에서만 보인다(`pro`).
+ * 검색은 층을 가리지 않는다 — 이름이나 INFO 키를 아는 사람이 스위치부터 찾게 하지 않는다. 찾은 줄은 그 자리에서
+ * 바로 바꿀 수 있다(어느 하위 화면의 것인지 그룹 머리가 말한다).
  *
  * 줄마다 그 값이 엔진의 어느 `INFO` 키를 움직이는지 적는다(앱의 `engineKey`).
  */
 
-type Section = "basic" | "engine" | "display" | "system";
+type Page = "design" | "general" | "engine" | "desktop" | "about";
 
-/** 이름 · 설명 · 낱말은 사전 열쇠(한국어 원문) — 그릴 때 `t()`. 검색은 두 언어를 다 본다. */
-const SECTION_LABEL: Record<Section, string> = {
-  basic: msg("자주 쓰는 설정"),
+/** 하위 화면의 이름 — 사전 열쇠(한국어 원문), 그릴 때 `t()`. */
+const PAGE_TITLE: Record<Page, string> = {
+  design: msg("디자인"),
+  general: msg("일반"),
   engine: msg("엔진"),
-  display: msg("표시"),
-  system: msg("시스템"),
+  desktop: msg("PC 설정"),
+  about: msg("정보"),
 };
-
-const ADVANCED: readonly Section[] = ["engine", "display", "system"];
-const SECTIONS: readonly Section[] = ["basic", ...ADVANCED];
+const PAGES = Object.keys(PAGE_TITLE) as Page[];
 
 interface RowSpec {
   id: string;
-  sec: Section;
+  /** 어느 하위 화면의 줄인가. */
+  page: Exclude<Page, "about">;
+  /** 그 화면 안의 연결 그룹 머리(사전 열쇠). */
+  group: string;
+  /** 고급 사용자 모드에서만(검색은 가리지 않는다). */
+  pro?: boolean;
+  /** 이름 없이 조작부만 — 그룹 머리가 이미 그 이름이다(테마 단추 · 언어 줄). */
+  bare?: boolean;
   label: string;
   note?: string;
   /** 이 값이 움직이는 엔진 명령(`INFO <key>` 등). 검색 대상이다. */
@@ -232,16 +241,35 @@ const THEMES: readonly { value: ThemeMode; label: string }[] = [
   { value: "dark", label: msg("어둡게") },
 ];
 
+const THEME_ICON: Record<ThemeMode, string> = {
+  system: ICON.themeAuto,
+  light: ICON.themeLightMode,
+  dark: ICON.themeDarkMode,
+};
+
+/**
+ * 테마 — 아이콘 단추 셋(앱 M3 «디자인»): 시스템 · 밝게 · 어둡게. 고른 것은 진한 강조색으로 채워지고 모서리가
+ * 둥글어진다(모핑). 라디오 묶음이라 화면 낭독기는 «선택됨 · 라디오»로 읽는다.
+ */
 function ThemeControl() {
   const mode = useThemeStore((s) => s.mode);
   const set = useThemeStore((s) => s.set);
   return (
-    <Segmented
-      label={t("다크 모드")}
-      value={mode}
-      options={THEMES.map((o) => ({ ...o, label: t(o.label) }))}
-      onChange={set}
-    />
+    <div className="themechoice" role="radiogroup" aria-label={t("테마")}>
+      {THEMES.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={mode === o.value}
+          className="themechoice__opt"
+          onClick={() => set(o.value)}
+        >
+          <Icon d={THEME_ICON[o.value]} />
+          <span>{t(o.label)}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -257,9 +285,31 @@ const LANGS: readonly { value: Lang; label: string; lang: string }[] = [
   { value: "en", label: "English", lang: "en" },
 ];
 
+/**
+ * 언어 — 항목마다 한 줄, 고른 줄 끝에 채운 체크 원(앱 M3). 항목이 적은 고르기는 칩이 아니라 줄이다.
+ */
 function LangControl() {
   const lang = useLang((s) => s.lang);
-  return <Segmented label={t("언어")} value={lang} options={LANGS} onChange={setLang} />;
+  return (
+    <div className="radiorows" role="radiogroup" aria-label={t("언어")}>
+      {LANGS.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={lang === o.value}
+          lang={o.lang}
+          className="radiorow"
+          onClick={() => setLang(o.value)}
+        >
+          <span className="radiorow__label">{o.label}</span>
+          <span className="checkcircle" aria-hidden="true">
+            <Icon d={ICON.check} />
+          </span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 /**
@@ -348,7 +398,8 @@ const ROWS: readonly RowSpec[] = [
   // 자주 쓰는 설정 — 엔진과 화면.
   {
     id: "engine",
-    sec: "basic",
+    page: "engine",
+    group: msg("탐색"),
     label: msg("엔진"),
     note: msg("바꾸면 엔진을 다시 띄웁니다(분석은 이어 읽음)"),
     keywords:
@@ -358,7 +409,8 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "threads",
-    sec: "basic",
+    page: "engine",
+    group: msg("탐색"),
     label: msg("스레드 수"),
     note: msg("자동 = 코어 − 1 (최대 4)"),
     engineKey: "thread_num",
@@ -368,7 +420,8 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "autoBoot",
-    sec: "basic",
+    page: "general",
+    group: msg("동작"),
     label: msg("앱을 열면 엔진 시작"),
     note: msg("가중치 20MB 는 처음 한 번만 받습니다"),
     keywords: "자동 기동 부팅 autoboot 시작",
@@ -376,7 +429,8 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "boardTabs",
-    sec: "basic",
+    page: "general",
+    group: msg("보드"),
     label: msg("대국 · 분석 설정"),
     note: msg("컴퓨터 색 · 착수 시간 · 레벨 · 개시 · 분석 시간 · 후보 수"),
     keywords:
@@ -386,8 +440,10 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "theme",
-    sec: "basic",
-    label: msg("다크 모드"),
+    page: "design",
+    group: msg("테마"),
+    bare: true,
+    label: msg("테마"),
 
     keywords: "테마 dark theme light",
     wide: true,
@@ -395,7 +451,8 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "amoled",
-    sec: "basic",
+    page: "design",
+    group: msg("바탕"),
     label: msg("검은 배경"),
     note: msg("어두운 테마에서 바탕을 검정으로"),
     keywords: "amoled oled 블랙 검정 black 다크 dark",
@@ -403,7 +460,9 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "lang",
-    sec: "basic",
+    page: "general",
+    group: msg("언어"),
+    bare: true,
     label: msg("언어"),
     keywords: "language lang english korean 한국어 영어",
     wide: true,
@@ -413,7 +472,9 @@ const ROWS: readonly RowSpec[] = [
   // 고급 — 엔진
   {
     id: "hash",
-    sec: "engine",
+    page: "engine",
+    group: msg("엔진 파라미터"),
+    pro: true,
     label: msg("해시 크기 (MB)"),
     note: msg("탭 메모리 한도 안에서"),
     engineKey: "hash_size",
@@ -423,7 +484,9 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "hashAutoClear",
-    sec: "engine",
+    page: "engine",
+    group: msg("엔진 파라미터"),
+    pro: true,
     label: msg("해시 자동 지우기"),
     note: msg("탐색마다 해시를 비웁니다"),
     engineKey: "YXHASHCLEAR",
@@ -431,7 +494,9 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "style",
-    sec: "engine",
+    page: "engine",
+    group: msg("엔진 파라미터"),
+    pro: true,
     label: msg("스타일"),
 
     engineKey: "caution_factor",
@@ -440,7 +505,9 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "maxDepth",
-    sec: "engine",
+    page: "engine",
+    group: msg("엔진 파라미터"),
+    pro: true,
     label: msg("최대 깊이"),
     note: msg("{n} = 무제한"),
     engineKey: "max_depth",
@@ -448,7 +515,9 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "maxNode",
-    sec: "engine",
+    page: "engine",
+    group: msg("엔진 파라미터"),
+    pro: true,
     label: msg("최대 노드 수"),
 
     engineKey: "max_node",
@@ -457,7 +526,9 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "vcthread",
-    sec: "engine",
+    page: "engine",
+    group: msg("엔진 파라미터"),
+    pro: true,
     label: msg("전역 검색 추가 위협 확인"),
     engineKey: "vcthread",
     keywords: "vct vc2",
@@ -468,7 +539,8 @@ const ROWS: readonly RowSpec[] = [
   // 고급 — 표시
   {
     id: "evalBar",
-    sec: "display",
+    page: "design",
+    group: msg("판"),
     label: msg("평가 바 표시"),
 
     keywords: "eval bar 승률 게이지",
@@ -476,14 +548,16 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "numbers",
-    sec: "display",
+    page: "design",
+    group: msg("판"),
     label: msg("번호 매기기"),
 
     Control: NumbersControl,
   },
   {
     id: "forbidden",
-    sec: "display",
+    page: "design",
+    group: msg("판"),
     label: msg("금수 표시"),
 
     engineKey: "YXSHOWFORBID",
@@ -493,7 +567,9 @@ const ROWS: readonly RowSpec[] = [
   // 고급 — 시스템
   {
     id: "desktopFile",
-    sec: "system",
+    page: "desktop",
+    group: msg("설정 파일"),
+    pro: true,
     label: msg("데스크톱 설정 파일"),
     note: msg(
       "settings.txt · settings_dev.txt ({all}칸 중 {mapped}칸이 웹에 반영, 나머지는 그대로 보관)",
@@ -504,7 +580,9 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "adminTools",
-    sec: "system",
+    page: "desktop",
+    group: msg("관리자"),
+    pro: true,
     label: msg("관리자 도구"),
     note: msg(
       "정석 ▸ 공식 커리큘럼에 «커리큘럼 편집»(스튜디오)을 엽니다. 배포는 저장소 커밋으로만 됩니다",
@@ -514,15 +592,15 @@ const ROWS: readonly RowSpec[] = [
   },
   {
     id: "reset",
-    sec: "system",
+    page: "desktop",
+    group: msg("초기화"),
+    pro: true,
     label: msg("설정 초기화"),
     note: msg("대국은 그대로입니다"),
     keywords: "기본값 reset",
     Control: ResetControl,
   },
 ];
-
-const ADVANCED_COUNT = ROWS.filter((r) => r.sec !== "basic").length;
 
 /** 설명의 자리 값(`{n}` 등) — 줄마다 같다. */
 const NOTE_VARS = { n: MAX_DEPTH_LIMIT, all: ALL_SPECS.length, mapped: MAPPED_IDS.length };
@@ -538,59 +616,106 @@ const matches = (r: RowSpec, q: string) =>
     noteOf(r),
     r.engineKey,
     r.keywords,
-    SECTION_LABEL[r.sec],
-    t(SECTION_LABEL[r.sec]),
+    PAGE_TITLE[r.page],
+    t(PAGE_TITLE[r.page]),
+    r.group,
+    t(r.group),
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase()
     .includes(q);
 
-function Group({ sec, rows }: { sec: Section; rows: readonly RowSpec[] }) {
+/** 줄들을 그룹 머리로 묶는다(처음 나온 순서). */
+function grouped(rows: readonly RowSpec[], by: (r: RowSpec) => string) {
+  const out = new Map<string, RowSpec[]>();
+  for (const r of rows) out.set(by(r), [...(out.get(by(r)) ?? []), r]);
+  return [...out];
+}
+
+/**
+ * 연결 그룹 — 앱 `ConnectedGroup`(M3 · P4): 머리는 그룹 **위**에 강조색으로, 줄마다 제 면, 바깥 모서리만 카드
+ * 반경이고 줄 사이는 작은 틈. 구분선 대신 틈이 줄을 가른다.
+ */
+function Group({ id, title, children }: { id: string; title?: string; children: React.ReactNode }) {
   return (
-    <section className="panel sgroup" data-sec={sec} aria-labelledby={`sg-${sec}`}>
-      <header className="sgroup__head">
-        <h2 id={`sg-${sec}`} className="sgroup__title">
-          {t(SECTION_LABEL[sec])}
+    <section className="sgroup" data-sec={id} aria-labelledby={title ? `sg-${id}` : undefined}>
+      {title && (
+        <h2 id={`sg-${id}`} className="sgroup__title">
+          {title}
         </h2>
-      </header>
-      {rows.map((r) => (
-        <div key={r.id} className="srow" data-row={r.id} data-wide={r.wide || undefined}>
-          {/* 설명은 펼쳐 적지 않고 툴팁으로 — 화면에는 이름만. 검색은 여전히 설명까지 찾는다.
-              INFO 키 꼬리표는 고급 설정에서만(엔진 파라미터를 만지는 사람의 것이다). */}
-          <div className="srow__text" title={noteOf(r)}>
-            <span className="srow__label">{t(r.label)}</span>
-            {r.engineKey && sec !== "basic" && <code className="srow__key">{r.engineKey}</code>}
-          </div>
-          <div className="srow__control">
-            <r.Control />
-          </div>
-        </div>
-      ))}
+      )}
+      <div className="sgroup__rows">{children}</div>
     </section>
   );
 }
 
-export function SettingsScreen() {
+function Row({ r, keyTag }: { r: RowSpec; keyTag: boolean }) {
+  if (r.bare)
+    return (
+      <div className="srow srow--bare" data-row={r.id}>
+        <r.Control />
+      </div>
+    );
+  return (
+    <div className="srow" data-row={r.id} data-wide={r.wide || undefined}>
+      {/* 설명은 펼쳐 적지 않고 툴팁으로 — 화면에는 이름만. 검색은 여전히 설명까지 찾는다.
+          INFO 키 꼬리표는 엔진 파라미터에서만(그것을 만지는 사람의 것이다). */}
+      <div className="srow__text" title={noteOf(r)}>
+        <span className="srow__label">{t(r.label)}</span>
+        {r.engineKey && keyTag && <code className="srow__key">{r.engineKey}</code>}
+      </div>
+      <div className="srow__control">
+        <r.Control />
+      </div>
+    </div>
+  );
+}
+
+/** 첫 화면의 한 줄 — 앱 `LinkRow`: 외곽선 아이콘 · 제목 · 부제 · 꺾쇠, 줄 전체가 한 터치 대상. */
+function LinkRow({
+  to,
+  icon,
+  title,
+  note,
+}: {
+  to: Page;
+  icon: string;
+  title: string;
+  note: string;
+}) {
+  return (
+    <Link to={to} className="srow slink" data-row={`page-${to}`}>
+      <span className="slink__icon" aria-hidden="true">
+        <Icon d={icon} />
+      </span>
+      <span className="slink__text">
+        <span className="srow__label">{title}</span>
+        <span className="srow__note">{note}</span>
+      </span>
+      <Icon d={ICON.chevron} />
+    </Link>
+  );
+}
+
+const PAGE_ICON: Record<Page, string> = {
+  design: ICON.palette,
+  general: ICON.tune,
+  engine: ICON.memory,
+  desktop: ICON.computer,
+  about: ICON.info,
+};
+
+/** 첫 화면 — 큰 제목 · 알약 검색 · 하위 화면 줄. 검색 중이면 찾은 줄을 하위 화면별로 그 자리에서. */
+function RootPage() {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
-  const advanced = useSettingsStore((s) => s.showAdvanced);
+  const pro = useProMode();
   const update = useSettingsStore((s) => s.update);
-
-  // 검색 중에는 층을 가리지 않는다. 검색이 비었으면 고급은 스위치를 따른다.
-  const visible = useMemo(
-    () => ROWS.filter((r) => (q ? matches(r, q) : r.sec === "basic" || advanced)),
-    [q, advanced],
-  );
-  const groups = SECTIONS.map((sec) => ({
-    sec,
-    rows: visible.filter((r) => r.sec === sec),
-  })).filter((g) => g.rows.length > 0);
-  const basic = groups.find((g) => g.sec === "basic");
-  const rest = groups.filter((g) => g.sec !== "basic");
+  const found = useMemo(() => (q ? ROWS.filter((r) => matches(r, q)) : []), [q]);
 
   return (
-    <div className="settings">
+    <>
       <PageTitle>{t("설정")}</PageTitle>
       <div className="settings__head">
         <div className="search">
@@ -606,46 +731,154 @@ export function SettingsScreen() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        {/* 찾는 중에만 몇 줄이 걸렸는지. 평소의 «6/18 · 기동할 때 반영»은 읽을 이유가 없는 숫자였다. */}
+        {/* 찾는 중에만 몇 줄이 걸렸는지. */}
         {q && (
           <p className="settings__meta tnum">
-            {visible.length}/{ROWS.length}
+            {found.length}/{ROWS.length}
           </p>
         )}
       </div>
 
-      {groups.length === 0 ? (
-        <p className="settings__empty">{t("「{q}」에 맞는 설정이 없습니다.", { q: query })}</p>
+      {q ? (
+        found.length === 0 ? (
+          <p className="settings__empty">{t("「{q}」에 맞는 설정이 없습니다.", { q: query })}</p>
+        ) : (
+          grouped(found, (r) => r.page).map(([page, rows]) => (
+            <Group key={page} id={`found-${page}`} title={t(PAGE_TITLE[page as Page])}>
+              {rows.map((r) => (
+                <Row key={r.id} r={r} keyTag />
+              ))}
+            </Group>
+          ))
+        )
       ) : (
         <>
-          {basic && <Group sec="basic" rows={basic.rows} />}
-          {/* 고급 설정 스위치 — 검색 중에는 숨긴다(검색이 이미 층을 가리지 않으므로). */}
-          {!q && (
-            <section className="panel sadvanced" aria-labelledby="sg-advanced">
-              <div className="sadvanced__text">
-                <h2 id="sg-advanced" className="sgroup__title">
-                  {t("고급 사용자 모드")}
-                </h2>
-                <p className="sgroup__desc">
-                  {advanced
-                    ? t("해시 · 스타일 · 깊이 · 노드 · 표시")
-                    : t("{n}개 숨김", { n: ADVANCED_COUNT })}
-                </p>
-              </div>
+          <Group id="pages">
+            <LinkRow
+              to="design"
+              icon={PAGE_ICON.design}
+              title={t("디자인")}
+              note={t("테마 · 검은 배경 · 판 표시")}
+            />
+            <LinkRow
+              to="general"
+              icon={PAGE_ICON.general}
+              title={t("일반")}
+              note={t("언어 · 엔진 자동 시작")}
+            />
+            <LinkRow
+              to="engine"
+              icon={PAGE_ICON.engine}
+              title={t("엔진")}
+              note={pro ? t("엔진 · 스레드 · 해시 · 스타일 · 깊이 · 노드") : t("엔진 · 스레드 수")}
+            />
+          </Group>
+          <Group id="pro">
+            <div className="srow slink slink--switch" data-row="pro">
+              <span className="slink__icon" aria-hidden="true">
+                <Icon d={ICON.tune} />
+              </span>
+              <span className="slink__text">
+                <span className="srow__label">{t("고급 사용자 모드")}</span>
+                <span className="srow__note">
+                  {t("DB 탭 · 엔진 콘솔 · 엔진 파라미터 · PC 설정")}
+                </span>
+              </span>
               <Switch
                 label={t("고급 사용자 모드")}
-                on={advanced}
+                on={pro}
                 onChange={(v) => update({ showAdvanced: v })}
               />
-            </section>
-          )}
-          {rest.map(({ sec, rows }) => (
-            <Group key={sec} sec={sec} rows={rows} />
-          ))}
+            </div>
+            {pro && (
+              <LinkRow
+                to="desktop"
+                icon={PAGE_ICON.desktop}
+                title={t("PC 설정")}
+                note={t("데스크톱 설정 파일 · 관리자 도구 · 초기화")}
+              />
+            )}
+          </Group>
+          <Group id="about-link">
+            <LinkRow
+              to="about"
+              icon={PAGE_ICON.about}
+              title={t("정보")}
+              note={t("Zenyth Web · 라이선스")}
+            />
+          </Group>
         </>
       )}
-      {/* 정보 · 라이선스 고지(GPLv3) — 검색과 고급 스위치와 무관하게 맨 아래에 늘 있다. */}
-      {!q && <AboutPanel />}
+    </>
+  );
+}
+
+/**
+ * 디자인 화면의 미리보기 카드(앱 M3): 흐린 강조색 원이 깔린 면 위에 작은 판과 미니 툴바, 오른쪽 아래 «밝은 /
+ * 어두운» 배지. 고른 테마 · 검은 배경이 여기서 먼저 보인다.
+ */
+function DesignPreview() {
+  return (
+    <div className="designpreview" aria-hidden="true">
+      <MiniBoard
+        className="designpreview__board"
+        moves={[
+          { x: 7, y: 7 },
+          { x: 8, y: 8 },
+          { x: 8, y: 6 },
+          { x: 6, y: 8 },
+          { x: 9, y: 5 },
+        ]}
+      />
+      <span className="designpreview__keys">
+        <span className="designpreview__key" />
+        <span className="designpreview__key designpreview__key--play" />
+        <span className="designpreview__key" />
+      </span>
+      <span className="designpreview__badge">
+        <span className="designpreview__light">{t("밝은")}</span>
+        <span className="designpreview__dark">{t("어두운")}</span>
+      </span>
+    </div>
+  );
+}
+
+/** 하위 화면 — 원형 뒤로 · 큰 제목 · 섹션 머리 · 연결 그룹. */
+function SubPage({ page }: { page: Page }) {
+  const pro = useProMode();
+  const rows = ROWS.filter((r) => r.page === page && (!r.pro || pro));
+  return (
+    <>
+      <Link
+        to="/settings"
+        className="iconbtn iconbtn--back settings__back"
+        aria-label={t("설정으로")}
+      >
+        <Icon d={ICON.back} />
+      </Link>
+      <PageTitle>{t(PAGE_TITLE[page])}</PageTitle>
+      {page === "design" && <DesignPreview />}
+      {page === "about" ? (
+        <AboutPanel />
+      ) : (
+        grouped(rows, (r) => r.group).map(([group, list]) => (
+          <Group key={group} id={`${page}-${list[0]!.id}`} title={t(group)}>
+            {list.map((r) => (
+              <Row key={r.id} r={r} keyTag={page === "engine"} />
+            ))}
+          </Group>
+        ))
+      )}
+    </>
+  );
+}
+
+export function SettingsScreen() {
+  const { page } = useParams();
+  if (page && !PAGES.includes(page as Page)) return <Navigate to="/settings" replace />;
+  return (
+    <div className="settings" data-page={page ?? "root"}>
+      {page ? <SubPage page={page as Page} /> : <RootPage />}
     </div>
   );
 }

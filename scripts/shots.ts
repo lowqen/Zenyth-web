@@ -30,7 +30,7 @@ const GOLDEN = join(ROOT, "golden");
 const ACTUAL = join(ROOT, "actual");
 const DIFF = join(ROOT, "diff");
 
-/** 화면 아홉 — 라우트 표(`src/app/routes.tsx`)의 실물 화면 전부(관리자 스튜디오는 뺀다). */
+/** 화면 아홉과 설정 하위 화면 둘 — 라우트 표(`src/app/routes.tsx`)의 실물 화면(관리자 스튜디오는 뺀다). */
 const SCENES: ReadonlyArray<{ name: string; path: string }> = [
   { name: "board", path: "/board" },
   { name: "review", path: "/research/review" },
@@ -41,6 +41,9 @@ const SCENES: ReadonlyArray<{ name: string; path: string }> = [
   { name: "database", path: "/database" },
   { name: "engine", path: "/engine" },
   { name: "settings", path: "/settings" },
+  // 설정 하위 화면(Z5) — 미리보기 카드 · 테마 단추 · 체크 원이 있는 둘.
+  { name: "settings-design", path: "/settings/design" },
+  { name: "settings-general", path: "/settings/general" },
 ];
 
 interface Variant {
