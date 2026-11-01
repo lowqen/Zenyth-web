@@ -238,19 +238,22 @@ try {
   if ((await page.getByRole("radiogroup", { name: "레벨" }).count()) !== 1)
     fail("대국 탭에 레벨이 없습니다");
   if ((await page.getByRole("button", { name: "새 대국", exact: true }).count()) !== 0)
-    fail("「새 대국」 이 보드에 있습니다 — 새 판은 퀵 바의 몫입니다");
+    fail("「새 대국」 이 보드에 있습니다 — 새 판은 툴바의 몫입니다");
   if ((await page.getByRole("button", { name: "엔진 분석" }).count()) !== 0)
-    fail("대국 탭의 이동 바에 분석 ▶ 가 있습니다 — 분석 탭의 것입니다");
-  // 퀵 액션 바 — 판 위에 새 판·진영 전환 둘뿐, 국면 카드에 기권·무승부. 분석·무르기·
-  // 되돌리기는 이동 바의 몫이라 퀵 바에 다시 생기면 여기서 잡는다(위아래 두 벌).
-  const quickbar = page.getByRole("navigation", { name: "퀵 액션" });
-  if ((await quickbar.count()) !== 1) fail("보드에 퀵 액션 바가 없습니다");
-  const quickButtons = await quickbar.getByRole("button").count();
-  if (quickButtons !== 2) fail(`퀵 액션 바 버튼이 둘(새 판·진영 전환)이 아닙니다: ${quickButtons}`);
-  for (const name of ["새 판", "진영 전환"]) {
-    const n = await quickbar.getByRole("button", { name, exact: true }).count();
-    if (n !== 1) fail(`퀵 액션 바에 「${name}」 이 하나가 아닙니다: ${n}개`);
+    fail("대국 탭의 툴바에 분석 ▶ 가 있습니다 — 분석 탭의 것입니다");
+  // 수 이동 툴바(앱 M5) — 새 판 · 처음 · ‹ · › · 끝 · 진영 전환(대국 탭), 분석 탭에서는 진영 전환 대신 ▶.
+  // 옛 퀵 액션 바(판 위의 새 판 · 진영 전환)가 다시 생기면 같은 버튼이 두 벌이다.
+  const toolbar = page.getByRole("navigation", { name: "수 이동" });
+  if ((await toolbar.count()) !== 1) fail("보드에 수 이동 툴바가 없습니다");
+  for (const name of ["새 판", "처음으로", "한 수 뒤로", "한 수 앞으로", "끝으로", "진영 전환"]) {
+    const n = await toolbar.getByRole("button", { name, exact: true }).count();
+    if (n !== 1) fail(`대국 탭 툴바에 「${name}」 이 하나가 아닙니다: ${n}개`);
   }
+  if ((await page.locator(".quickbar, .stagebar").count()) !== 0)
+    fail("옛 퀵 액션 바가 남아 있습니다 — 새 판 · 진영 전환은 툴바의 몫입니다");
+  // 판 아래 요약 줄 — 대국 탭이면 차례 + 알약(대진 · 수).
+  if ((await page.locator('[data-k="summary"] .summary__state').count()) !== 1)
+    fail("대국 탭 요약 줄에 차례 줄이 없습니다");
   for (const name of ["기권", "무승부"]) {
     const n = await page.getByRole("button", { name, exact: true }).count();
     if (n !== 1) fail(`보드 국면 카드에 「${name}」 이 하나가 아닙니다: ${n}개`);
@@ -268,9 +271,10 @@ try {
     if ((await page.getByRole("button", { name, exact: true }).count()) !== 0)
       fail(`분석 탭에 「${name}」 이 있습니다 — 대국 탭의 것입니다`);
   }
+  // 분석 · 정지는 툴바의 ▶ 하나가 한다(앱 P3 피드백) — 엔진 카드에 같은 버튼이 다시 생기면 두 벌이다.
   for (const name of ["분석", "정지"]) {
-    if ((await page.getByRole("button", { name, exact: true }).count()) !== 1)
-      fail(`분석 탭에 「${name}」 이 하나가 아닙니다`);
+    if ((await page.getByRole("button", { name, exact: true }).count()) !== 0)
+      fail(`분석 탭에 「${name}」 버튼이 있습니다 — 툴바의 ▶ 가 그 일을 합니다`);
   }
   // 분석 설정은 접혀 있고(머리에 요약 한 줄) 펼치면 줄이 나온다 — 펼친 상태는 기억된다.
   const optionsHead = page.getByRole("button", { name: /^분석 설정/ });
@@ -284,7 +288,7 @@ try {
   )
     fail("「정지하면 최선수 두기」 가 기본으로 켜져 있지 않습니다");
   if ((await page.getByRole("button", { name: "엔진 분석" }).count()) !== 1)
-    fail("분석 탭의 이동 바에 분석 ▶ 가 없습니다");
+    fail("분석 탭의 툴바에 분석 ▶ 가 없습니다");
   const keptStones = await page.locator("canvas[role=img]").getAttribute("aria-label");
   if (!keptStones?.includes("돌 2개")) fail(`탭을 바꾸자 판이 바뀌었습니다: ${keptStones}`);
   // 새로고침해도 고른 탭이 남는다 — 기본(분석)이 아닌 대국을 골라 두고 본다.

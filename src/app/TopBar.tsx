@@ -1,6 +1,8 @@
 import { ThemeToggle } from "./ThemeToggle";
 import { EngineIndicator } from "./EngineIndicator";
 import { usePageTitle } from "./pageTitleStore";
+import { useLocation } from "react-router-dom";
+import { ModeTabs } from "../features/board/ModeTabs";
 
 /**
  * 제목 — 현재 위치를 말로 확인해 주는 자리. 부제(«대국과 분석» 같은 화면 설명)는 걷었다(UI 개편):
@@ -17,10 +19,18 @@ import { usePageTitle } from "./pageTitleStore";
 export function TopBar({ title }: { title: string }) {
   // 목록 화면의 큰 제목(`PageTitle`)이 보이는 동안은 같은 말을 두 번 하지 않는다 — 투명하게만.
   const large = usePageTitle((s) => s.showing);
+  // 보드에서는 제목 대신 [분석] | [대국](앱 P3 ③ · M5: 선택된 탭이 이미 «보드»라 말한다). 제목은 화면 낭독기와
+  // 시험을 위해 남기되 보이지 않게.
+  const board = useLocation().pathname.startsWith("/board");
   return (
-    <header className="topbar" data-large-title={large || undefined}>
+    <header
+      className="topbar"
+      data-large-title={large || undefined}
+      data-board={board || undefined}
+    >
       <div className="topbar__text">
-        <h1 className="topbar__title">{title}</h1>
+        <h1 className={"topbar__title" + (board ? " sr-only" : "")}>{title}</h1>
+        {board && <ModeTabs />}
       </div>
       <div className="topbar__end">
         <EngineIndicator />

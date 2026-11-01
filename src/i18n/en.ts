@@ -79,7 +79,6 @@ export const EN: Readonly<Record<string, string>> = {
   "진영 전환: {from} → {to}": "Switch sides: {from} → {to}",
   "진영 전환은 컴퓨터가 한쪽을 맡은 대국에서만 됩니다(대국 탭 ▸ 흑 / 백)":
     "Switching sides works only when the computer plays one color (Play tab ▸ Black / White)",
-  "퀵 액션": "Quick actions",
   "새 판": "New game",
   "새 판: 판과 물음을 비우고 새로 시작합니다(개시와 컴퓨터 색은 그대로)":
     "New game: clear the board and questions and start over (opening and computer color stay)",
@@ -139,8 +138,6 @@ export const EN: Readonly<Record<string, string>> = {
   "최선수 자리에 둘 수 없습니다": "Cannot play on the best move point",
 
   // ── 보드 — 분석 카드 · 평가 바 · 형세 그래프 · 물음 · 링크 보관 · 기보 파일 ──
-  "정지하고 최선수를 둡니다": "Stop and play the best move",
-  정지: "Stop",
   종료: "Shut down",
   "후보 {n}수": "{n} {n|candidate|candidates}",
   "빈 판의 천원이나 막아야만 하는 수처럼 정해진 자리라 깊이와 평가가 없습니다":
@@ -1106,8 +1103,9 @@ export const EN: Readonly<Record<string, string>> = {
   "이 레슨의 링크입니다. 복사해 쓰세요": "This is the link to the lesson. Copy it.",
   "링크를 복사했습니다": "Link copied",
   // ── UI 개편(calm-design) — 한 줄 안내 · 펼침 머리 · 엔진 수치 ──
-  "「분석」을 누르면 엔진이 이 국면의 최선수를 찾습니다":
-    "Press “Analyze” and the engine looks for the best move here",
+  "▶ 를 누르면 엔진이 이 국면의 최선수를 찾습니다":
+    "Press ▶ and the engine looks for the best move here",
+  "▶ 를 누르면 엔진이 최선수를 찾습니다": "Press ▶ and the engine looks for the best move",
   노드: "Nodes",
   속도: "Speed",
   최선수: "Best move",

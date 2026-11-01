@@ -5,9 +5,8 @@ import type { SearchStats } from "../../engine/engine-types";
 import { useBoardStore } from "./boardStore";
 import { label } from "../../core/model/move";
 import { colorsForTag, DEFAULT_PALETTE } from "../../core/board/ladder";
-import { useSettingsStore } from "../settings/settingsStore";
 import { useDisplayedAnalysis } from "./currentAnalysis";
-import { STATUS_TEXT, useStartAnalysis, useStopAnalysis } from "./analysisActions";
+import { STATUS_TEXT } from "./analysisActions";
 import { AnalysisTimeControl, MultiPvControl, PlayBestOnStopControl, Row } from "./boardControls";
 import { Disclosure } from "../../components/Disclosure";
 import { useRememberedOpen } from "../../components/useRememberedOpen";
@@ -48,9 +47,6 @@ export function AnalysisPanel() {
   const caps = useEngineStore((s) => s.capabilities);
   const error = useEngineStore((s) => s.error);
   const start = useEngineStore((s) => s.start);
-  const startAnalysis = useStartAnalysis();
-  const stopAnalysis = useStopAnalysis();
-  const playBest = useSettingsStore((s) => s.playBestOnStop);
 
   const render = useBoardStore((s) => s.render);
   const size = render.size;
@@ -89,29 +85,15 @@ export function AnalysisPanel() {
         <span className="panel__status">{STATUS_TEXT[status]}</span>
       </h2>
 
-      <div className="panel__actions">
-        {status === "idle" || status === "error" ? (
-          <button type="button" onClick={() => void start()}>
+      {/* 분석 · 정지는 판 아래 툴바의 ▶ 하나가 한다(앱 P3 피드백 — 카드에 같은 버튼이 두 벌이었다).
+          카드에는 엔진이 꺼져 있을 때의 켜기만 남는다. */}
+      {(status === "idle" || status === "error") && (
+        <div className="panel__actions">
+          <button type="button" className="button--tonal" onClick={() => void start()}>
             {t("엔진 시작")}
           </button>
-        ) : null}
-        <button
-          type="button"
-          className="button--tonal"
-          onClick={startAnalysis}
-          disabled={searching || status === "starting"}
-        >
-          {t("분석")}
-        </button>
-        <button
-          type="button"
-          onClick={stopAnalysis}
-          disabled={!searching}
-          title={playBest ? t("정지하고 최선수를 둡니다") : t("정지")}
-        >
-          {t("정지")}
-        </button>
-      </div>
+        </div>
+      )}
 
       {error && <p className="panel__error">{error}</p>}
 
@@ -125,27 +107,28 @@ export function AnalysisPanel() {
 
       {blank && (
         <p className="panel__hint" data-k="analysis-empty">
-          {t("「분석」을 누르면 엔진이 이 국면의 최선수를 찾습니다")}
+          {t("▶ 를 누르면 엔진이 이 국면의 최선수를 찾습니다")}
         </p>
       )}
 
-      {/* 화면에서는 최선수가 맨 위(CSS order), 문서 순서는 그대로 — 스모크가 첫 dd 를 깊이로,
-          마지막 dd 를 최선수로 읽는다. 시간 · 노드 · 속도는 «세부 수치»를 켰을 때만. */}
+      {/* 앱(2026-11-01)처럼 승률 · 평가 · 깊이 세 타일이 카드의 머리다. 최선수는 판 아래 요약 줄이 크게
+          말한다(`SummaryLine`, data-k="summary-best"). 시간 · 노드 · 속도는 «세부 수치»를 켰을 때만.
+          칸은 data-k 로 집는다(스모크). */}
       <dl
         className="kv stats"
         data-stale={stale || undefined}
         data-detail={detail || undefined}
         hidden={blank}
       >
-        <Stat id="depth" k={t("깊이")}>
-          {stats.depth || NONE()}
-          {stats.depth && stats.selDepth ? `/${stats.selDepth}` : ""}
+        <Stat id="winrate" k={t("승률")}>
+          {stats.winRatePct === null ? NONE() : `${stats.winRatePct}%`}
         </Stat>
         <Stat id="eval" k={t("평가")}>
           {formatEval(stats)}
         </Stat>
-        <Stat id="winrate" k={t("승률")}>
-          {stats.winRatePct === null ? NONE() : `${stats.winRatePct}%`}
+        <Stat id="depth" k={t("깊이")}>
+          {stats.depth || NONE()}
+          {stats.depth && stats.selDepth ? `/${stats.selDepth}` : ""}
         </Stat>
         <Stat id="time" k={t("시간")} minor>
           {formatTime(timeMs)}
@@ -155,9 +138,6 @@ export function AnalysisPanel() {
         </Stat>
         <Stat id="speed" k={t("속도")} minor>
           {stats.speed === null ? NONE() : `${compact(stats.speed)}/s`}
-        </Stat>
-        <Stat id="best" k={t("최선수")} wide>
-          {bestMove ? label(bestMove, size) : NONE()}
         </Stat>
       </dl>
       {!blank && (

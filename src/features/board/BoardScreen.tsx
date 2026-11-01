@@ -6,15 +6,15 @@ import { AnalysisOptions, AnalysisPanel } from "./AnalysisPanel";
 import { EvalBar } from "./EvalBar";
 import { EvalGraph } from "./EvalGraph";
 import { GamePanel } from "./GamePanel";
-import { ModeTabs, MODE_PANEL_ID } from "./ModeTabs";
+import { MODE_PANEL_ID } from "./ModeTabs";
 import { PositionCard, PositionStrip } from "./PositionCard";
 import { useBoardDb, useBoardDbSync } from "./boardDb";
 import { dbCellTag } from "../database/dbTags";
 import { useDbStore } from "../database/dbStore";
 import { PromptPanel } from "./OpeningPanel";
 import { LinkBackupBanner } from "./LinkBackupBanner";
-import { MoveTransport } from "./MoveTransport";
-import { QuickActions } from "./QuickActions";
+import { MoveToolbar } from "./MoveToolbar";
+import { SummaryLine } from "./SummaryLine";
 import { useBoardNotice } from "./boardNotice";
 import { useCurrentAnalysis } from "./currentAnalysis";
 import { openGameFile } from "./gameFileActions";
@@ -147,10 +147,8 @@ export function BoardScreen() {
           </p>
         )}
       </div>
-      <div className="stagebar">
-        <ModeTabs />
-        <QuickActions />
-      </div>
+      {/* 판 아래의 요약 줄(최선수 · 차례). [분석] | [대국] 은 상단 바 왼쪽(TopBar), 새 판 · 진영 전환은 툴바. */}
+      <SummaryLine />
 
       <aside
         id={MODE_PANEL_ID}
@@ -173,7 +171,7 @@ export function BoardScreen() {
           </>
         )}
       </aside>
-      <MoveTransport />
+      <MoveToolbar />
     </div>
   );
 }

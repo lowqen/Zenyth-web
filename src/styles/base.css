@@ -454,25 +454,25 @@ a:focus-visible {
 }
 /*
  * 판이 주인공이다(UI 개편 2차). 왼쪽 칸에는 평가 바와 판**만** 둔다 — 판이 칸의 높이를 그대로
- * 받는다. 탭 · 새 판(`stagebar`)은 오른쪽 칸 맨 위, 카드는 가운데(스크롤), 기보 이동(`transport`)은
- * 맨 아래. 예전에는 판 위아래의 두 줄(40 + 52px)이 판에서 높이를 빼 갔다(1440×900 에서 판 ~710px →
- * 이제 ~810px).
+ * 받는다. 오른쪽 칸은 위에서부터 요약 줄(최선수 · 차례, `summary`) · 카드(스크롤) · 툴바(`toolbar`) —
+ * 앱 가로 화면의 오른쪽 열과 같다. [분석] | [대국] 은 상단 바 왼쪽(제목 자리)에 있다(앱 P3 ③).
  */
 .boardscreen {
-  /* 이동 바 · 퀵 바의 높이. 세로 화면에서 판 높이를 셈할 때 쓴다. */
-  --transport-h: 52px;
-  --quickbar-h: 40px;
+  /* 툴바 줄(키 56 + 위아래 12 — 앱 M5 보정: 64 는 ▶ 바로 밑에 시트 손잡이가 붙었다)과 요약 줄의 높이.
+     세로 화면에서 판 높이를 셈할 때 쓴다. */
+  --transport-h: 80px;
+  --summary-h: 64px;
   /* 휴대폰 세로에서 판 밑에 남겨 둘 카드 몫 — 국면 요약 줄과 첫 카드의 머리가 보이게. */
-  --side-peek: 150px;
+  --side-peek: 120px;
 
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(300px, 27vw, 380px);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
-    "board bar"
+    "board summary"
     "board side"
     "board nav";
-  gap: var(--space-m) var(--space-xl);
+  gap: var(--space-s) var(--space-xl);
   height: 100%;
   min-height: 0;
   container-type: size;
@@ -485,15 +485,14 @@ a:focus-visible {
   /* 판과 평가 바의 크기를 이 칸 기준으로 잰다(아래 `--board-side`). */
   container-type: size;
 }
-.boardscreen > .stagebar {
-  grid-area: bar;
+.boardscreen > .summary {
+  grid-area: summary;
 }
 .boardscreen > .boardscreen__side {
   grid-area: side;
 }
-.boardscreen > .transport {
+.boardscreen > .toolbar {
   grid-area: nav;
-  border-top: 1px solid var(--c-outline-variant);
 }
 /* 기보 파일을 끌어 오는 동안 — 놓을 수 있는 곳이라는 표시. */
 .boardscreen__board[data-drop] {
@@ -539,8 +538,8 @@ a:focus-visible {
   scrollbar-width: thin;
   scrollbar-color: var(--c-outline-variant) transparent;
 }
-/* 세로로 긴 좁은 화면(휴대폰 세로 · 태블릿 세로): 판이 너비를 다 쓰고, 그 밑으로 이동 바 · 탭 ·
-   카드. 판은 (너비, 남은 높이 − 이동 바 − 퀵 바 − 카드 몫) 중 작은 쪽. */
+/* 세로로 긴 좁은 화면(휴대폰 세로 · 태블릿 세로): 판이 너비를 다 쓰고, 그 밑으로 툴바 · 요약 줄 · 카드.
+   판은 (너비, 남은 높이 − 툴바 − 요약 줄 − 카드 몫) 중 작은 쪽. */
 @media (max-width: 1024px) and (orientation: portrait) {
   .boardscreen {
     grid-template-columns: minmax(0, 1fr);
@@ -548,19 +547,16 @@ a:focus-visible {
     grid-template-areas:
       "board"
       "nav"
-      "bar"
+      "summary"
       "side";
-    gap: var(--space-s);
+    gap: 0;
   }
   .boardscreen__board {
     width: 100%;
     height: min(
       100cqw - var(--evalbar-space),
-      100cqh - var(--transport-h) - var(--quickbar-h) - var(--side-peek)
+      100cqh - var(--transport-h) - var(--summary-h) - var(--side-peek)
     );
-  }
-  .boardscreen > .transport {
-    border-top: 0;
   }
 }
 /* 휴대폰 세로 — 판을 화면 끝까지. 바깥 여백을 걷고(옆 칸만 제 여백을 둔다), 평가 바는 숫자 없는
@@ -579,131 +575,156 @@ a:focus-visible {
   .boardscreen .evalbar__label {
     display: none;
   }
-  .boardscreen__side,
-  .boardscreen > .stagebar {
-    padding: 0 var(--space-m);
-  }
   .boardscreen__side {
-    padding-bottom: var(--space-m);
+    padding: 0 var(--screen-padding) var(--screen-padding);
   }
 }
 
-/* ── 퀵 액션 바 ─────────────────────────────────────────────────────
-   보드 위 — 새 판 · 진영 전환. 분석·무르기·되돌리기는 이동 바(아래)의 몫이라 두지
-   않는다. 이동 바와 같은 면 위의 알약 버튼이되 이름을 적는다. 버튼이 둘뿐이라 휴대폰
-   폭에서도 한 줄에 들어간다 — 줄을 넘기면 판이 그만큼 작아지므로 한 줄을 지킨다. */
-.quickbar {
+/* ── 수 이동 툴바(MoveToolbar) ─────────────────────────────────────
+   앱 M5 · 보정: 알약 배경 없는 버튼 묶음. 가운데 ▶ 84×56(강한 강조), 양옆 ‹ › 56×56(연한 강조), 끝의
+   면 없는 아이콘 44. 모서리는 높이의 42 %, 누르는 동안 24 % 로 각졌다가 스프링으로 돌아온다(▶ 는 엔진이
+   읽는 동안 둥글다). 좁은 칸에서는 묶음 전체가 비율대로(0.7 배까지) 줄어든다 — 묶음의 기준 폭은
+   44×4 + 56×2 + 84 + 6×6 = 408. 가로 끌기는 훑기라 세로 스크롤만 브라우저에 맡긴다. */
+.toolbar {
   display: flex;
   flex: none;
-  gap: var(--space-s);
-  align-items: center;
-  /* safe — 넘칠 때 가운데 정렬이 왼쪽 끝을 스크롤로도 닿지 않게 자르지 않도록. */
-  justify-content: safe center;
-  height: var(--quickbar-h);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.quickbar__btn {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-  gap: var(--space-s);
-  align-items: center;
-  height: 36px;
-  padding: 0 var(--space-l) 0 var(--space-m);
-  font: var(--type-label-large);
-  color: var(--c-on-surface);
-  white-space: nowrap;
-  background: var(--c-surface-container);
-  border: 1px solid var(--c-outline-variant);
-  border-radius: var(--radius-xl);
-  transition:
-    background var(--motion-quick) ease-out,
-    color var(--motion-quick) ease-out;
-}
-.quickbar__btn .icon {
-  width: 20px;
-  height: 20px;
-}
-.quickbar__btn:hover:not(:disabled) {
-  background: var(--c-surface-container-highest);
-}
-.quickbar__btn:disabled {
-  color: var(--c-outline);
-  background: transparent;
-  cursor: default;
-}
-.quickbar__sep {
-  flex: none;
-  width: 1px;
-  height: 20px;
-  background: var(--c-outline-variant);
-}
-.quickbar__side {
-  flex: none;
-  padding: 0 var(--space-s);
-  font: var(--type-label-medium);
-  color: var(--c-on-surface-variant);
-  white-space: nowrap;
-}
-
-/* ── 이동 바 ────────────────────────────────────────────────────────
-   앱의 재생 바: 가운데 큰 원이 엔진, 양옆이 기보 이동. 아이콘만 두고 글자는
-   aria-label·title 이 진다 — 판 밑이 좁을수록 글자가 먼저 잘린다. */
-.transport {
-  display: flex;
-  flex: none;
-  gap: var(--space-l);
   align-items: center;
   justify-content: center;
   height: var(--transport-h);
+  container-type: inline-size;
+  touch-action: pan-y;
+  user-select: none;
 }
-.transport__btn {
+/* 비율 단위는 키가 잰다 — 툴바가 컨테이너라 키의 100cqw 가 툴바 폭이다(툴바 자신은 자기를 못 잰다).
+   간격도 키의 바깥 여백(3 + 3)으로. */
+.toolbar__key,
+.toolbar__gap {
+  --u: clamp(0.7px, (100cqw - 16px) / 408, 1px);
+  margin: 0 calc(3 * var(--u));
+}
+.toolbar__key {
+  --h: calc(56 * var(--u));
   display: grid;
+  flex: none;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  color: var(--c-on-surface-variant);
-  border-radius: 50%;
+  width: var(--h);
+  height: var(--h);
+  color: var(--c-on-secondary-container);
+  background: var(--c-secondary-container);
+  border-radius: calc(var(--h) * 0.42);
   transition:
+    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
     background var(--motion-quick) ease-out,
     color var(--motion-quick) ease-out;
 }
-.transport__btn:hover:not(:disabled) {
-  color: var(--c-on-surface);
+.toolbar__key .icon {
+  width: calc(var(--h) * 0.46);
+  height: calc(var(--h) * 0.46);
+}
+.toolbar__key:active:not(:disabled) {
+  border-radius: calc(var(--h) * 0.24);
+  transition-duration: 90ms;
+}
+.toolbar__key--strong {
+  width: calc(84 * var(--u));
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+}
+.toolbar__key--strong .icon {
+  width: calc(var(--h) * 0.5);
+  height: calc(var(--h) * 0.5);
+}
+.toolbar__key--strong[data-round] {
+  border-radius: calc(var(--h) / 2);
+}
+.toolbar__key--bare,
+.toolbar__gap {
+  --h: calc(44 * var(--u));
+  width: var(--h);
+  height: var(--h);
+}
+.toolbar__key--bare {
+  color: var(--c-on-surface-variant);
+  background: transparent;
+  border-radius: 50%;
+}
+.toolbar__key--bare:hover:not(:disabled) {
   background: var(--c-surface-container-high);
 }
-.transport__btn:disabled {
-  color: var(--c-outline-variant);
+.toolbar__gap {
+  flex: none;
+}
+.toolbar__key:disabled {
+  color: color-mix(in srgb, var(--c-on-surface) 38%, transparent);
+  background: color-mix(in srgb, var(--c-on-surface) 8%, transparent);
   cursor: default;
 }
-.transport__btn--play {
-  width: 48px;
-  height: 48px;
+.toolbar__key--bare:disabled {
+  background: transparent;
+}
+
+/* ── 요약 줄(SummaryLine) ─────────────────────────────────────────────
+   앱 SummaryStrip: 분석이면 최선수 하나를 크게(32 Bold, 가운데), 대국이면 차례 · 결과를 크게 + 알약 하나. */
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: var(--summary-h);
+  padding: 0 var(--screen-padding);
+  text-align: center;
+}
+.summary__best {
+  overflow: hidden;
+  font: 700 32px/38px var(--font-sans);
+  letter-spacing: -0.6px;
   color: var(--c-on-surface);
-  background: var(--c-surface-container-highest);
+  white-space: nowrap;
 }
-.transport__btn--play .icon {
-  width: 28px;
-  height: 28px;
+.summary__hint {
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+  font: var(--type-body-medium);
+  color: var(--c-on-surface-variant);
 }
-.transport__btn--play:hover:not(:disabled) {
-  background: var(--c-surface-container-highest);
-  filter: brightness(1.12);
+.summary__game {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  min-width: 0;
 }
-/* 도는 중은 색 + 아이콘(일시정지) 두 갈래로 말한다. */
-.transport__btn--play[data-running] {
-  color: var(--c-on-secondary-container);
-  background: var(--c-secondary-container);
+.summary__state {
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+  font: 700 22px/28px var(--font-sans);
+  letter-spacing: -0.2px;
 }
-.transport__btn--play:disabled {
-  color: var(--c-outline);
-  background: var(--c-surface-container);
+.summary__pill {
+  padding: 2px var(--space-m);
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+  background: var(--c-surface-container-high);
+  border-radius: var(--radius-xl);
 }
-@media (max-width: 640px) {
-  .transport {
-    gap: var(--space-s);
-  }
+.summary__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--c-outline);
+  border-radius: 50%;
+}
+.summary__dot[data-status="ready"] {
+  background: var(--c-positive);
+}
+.summary__dot[data-status="searching"],
+.summary__dot[data-status="starting"] {
+  background: var(--c-caution);
+}
+.summary__dot[data-status="error"] {
+  background: var(--c-error);
 }
 
 /* ── 옆 칸 카드 ─────────────────────────────────────────────────────
@@ -827,11 +848,12 @@ a:focus-visible {
 }
 
 /* ── 엔진 수치 ──────────────────────────────────────────────────────
-   최선수 한 줄(크게) 밑에 승률 · 평가 · 깊이 세 칸. 칸에 면을 깔지 않는다 — 흰 카드 위의 회색
-   타일 일곱 장이 «계기판»으로 읽혔다. 시간 · 노드 · 속도는 «세부 수치»를 켰을 때만. */
+   앱(2026-11-01)처럼 승률 · 평가 · 깊이 세 타일이 카드의 머리다(최선수는 판 아래 요약 줄). 타일은 카드 위의
+   한 단 위 면(surface-container-high) — 연결된 값 셋이라 면이 묶음을 말한다. 시간 · 노드 · 속도는 «세부 수치»를
+   켰을 때만, 같은 모양의 작은 타일로. */
 .kv.stats {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-l) var(--space-m);
+  gap: var(--space-m);
   margin-top: var(--space-l);
 }
 .kv.stats[hidden] {
@@ -842,6 +864,9 @@ a:focus-visible {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  padding: var(--space-m) var(--space-l);
+  background: var(--c-surface-container-high);
+  border-radius: var(--radius-m);
 }
 .stat--minor {
   display: none;
@@ -855,26 +880,14 @@ a:focus-visible {
 }
 .stats .stat__value {
   overflow: hidden;
-  font: var(--type-title-medium);
+  font: 700 22px/28px var(--font-sans);
+  letter-spacing: -0.2px;
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 최선수는 한 줄을 다 쓰고 맨 위에 온다 — 이 카드에서 가장 먼저 읽힐 값이다. 문서 순서는
-   맨 끝 그대로다(스모크가 마지막 dd 를 최선수로 읽는다). */
-.stat--wide {
-  grid-column: 1 / -1;
-  order: -1;
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: var(--space-l);
-  border-bottom: 1px solid var(--c-outline-variant);
-}
-.stats .stat--wide .stat__value {
-  font: var(--type-headline-small);
-  letter-spacing: var(--track-headline-small);
-  color: var(--c-on-surface);
+.stats .stat--minor .stat__value {
+  font: var(--type-title-medium);
 }
 .stats__toggle {
   margin-top: var(--space-m);
@@ -1562,10 +1575,8 @@ a:focus-visible {
 .stats__stale {
   margin-top: var(--space-s);
 }
-.kv.stats[data-stale] dd,
-.pvlist[data-stale] {
-  color: var(--c-on-surface-variant);
-}
+/* 직전 국면의 값도 흐리게 하지 않는다 — 앱 P3 실기 피드백(«멈추면 글자가 너무 흐림»). 어느 국면의 것인지는
+   위의 한 줄(stats__stale)이 말로 한다. */
 .pvlist__row {
   display: flex;
   gap: var(--space-m);
@@ -1937,22 +1948,10 @@ a:focus-visible {
 }
 
 /* ── 보드 탭 · 엔진 표시 · 형세 그래프 ────────────────────────────────
-   탭은 퀵 액션 바와 **한 줄**에 서서 오른쪽 칸 맨 위에 붙는다(판 위에는 아무것도 없다). 휴대폰
-   세로에서는 이동 바 밑이고, 그때는 줄이 하나 늘면 그만큼 판이 작아진다(`--quickbar-h`). */
-.stagebar {
+   [분석] | [대국] 은 상단 바의 제목 자리에 선다(앱 P3 ③ — 고른 레일 항목이 이미 «보드»라 말한다). */
+.topbar[data-board] .topbar__text {
   display: flex;
-  flex: none;
-  gap: var(--space-m);
   align-items: center;
-  justify-content: space-between;
-  min-width: 0;
-  min-height: var(--quickbar-h);
-}
-.stagebar .quickbar {
-  /* 줄어들 수 있어야 안에서 스크롤한다 — `flex: none` 이면 본문을 옆으로 밀어낸다(W10 360px 영어). */
-  flex: 0 1 auto;
-  justify-content: safe flex-end;
-  min-width: 0;
 }
 .modetabs {
   display: inline-flex;
@@ -1981,25 +1980,8 @@ a:focus-visible {
   background: var(--c-secondary-container);
 }
 @media (max-width: 480px) {
-  .stagebar {
-    gap: var(--space-m);
-  }
   .modetabs__tab {
     padding: 0 var(--space-l);
-  }
-  /* 휴대폰 폭에서는 진영 전환 옆의 「컴퓨터 백」 글자를 접는다 — 탭과 한 줄을 지킨다. */
-  .stagebar .quickbar__sep,
-  .stagebar .quickbar__side {
-    display: none;
-  }
-}
-/* 영어 라벨은 한국어보다 길다 — 아주 좁은 폭에서는 아이콘만(이름은 단추의 aria-label 이 진다). */
-@media (max-width: 420px) {
-  :root:lang(en) .stagebar .quickbar__label {
-    display: none;
-  }
-  :root:lang(en) .stagebar .quickbar__btn {
-    padding: 0 var(--space-m);
   }
 }
 

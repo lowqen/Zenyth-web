@@ -118,17 +118,18 @@ const PRESS_MOVE_NOW = `(() => {
 })()`;
 
 /**
- * 화면의 BEST 를 읽고 **같은 순간에** 「정지」를 누른다 — 페이지 안에서 한 번에.
+ * 화면의 BEST 를 읽고 **같은 순간에** 툴바의 ⏸(엔진 멈춤)를 누른다 — 페이지 안에서 한 번에.
  *
  * 읽기와 누르기를 Playwright 왕복 둘로 나누면 그 사이(수십 ms)에 새 스냅샷이 와서 BEST 가 바뀐다. 앱은 누른
  * 순간의 BEST 를 두므로(맞는 동작) 시험만 틀린다 — 16코어 멀티 러너의 실제 사이트 검증에서 H9 를 읽고 J9 가
  * 놓인 적이 있다(deploy 37334478792).
  */
 const STOP_AND_READ_BEST = `(() => {
-  const dds = [...document.querySelectorAll(".kv.stats dd")];
-  const best = dds.length ? dds[dds.length - 1].textContent.trim() : "";
-  const stop = [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "정지");
-  if (!stop) throw new Error("「정지」 버튼이 없습니다");
+  // 최선수는 판 아래 요약 줄(data-k="summary-best"), 정지는 툴바의 ⏸ — 카드의 「정지」는 Z4 에서 걷었다.
+  const bestEl = document.querySelector('[data-k="summary-best"]');
+  const best = bestEl ? bestEl.textContent.trim() : "";
+  const stop = document.querySelector('button[aria-label="엔진 멈춤"]');
+  if (!stop) throw new Error("툴바의 「엔진 멈춤」 버튼이 없습니다");
   stop.click();
   return best;
 })()`;
@@ -161,7 +162,7 @@ type Screen = "board" | "settings";
 type Tab = "대국" | "분석";
 
 /** 분석 탭에 사는 버튼들. 여기 없는 이름은 대국 탭에서 누른다. */
-const ON_ANALYSIS = new Set(["분석", "정지"]);
+const ON_ANALYSIS = new Set(["엔진 분석", "엔진 멈춤"]);
 
 /** 보드의 탭을 고른다(이미 그 탭이면 아무것도 하지 않는다). */
 async function tab(name: Tab) {
@@ -332,7 +333,7 @@ async function analysisHealthy(label: string) {
 async function runAnalysis(ms: number): Promise<string> {
   await tab("분석");
   const before = await stoneCount();
-  await click("분석");
+  await click("엔진 분석");
   await waitSel('.panel__badge[data-status="searching"]', "분석 시작(배지 searching)", 20_000);
   await page.waitForTimeout(ms);
   const still = await page.locator(".panel__badge").first().getAttribute("data-status");
@@ -583,7 +584,7 @@ try {
   // 않는다) 판은 그대로다. 예전에는 분석 도중의 착수가 명령이 섞이기 가장 쉬운 자리였는데,
   // 이제 대국 탭으로 가는 순간 분석이 멈추므로 그 뒤의 착수가 깨끗한지를 본다.
   await tab("분석");
-  await click("분석");
+  await click("엔진 분석");
   await waitSel('.panel__badge[data-status="searching"]', "분석 시작(배지 searching)", 20_000);
   await page.waitForTimeout(1_500);
   await tab("대국");

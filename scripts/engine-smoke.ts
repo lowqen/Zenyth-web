@@ -37,17 +37,18 @@ const fail = (m: string) => {
 };
 
 /**
- * 화면의 BEST 를 읽고 **같은 순간에** 「정지」를 누른다 — 페이지 안에서 한 번에.
+ * 화면의 BEST 를 읽고 **같은 순간에** 툴바의 ⏸(엔진 멈춤)를 누른다 — 페이지 안에서 한 번에.
  *
  * 읽기와 누르기를 Playwright 왕복 둘로 나누면 그 사이(수십 ms)에 새 스냅샷이 와서 BEST 가 바뀐다. 앱은 누른
  * 순간의 BEST 를 두므로(맞는 동작) 시험만 틀린다 — 16코어 멀티 러너의 실제 사이트 검증에서 H9 를 읽고 J9 가
  * 놓인 적이 있다(deploy 37334478792).
  */
 const STOP_AND_READ_BEST = `(() => {
-  const dds = [...document.querySelectorAll(".kv.stats dd")];
-  const best = dds.length ? dds[dds.length - 1].textContent.trim() : "";
-  const stop = [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "정지");
-  if (!stop) throw new Error("「정지」 버튼이 없습니다");
+  // 최선수는 판 아래 요약 줄(data-k="summary-best"), 정지는 툴바의 ⏸ — 카드의 「정지」는 Z4 에서 걷었다.
+  const bestEl = document.querySelector('[data-k="summary-best"]');
+  const best = bestEl ? bestEl.textContent.trim() : "";
+  const stop = document.querySelector('button[aria-label="엔진 멈춤"]');
+  if (!stop) throw new Error("툴바의 「엔진 멈춤」 버튼이 없습니다");
   stop.click();
   return best;
 })()`;
@@ -195,14 +196,13 @@ try {
   // 그대로 비어 멈춘 듯 보였다. 이제 최선수 H8 과 즉답 안내가 떠야 한다.
   {
     const panel = page.locator(".panel").filter({ has: page.locator(".panel__badge") });
-    await page.getByRole("button", { name: "분석", exact: true }).click();
+    await page.getByRole("button", { name: "엔진 분석", exact: true }).click();
     await page.locator('.panel__badge[data-status="searching"]').waitFor({ timeout: 10_000 });
-    const best = panel.locator(".kv dd").last();
+    const best = page.locator('[data-k="summary-best"]');
     await page
       .waitForFunction(
         () => {
-          const dds = [...document.querySelectorAll(".kv.stats dd")];
-          return dds.length > 0 && dds[dds.length - 1]!.textContent?.trim() === "H8";
+          return document.querySelector('[data-k="summary-best"]')?.textContent?.trim() === "H8";
         },
         undefined,
         { timeout: 10_000 },
@@ -215,7 +215,7 @@ try {
     }
     console.log(`빈 판 분석: 최선수 ${emptyBest} · 즉답 안내`);
     // 2. **정지하면 최선수를 둔다** — 빈 판이면 천원(H8).
-    await page.getByRole("button", { name: "정지" }).click();
+    await page.getByRole("button", { name: "엔진 멈춤" }).click();
     await page.locator('.panel__badge[data-status="ready"]').waitFor({ timeout: 5000 });
     await page.waitForTimeout(150);
     const placed = (await page.locator("dd[data-k=last]").innerText()).trim();
@@ -240,7 +240,7 @@ try {
   })()`);
 
   const tAnalyze = Date.now();
-  await page.getByRole("button", { name: "분석", exact: true }).click();
+  await page.getByRole("button", { name: "엔진 분석", exact: true }).click();
   await page.locator('.panel__badge[data-status="searching"]').waitFor({ timeout: 10_000 });
 
   // 승률이나 최선수 중 하나라도 채워지면 스트림이 도착한 것이다.
@@ -264,9 +264,8 @@ try {
   if (fps < 30) fail(`탐색 중 메인 스레드가 막힙니다: ${fps.toFixed(1)}fps`);
 
   // 4. 분석 결과가 화면에 있는가
-  // 분석 패널은 상태 점(.panel__badge)을 가진 패널이다.
-  const analysisPanel = page.locator(".panel").filter({ has: page.locator(".panel__badge") });
-  const bestCell = (await analysisPanel.locator(".kv dd").last().innerText()).trim();
+  // 최선수는 판 아래 요약 줄이 크게 말한다(Z4 — 앱처럼 카드에서 빠졌다).
+  const bestCell = (await page.locator('[data-k="summary-best"]').innerText()).trim();
   if (bestCell === "없음") fail("최선수가 비어 있습니다 — INFO 스트림이 오지 않았습니다");
   else console.log(`최선수 ${bestCell}`);
 
@@ -345,12 +344,13 @@ try {
   // 정지해도 **엔진 카드는 직전 분석을 고정해 보인다** — 깊이 · 평가 · BEST · PV 가 사라지지 않고
   // «직전 국면(1수)»으로 밝혀진다(`data-stale`). 판 위의 값 칩 · 최선수 링은 새 국면(2수)에 남지 않는다.
   const frozen = (await page.evaluate(`(() => {
-    const dds = [...document.querySelectorAll(".kv.stats dd")];
+    const dd = (k) => (document.querySelector('.stat[data-k="' + k + '"] dd')?.textContent ?? "").trim();
+    const bestNow = (document.querySelector('[data-k="summary-best"]')?.textContent ?? "없음").trim();
     return {
       stale: !!document.querySelector(".kv.stats[data-stale]"),
       label: document.querySelector('[data-k="analysis-stale"]')?.textContent ?? "",
-      best: dds[dds.length - 1].textContent.trim(),
-      depth: dds[0].textContent.trim(),
+      best: bestNow,
+      depth: dd("depth"),
       pv: document.querySelectorAll(".pvlist__row").length,
       tags: window.__rapfiBoard().tags.length,
     };
@@ -378,16 +378,16 @@ try {
   // 5b. **무르기 정리.** 2수 국면을 분석해 값이 차오른 뒤 분석 중에 한 수 무른다. 그 순간
   // 2수 국면의 BEST · PV · 평가 바 · 값 칩이 1수 판에 남으면 안 된다 — 새 국면의 첫 답이
   // 오기 전의 틈을 보려고, 누르는 것과 읽는 것을 한 번에(같은 마이크로태스크 안) 한다.
-  await page.getByRole("button", { name: "분석", exact: true }).click();
+  await page.getByRole("button", { name: "엔진 분석", exact: true }).click();
   await page
     .waitForFunction(
       () => {
-        const dds = [...document.querySelectorAll(".kv.stats dd")];
+        const best = document.querySelector('[data-k="summary-best"]')?.textContent?.trim();
         return (
           !document.querySelector(".kv.stats[data-stale]") &&
           document.querySelectorAll(".pvlist__row").length > 0 &&
-          dds.length > 0 &&
-          dds[dds.length - 1]!.textContent?.trim() !== "없음"
+          best !== undefined &&
+          best !== "없음"
         );
       },
       undefined,
@@ -400,9 +400,10 @@ try {
   const undone = (await page.evaluate(`(async () => {
     document.querySelector('[aria-label="한 수 뒤로"]').click();
     await Promise.resolve();
-    const dds = [...document.querySelectorAll(".kv.stats dd")];
+    const dd = (k) => (document.querySelector('.stat[data-k="' + k + '"] dd')?.textContent ?? "").trim();
+    const bestNow = (document.querySelector('[data-k="summary-best"]')?.textContent ?? "없음").trim();
     return {
-      best: dds[dds.length - 1].textContent.trim(),
+      best: bestNow,
       stale: !!document.querySelector(".kv.stats[data-stale]"),
       bar: document.querySelector(".evalbar").getAttribute("aria-valuetext"),
       stones: document.querySelector("canvas[role=img]").getAttribute("aria-label"),
@@ -426,10 +427,9 @@ try {
   await page
     .waitForFunction(
       () => {
-        const dds = [...document.querySelectorAll(".kv.stats dd")];
+        const best = document.querySelector('[data-k="summary-best"]')?.textContent?.trim();
         return (
-          !document.querySelector(".kv.stats[data-stale]") &&
-          dds[dds.length - 1]?.textContent?.trim() !== "없음"
+          !document.querySelector(".kv.stats[data-stale]") && best !== undefined && best !== "없음"
         );
       },
       undefined,
@@ -465,7 +465,7 @@ try {
     await page.waitForURL(`**${path}`);
     await page.locator(ready).first().waitFor();
   };
-  await page.getByRole("button", { name: "분석", exact: true }).click();
+  await page.getByRole("button", { name: "엔진 분석", exact: true }).click();
   await page.locator('.panel__badge[data-status="searching"]').waitFor({ timeout: 10_000 });
   const tSwap = Date.now();
   await goto("설정", "/settings", ".settings .sgroup");

@@ -277,7 +277,7 @@ export function BoardCanvas({
     } else if (e.key === "Enter" || e.key === " ") {
       onTap?.(cur);
     } else return;
-    // 보드 위의 방향키는 커서의 것이다 — 기보 넘기기(MoveTransport)는 `defaultPrevented` 를 보고 비켜선다.
+    // 보드 위의 방향키는 커서의 것이다 — 기보 넘기기(MoveToolbar)는 `defaultPrevented` 를 보고 비켜선다.
     e.preventDefault();
   };
   const stoneAt = (m: Move) => render.stones.findIndex((s) => sameMove(s, m));
