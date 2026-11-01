@@ -96,9 +96,13 @@ async function shootVariant(browser: Browser, v: Variant) {
     });
     // 저장된 선택은 첫 프레임 전에 읽힌다(theme-init.js) — 그보다 먼저 심는다.
     if (v.amoled) await context.addInitScript(() => localStorage.setItem("rapfi.amoled", "1"));
-    // 데이터 없이 오프닝 · 랭킹을 처음 열 때 한 번 뜨는 시트(Z7)는 본 것으로 — 화면 자체를 찍는다.
-    await context.addInitScript(() => localStorage.setItem("rapfi.dataPrompt.sheet", "1"));
-    // 첫 방문 환영 · 새로워진 점(Z8)도 — `welcome` 장면(`?firstvisit`)만 그것을 찍는다.
+    // 처음 열 때 한 번 뜨는 것들 — 데이터 시트(Z7) · 환영 · 새로워진 점(Z8) — 은 본 것으로 두고 화면 자체를
+    // 찍는다. `welcome` 장면(`?firstvisit`)만 처음 온 사람이다: 그때는 **아무 값도** 심지 않는다 — `rapfi.*` 가
+    // 하나라도 있으면 앱은 전에 온 사람으로 본다(firstVisit.ts).
+    await context.addInitScript(() => {
+      if (!location.search.includes("firstvisit"))
+        localStorage.setItem("rapfi.dataPrompt.sheet", "1");
+    });
     await context.addInitScript(SEEN_INTRO);
     const page = await context.newPage();
     const errors: string[] = [];
