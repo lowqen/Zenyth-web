@@ -99,6 +99,19 @@ async function shootVariant(browser: Browser, v: Variant) {
     await page.waitForURL(`**${scene.path}`, { timeout: 5_000 }).catch(() => undefined);
     await page.evaluate(async () => {
       await document.fonts.ready;
+      // 세그먼트의 선택 알약이 자리를 잡을 때까지(useSlidingPill — 한 프레임 뒤 data-pill="ready").
+      // 잡기 전에는 칸이 자기 배경으로, 잡은 뒤에는 ::before 가 같은 모양을 그리는데 둥근 모서리의
+      // 계단 픽셀이 조금 달라 장면이 흔들렸다(Z3 board-wide-amoled, 채널 최대 6).
+      for (let i = 0; i < 60; i++) {
+        const pending = document.querySelectorAll('.pilltrack:not([data-pill="ready"])');
+        const unplaced = Array.from(pending).some((el) =>
+          el.querySelector(
+            ':scope > [aria-selected="true"], :scope > [aria-checked="true"], :scope > [aria-current="page"]',
+          ),
+        );
+        if (!unplaced) break;
+        await new Promise((r) => requestAnimationFrame(r));
+      }
       // 두 프레임 — 글꼴이 들어온 뒤의 배치가 칠해질 때까지.
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     });
