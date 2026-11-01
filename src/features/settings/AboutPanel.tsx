@@ -70,6 +70,12 @@ const COMPONENTS: readonly Component[] = [
     role: msg("본문 글꼴"),
     license: "OFL-1.1",
   },
+  {
+    name: "Material Icons © Google",
+    href: "https://github.com/google/material-design-icons",
+    role: msg("아이콘 경로"),
+    license: "Apache-2.0",
+  },
 ];
 
 function Ext({ href, children }: { href: string; children: ReactNode }) {

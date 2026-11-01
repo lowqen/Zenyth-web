@@ -308,7 +308,7 @@ export const useDbStore = create<DbState>((set, get) => {
       return null;
     },
 
-    save: async (why = t("저장")) => {
+    save: async (why = t("저장됨")) => {
       if (get().status !== "on") return t("DB 가 붙어 있지 않습니다");
       if (get().settings.readonly) return t("읽기 전용 DB 는 저장하지 않습니다");
       const claim = claimForWrite();

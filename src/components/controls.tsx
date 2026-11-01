@@ -3,6 +3,7 @@ import { Icon } from "./icons";
 import { ICON } from "./icon-paths";
 import { durationText, parseDuration, type DurationSpec } from "../core/settings/duration";
 import { t } from "../i18n/i18n";
+import { useSlidingPill } from "./useSlidingPill";
 
 /**
  * 입력 부품 — 앱의 `FilterChip`·`Switch`·스테퍼를 옮긴 것. 설정 · 보드 옆 칸 · 연구가 함께 쓴다.
@@ -76,8 +77,15 @@ export function Segmented<T extends string | number>({
   onChange: (v: T) => void;
   disabled?: boolean;
 }) {
+  const track = useSlidingPill<HTMLDivElement>(value);
   return (
-    <div className="seg" role="radiogroup" aria-label={label} aria-disabled={disabled || undefined}>
+    <div
+      ref={track}
+      className="seg pilltrack"
+      role="radiogroup"
+      aria-label={label}
+      aria-disabled={disabled || undefined}
+    >
       {options.map((o) => (
         <button
           key={String(o.value)}

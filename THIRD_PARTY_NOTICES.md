@@ -19,6 +19,7 @@ shown inside the app under **Settings ▸ About**.
 | Zustand | npm | [pmndrs/zustand](https://github.com/pmndrs/zustand) | MIT |
 | Dexie.js | npm | [dexie/Dexie.js](https://github.com/dexie/Dexie.js) | Apache-2.0 |
 | **Pretendard** (variable, dynamic-subset WOFF2; the CSS carries the copyright header) | npm, bundled under `assets/` | [orioncactus/pretendard](https://github.com/orioncactus/pretendard) | SIL OFL 1.1, © 2021 Kil Hyung-jin, with Reserved Font Name Pretendard |
+| **Material Icons** (24px SVG path data: navigation icons in filled/outlined pairs, toolbar and theme glyphs) | `src/app/destinations.ts`, `src/components/icon-paths.ts` | [google/material-design-icons](https://github.com/google/material-design-icons), via `@material-design-icons/svg` 0.14.15 | Apache-2.0, © Google |
 
 Build and test tooling (Vite, TypeScript, Vitest, ESLint, Prettier, Playwright, Emscripten) is
 not shipped in the bundle.

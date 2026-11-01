@@ -18,10 +18,15 @@ export function Menu({
   label,
   ariaLabel,
   items,
+  buttonClassName = "menu__button",
+  chevron = true,
 }: {
   label: ReactNode;
   ariaLabel?: string;
   items: readonly MenuItem[];
+  /** 단추의 모양 — 국면 카드의 파일 키(`filekey`)처럼 메뉴를 품은 다른 단추로 쓸 때. */
+  buttonClassName?: string;
+  chevron?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -62,7 +67,7 @@ export function Menu({
       <button
         ref={button}
         type="button"
-        className="menu__button"
+        className={buttonClassName}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
@@ -70,9 +75,11 @@ export function Menu({
         onClick={() => setOpen(!open)}
       >
         {label}
-        <svg className="menu__chev" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7.4 8.6 6 10l6 6 6-6-1.4-1.4-4.6 4.6z" />
-        </svg>
+        {chevron && (
+          <svg className="menu__chev" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7.4 8.6 6 10l6 6 6-6-1.4-1.4-4.6 4.6z" />
+          </svg>
+        )}
       </button>
       {open && (
         <div id={menuId} className="menu__list quiet-switch" role="menu">

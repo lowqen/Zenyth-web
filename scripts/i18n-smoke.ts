@@ -26,7 +26,7 @@ const fail = (m: string) => {
   failures++;
 };
 
-/** 훑을 화면 — 경로와, 들어가서 더 펼칠 것(고급 설정 · 정석 편집기). */
+/** 훑을 화면 — 경로와, 들어가서 더 펼칠 것(고급 사용자 모드 · 정석 편집기). */
 const ROUTES: readonly { path: string; prepare?: (p: Page) => Promise<void> }[] = [
   { path: "/board" },
   {
@@ -90,7 +90,7 @@ const ROUTES: readonly { path: string; prepare?: (p: Page) => Promise<void> }[] 
   { path: "/settings" },
 ];
 
-/** 고급 설정을 켜 둔 채로 열어 숨은 줄까지 훑는다. */
+/** 고급 사용자 모드를 켜 둔 채로 열어 숨은 줄까지 훑는다. */
 const SEED = `(() => {
   try {
     localStorage.setItem("rapfi.settings", JSON.stringify({ showAdvanced: true, autoBoot: false }));

@@ -9,10 +9,15 @@ import { create } from "zustand";
  * (불러오기는 설정 ▸ 데스크톱 설정 파일 — `features/settings/desktopBridge.ts` 가 `setFromDesktopSettings` 를 부른다.)
  *
  * Material You(동적 색)는 앱이 의도적으로 거부했으므로 웹에도 없다.
+ *
+ * **검은 배경(AMOLED)** 은 다크 위에 덧씌우는 따로 된 켜짐/꺼짐이다(앱 P1 ②). 라이트에서는 아무것도
+ * 바꾸지 않으므로 테마 3상태와 섞지 않는다 — `data-amoled` 하나를 붙이고, 어떤 토큰을 바꿀지는
+ * tokens.css(생성물)의 덧씌움 블록이 정한다. 첫 프레임 전에는 `public/theme-init.js` 가 같은 열쇠를 읽는다.
  */
 export type ThemeMode = "system" | "light" | "dark";
 
 const KEY = "rapfi.theme";
+const AMOLED_KEY = "rapfi.amoled";
 
 function load(): ThemeMode {
   try {
@@ -36,9 +41,32 @@ function apply(mode: ThemeMode) {
   }
 }
 
+function loadAmoled(): boolean {
+  try {
+    return localStorage.getItem(AMOLED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function applyAmoled(on: boolean) {
+  const el = document.documentElement;
+  if (on) el.dataset.amoled = "";
+  else delete el.dataset.amoled;
+  try {
+    if (on) localStorage.setItem(AMOLED_KEY, "1");
+    else localStorage.removeItem(AMOLED_KEY);
+  } catch {
+    /* 저장이 안 돼도 이번 세션은 정상 동작한다 */
+  }
+}
+
 interface ThemeState {
   mode: ThemeMode;
   set: (mode: ThemeMode) => void;
+  /** 검은 배경 — 다크일 때만 보인다(라이트에서는 켜 두어도 바뀌는 것이 없다). */
+  amoled: boolean;
+  setAmoled: (on: boolean) => void;
   /** settings.txt 27행 → 명시 고정. 데스크톱 설정 파일 가져오기(W5b)가 부른다. */
   setFromDesktopSettings: (darkFromLine27: boolean) => void;
 }
@@ -48,6 +76,11 @@ export const useThemeStore = create<ThemeState>((set) => ({
   set: (mode) => {
     apply(mode);
     set({ mode });
+  },
+  amoled: loadAmoled(),
+  setAmoled: (on) => {
+    applyAmoled(on);
+    set({ amoled: on });
   },
   setFromDesktopSettings: (dark) => {
     const mode: ThemeMode = dark ? "dark" : "light";

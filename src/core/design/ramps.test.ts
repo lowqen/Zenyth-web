@@ -1,7 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { ALL_RAMPS } from "./ramps";
-import { rampIsMonotone, contrastRatio, toHex, mixColors } from "./oklch";
-import { LightScheme, DarkScheme, CONTRAST_PAIRS, type TokenValue } from "./scheme";
+import { rampIsMonotone, contrastRatio, toHex, mixColors, srgbToLinear } from "./oklch";
+import {
+  LightScheme,
+  DarkScheme,
+  AmoledScheme,
+  AMOLED_KEYS,
+  WoodLight,
+  WoodDark,
+  CONTRAST_PAIRS,
+  type TokenValue,
+} from "./scheme";
 import type { Rgb } from "./oklch";
 import golden from "./tokens.golden.json";
 
@@ -71,11 +80,25 @@ const rgb = (s: Record<string, TokenValue>, k: string): Rgb => {
   return v;
 };
 
+const SCHEMES = [
+  { name: "light", s: LightScheme },
+  { name: "dark", s: DarkScheme },
+  { name: "amoled", s: AmoledScheme },
+  // 보드 화면의 나무색 팔레트 — 앱 WoodTheme. 검은 배경에서는 면을 검정으로 되돌린다(tokens.css 와 같은 순서).
+  { name: "wood light", s: { ...LightScheme, ...WoodLight } },
+  { name: "wood dark", s: { ...DarkScheme, ...WoodDark } },
+  {
+    name: "wood amoled",
+    s: {
+      ...AmoledScheme,
+      ...WoodDark,
+      ...Object.fromEntries(AMOLED_KEYS.map((k) => [k, AmoledScheme[k]!])),
+    },
+  },
+] as const;
+
 describe("대비", () => {
-  for (const scheme of [
-    { name: "light", s: LightScheme },
-    { name: "dark", s: DarkScheme },
-  ]) {
+  for (const scheme of SCHEMES) {
     for (const [fg, bg] of CONTRAST_PAIRS) {
       it(`${scheme.name}: ${fg} / ${bg} 는 4.5:1 이상`, () => {
         const ratio = contrastRatio(rgb(scheme.s, fg), rgb(scheme.s, bg));
@@ -102,5 +125,46 @@ describe("선형광 혼합", () => {
     // 감마를 무시하고 섞으면 여기서 #808080 이 나온다. 그게 «정직하지 않은» 혼합이다.
     const mid = toHex(mixColors({ r: 0, g: 0, b: 0 }, { r: 1, g: 1, b: 1 }, 0.5));
     expect(mid).toBe("#BCBCBC"); // 선형 0.5 → sRGB 0.7354 → 187.5 → 반올림 188
+  });
+});
+
+/** sRGB → OKLab(Ottosson). 앱 `Oklch.kt` 의 `oklchOf` 와 같은 행렬. */
+function oklab(c: Rgb): [number, number, number] {
+  const r = srgbToLinear(c.r);
+  const g = srgbToLinear(c.g);
+  const b = srgbToLinear(c.b);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [
+    0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+  ];
+}
+
+describe("면과 강조 — 앱 ThemeContrastTest 의 성질 (Z1)", () => {
+  for (const { name, s } of SCHEMES) {
+    it(`${name}: 카드 면이 페이지와 1.06:1 이상 갈린다(테두리가 없으니 이것이 경계)`, () => {
+      expect(
+        contrastRatio(rgb(s, "surface-container"), rgb(s, "background")),
+      ).toBeGreaterThanOrEqual(1.06);
+    });
+
+    it(`${name}: 강조색(primary)이 의미색에서 OKLab 0.08 이상 떨어진다(색은 값이다)`, () => {
+      const p = oklab(rgb(s, "primary"));
+      for (const meaning of ["result-black", "result-white", "error", "positive", "caution"]) {
+        const q = oklab(rgb(s, meaning));
+        const d = Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+        expect(d, `primary ↔ ${meaning}`).toBeGreaterThanOrEqual(0.08);
+      }
+    });
+  }
+
+  it("검은 배경은 페이지만 검정이고, 면만 바꾼다(강조 · 의미 · 판은 다크 그대로)", () => {
+    expect(toHex(rgb(AmoledScheme, "background"))).toBe("#000000");
+    expect(
+      AMOLED_KEYS.every((k) => k === "background" || k === "surface" || k.startsWith("surface-")),
+    ).toBe(true);
   });
 });

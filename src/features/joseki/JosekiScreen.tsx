@@ -6,6 +6,8 @@ import { CurriculumHome } from "./curriculum/CurriculumHome";
 import { JosekiEditor } from "./JosekiEditor";
 import { JosekiList } from "./JosekiList";
 import { useJosekiStore } from "./josekiStore";
+import { PageTitle } from "../../app/PageTitle";
+import { useSlidingPill } from "../../components/useSlidingPill";
 
 /**
  * 정석 — 두 탭.
@@ -48,6 +50,7 @@ export function JosekiScreen() {
     void loadOpeningTables();
   }, [loaded]);
 
+  const track = useSlidingPill<HTMLDivElement>(tab);
   const setTab = (next: Tab) => {
     setTabState(next);
     // 내 정석으로 가면 레슨 링크는 주소에서 걷는다 — 새로고침이 다시 레슨으로 끌고 가지 않게.
@@ -61,7 +64,14 @@ export function JosekiScreen() {
 
   return (
     <div className="josekiscreen">
-      <div className="modetabs josekiscreen__tabs" role="tablist" aria-label={t("정석 보기")}>
+      {/* 목록에서만 — 코스 · 레슨 · 편집기는 판이 있어 한 줄 머리를 쓴다(앱 M2). 코스 · 레슨은 base.css 가 감춘다. */}
+      {!(tab === "mine" && open) && <PageTitle>{t("정석")}</PageTitle>}
+      <div
+        ref={track}
+        className="modetabs pilltrack josekiscreen__tabs"
+        role="tablist"
+        aria-label={t("정석 보기")}
+      >
         {(["official", "mine"] as const).map((x) => (
           <button
             key={x}

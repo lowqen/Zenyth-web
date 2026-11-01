@@ -79,7 +79,6 @@ export const EN: Readonly<Record<string, string>> = {
   "진영 전환: {from} → {to}": "Switch sides: {from} → {to}",
   "진영 전환은 컴퓨터가 한쪽을 맡은 대국에서만 됩니다(대국 탭 ▸ 흑 / 백)":
     "Switching sides works only when the computer plays one color (Play tab ▸ Black / White)",
-  "퀵 액션": "Quick actions",
   "새 판": "New game",
   "새 판: 판과 물음을 비우고 새로 시작합니다(개시와 컴퓨터 색은 그대로)":
     "New game: clear the board and questions and start over (opening and computer color stay)",
@@ -139,8 +138,6 @@ export const EN: Readonly<Record<string, string>> = {
   "최선수 자리에 둘 수 없습니다": "Cannot play on the best move point",
 
   // ── 보드 — 분석 카드 · 평가 바 · 형세 그래프 · 물음 · 링크 보관 · 기보 파일 ──
-  "정지하고 최선수를 둡니다": "Stop and play the best move",
-  정지: "Stop",
   종료: "Shut down",
   "후보 {n}수": "{n} {n|candidate|candidates}",
   "빈 판의 천원이나 막아야만 하는 수처럼 정해진 자리라 깊이와 평가가 없습니다":
@@ -159,7 +156,8 @@ export const EN: Readonly<Record<string, string>> = {
   "흑 {b}% · 백 {w}%": "Black {b}% · White {w}%",
   "{n}수": "{n} {n|move|moves}",
   "{n}수째": "move {n}",
-  "형세 그래프": "Evaluation graph",
+  형세: "Evaluation",
+  "백 {w}%": "White {w}%",
   "형세 그래프. 수를 고르면 그 국면으로 갑니다":
     "Evaluation graph. Pick a move to go to that position",
   흑: "Black",
@@ -206,7 +204,17 @@ export const EN: Readonly<Record<string, string>> = {
   "기록 {n}": "{n} {n|record|records}",
   주석: "Comment",
   기보: "Game",
-  "기보 열기": "Open game",
+  열기: "Open",
+  저장: "Save",
+  공유: "Share",
+  이미지: "Image",
+  "국면 문자열": "Position string",
+  "수순을 좌표로 이은 한 줄(h8i9j10)을 복사합니다":
+    "Copies the moves as one line of coordinates (h8i9j10)",
+  "판 이미지를 저장했습니다": "Saved the board image",
+  "이미지를 만들지 못했습니다": "Could not make the image",
+  "국면 문자열을 복사했습니다": "Copied the position string",
+  "국면 문자열입니다. 복사해 쓰세요": "The position string. Copy it from here",
   "Piskvork 기보(.psq)로 저장": "Save as a Piskvork game (.psq)",
   ".psq 저장": "Save .psq",
   "Yixin 저장 국면(.sav)으로 저장": "Save as a Yixin position (.sav)",
@@ -689,7 +697,6 @@ export const EN: Readonly<Record<string, string>> = {
   "붙이기 실패: {msg}": "Attach failed: {msg}",
   "떼기 전": "Before detaching",
   뗌: "Detached",
-  저장: "Saved",
   "읽기 전용 DB 는 저장하지 않습니다": "A read only DB is not saved",
   "엔진이 DB 파일을 돌려주지 않았습니다": "The engine did not return the DB file",
   "(이 브라우저는 저장소가 없어 이번 세션만)": "(this browser has no storage, this session only)",
@@ -808,6 +815,8 @@ export const EN: Readonly<Record<string, string>> = {
   "번호 매기기": "Move numbers",
   "금수 표시": "Show forbidden moves",
   "다크 모드": "Dark mode",
+  "검은 배경": "Black background",
+  "어두운 테마에서 바탕을 검정으로": "Pure black page in the dark theme",
   언어: "Language",
   가져오기: "Import",
   "settings.txt · settings_dev.txt 를 내려받았습니다": "Downloaded settings.txt · settings_dev.txt",
@@ -837,7 +846,7 @@ export const EN: Readonly<Record<string, string>> = {
   "대국은 그대로입니다": "The game is kept",
   "설정 검색": "Search settings",
   "「{q}」에 맞는 설정이 없습니다.": "No settings match “{q}”.",
-  "고급 설정": "Advanced settings",
+  "고급 사용자 모드": "Advanced mode",
   "해시 · 스타일 · 깊이 · 노드 · 표시": "Hash · style · depth · nodes · display",
   "{n}개 숨김": "{n} hidden",
   "멀티스레드 · relaxed SIMD": "Multi thread · relaxed SIMD",
@@ -1104,8 +1113,9 @@ export const EN: Readonly<Record<string, string>> = {
   "이 레슨의 링크입니다. 복사해 쓰세요": "This is the link to the lesson. Copy it.",
   "링크를 복사했습니다": "Link copied",
   // ── UI 개편(calm-design) — 한 줄 안내 · 펼침 머리 · 엔진 수치 ──
-  "「분석」을 누르면 엔진이 이 국면의 최선수를 찾습니다":
-    "Press “Analyze” and the engine looks for the best move here",
+  "▶ 를 누르면 엔진이 최선수를 찾습니다": "Press ▶ and the engine looks for the best move",
+  "카드 펼치기": "Show cards",
+  "카드 접기": "Hide cards",
   노드: "Nodes",
   속도: "Speed",
   최선수: "Best move",
@@ -1127,6 +1137,9 @@ export const EN: Readonly<Record<string, string>> = {
   "엔진이 수마다 좋은 수와 실수를 가려 정확도를 매깁니다.":
     "The engine grades every move and scores each side's accuracy.",
   "깊이 {n}": "Depth {n}",
+  "승률 {n}%": "Win {n}%",
+  "진행 중인 분석": "Analysis in progress",
+  "읽는 중": "Reading",
   "첫 5수 건너뜀": "First 5 moves skipped",
   "리뷰한 대국이 여기에 쌓입니다.": "Reviewed games appear here.",
   "세계 렌주 대국 약 12만 판으로 오프닝 통계와 랭킹을 봅니다. 파일은 한 번만 넣으면 됩니다.":
@@ -1135,6 +1148,7 @@ export const EN: Readonly<Record<string, string>> = {
   "파일과 통계는 {here} 남습니다.": "The file and statistics stay {here}.",
   "보드로 가기": "Go to the board",
   "본문 글꼴": "Body typeface",
+  "아이콘 경로": "Icon paths",
   // ── 정석 커리큘럼 — 체스닷컴 구조(목록 · 코스 · 레슨) ──
   "정해진 차례대로 오프닝 정석을 배웁니다": "Learn opening joseki in a set order",
   시작: "Start",

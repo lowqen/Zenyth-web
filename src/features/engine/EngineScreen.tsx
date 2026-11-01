@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useEngineStore } from "../../engine/engine-state";
 import { useSettingsStore } from "../settings/settingsStore";
 import { localized, msg, t } from "../../i18n/i18n";
+import { useProMode } from "../../app/proMode";
 
 /**
  * 엔진 화면 — 엔진 상태와 piskvork 콘솔.
@@ -38,6 +39,7 @@ export function EngineScreen() {
   const terminate = useEngineStore((s) => s.terminate);
   const send = useEngineStore((s) => s.send);
   const lines = useEngineStore((s) => s.console);
+  const pro = useProMode();
   const clearConsole = useEngineStore((s) => s.clearConsole);
   const engine = useEngineStore((s) => s.engine);
   const applied = useEngineStore((s) => s.appliedThreads);
@@ -109,23 +111,26 @@ export function EngineScreen() {
         </div>
       </section>
 
-      <section className="panel enginescreen__console">
-        <h2 className="panel__title">
-          {t("콘솔")}
-          <span className="panel__status tnum">
-            {t("{n}줄", { n: lines.length.toLocaleString() })}
-          </span>
-          <button
-            type="button"
-            className="panel__link"
-            onClick={clearConsole}
-            disabled={lines.length === 0}
-          >
-            {t("지우기")}
-          </button>
-        </h2>
-        <ConsoleView lines={lines} />
-      </section>
+      {/* 콘솔은 고급 사용자 모드에서만(앱: 엔진 화면은 연결만 — 도구 · 콘솔 · 명령줄은 고급 모드). */}
+      {pro && (
+        <section className="panel enginescreen__console">
+          <h2 className="panel__title">
+            {t("콘솔")}
+            <span className="panel__status tnum">
+              {t("{n}줄", { n: lines.length.toLocaleString() })}
+            </span>
+            <button
+              type="button"
+              className="panel__link"
+              onClick={clearConsole}
+              disabled={lines.length === 0}
+            >
+              {t("지우기")}
+            </button>
+          </h2>
+          <ConsoleView lines={lines} />
+        </section>
+      )}
     </div>
   );
 }

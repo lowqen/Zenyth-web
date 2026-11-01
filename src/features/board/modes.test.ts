@@ -2,7 +2,15 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { isUnlimitedTurn, levelInfo, useGameStore } from "./gameStore";
 import { useBoardStore } from "./boardStore";
 import { useEvalHistory } from "./currentAnalysis";
-import { buildSeries, evalAtOrBefore, showMarkers } from "./evalSeries";
+import {
+  buildSeries,
+  evalAtOrBefore,
+  showMarkers,
+  splitRuns,
+  monotonePath,
+  swings,
+  tickStep,
+} from "./evalSeries";
 import { getGameHandlers, useEngineStore } from "../../engine/engine-state";
 import { isSameOrAncestorKey, move, positionKey, type Move } from "../../core/model/move";
 import { EMPTY_SNAPSHOT, type EngineCommand, type Placement } from "../../engine/engine-types";
@@ -342,5 +350,41 @@ describe("형세 그래프 · 무르기 정리", () => {
     expect(stones()).toHaveLength(3);
     g().gotoPly(0);
     expect(stones()).toHaveLength(0);
+  });
+});
+
+describe("형세 그래프의 셈(앱 R3)", () => {
+  const P = (ply: number, pct: number) => ({ ply, pct });
+
+  it("두 수 넘게 떨어진 점 사이는 빈 구간 — 한 수 걸러 선 대국 점은 이어 긋는다", () => {
+    const { runs, gaps } = splitRuns([P(1, 50), P(3, 55), P(5, 60), P(12, 40), P(13, 45)]);
+    expect(runs.map((r) => r.map((p) => p.ply))).toEqual([
+      [1, 3, 5],
+      [12, 13],
+    ]);
+    expect(gaps.map(([a, b]) => [a.ply, b.ply])).toEqual([[5, 12]]);
+  });
+
+  it("단조 곡선은 이웃한 두 값 밖으로 나가지 않는다", () => {
+    const pts = [
+      { x: 0, y: 10 },
+      { x: 10, y: 90 },
+      { x: 20, y: 90 },
+      { x: 30, y: 10 },
+    ];
+    const d = monotonePath(pts);
+    const ys = [...d.matchAll(/,(-?[\d.]+)/g)].map((m) => Number(m[1]));
+    for (const y of ys) {
+      expect(y).toBeGreaterThanOrEqual(10 - 1e-6);
+      expect(y).toBeLessThanOrEqual(90 + 1e-6);
+    }
+  });
+
+  it("15%p 넘게 움직인 수만 큰 변화", () => {
+    expect(swings([P(1, 50), P(2, 60), P(3, 80), P(4, 70)]).map((p) => p.ply)).toEqual([3]);
+  });
+
+  it("눈금 간격은 수가 늘면 넓어진다", () => {
+    expect([tickStep(20), tickStep(60), tickStep(150)]).toEqual([5, 10, 20]);
   });
 });

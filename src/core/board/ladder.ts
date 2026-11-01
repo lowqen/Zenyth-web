@@ -4,6 +4,7 @@ import {
   linearToSrgb,
   toHex,
   contrastRatio,
+  oklch,
   type Rgb,
 } from "../design/oklch";
 
@@ -175,29 +176,55 @@ export function colorsForTag(p: TagPalette, kind: TagKind, winRatePct?: number):
 export interface TagText {
   ink: string;
   outline: string;
+  /** 확정 승 · 패(W · L)는 굵게 — 사실이 숫자보다 약해 보이면 안 된다(앱 0.16 고친 점). */
+  bold: boolean;
 }
 
 export const TAG_OUTLINE = "#140F0A";
 
-const hslHex = (h: number, s: number, l: number): string => {
-  const k = (n: number) => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
-  const c = (v: number) =>
-    Math.round(v * 255)
-      .toString(16)
-      .padStart(2, "0");
-  return `#${c(f(0))}${c(f(8))}${c(f(4))}`.toUpperCase();
-};
+/**
+ * 판 위 값 글자의 잉크 — 앱 `textInkAt` 그대로(2026-10-29 «판 위 값 색이 쨍함»).
+ *
+ * 예전 식은 `hsl(색상, 95 %, 62 %)` 였다. HSL 최대 채도는 sRGB 가 낼 수 있는 가장 큰 소리이고, 그 노랑 · 연두는
+ * 파랑 · 빨강보다 훨씬 밝아 사다리 가운데가 형광처럼 튀었다. 이제 색 순서(파랑 → 청록 → 초록 → 노랑 → 주황 →
+ * 빨강, 데스크톱 그대로)는 두고, 각 색을 같은 이름의 색으로 **Oklch 채도 0.14** 에 놓되 밝기를 색에 따라
+ * 준다(빨강 0.66 · 노랑 0.84 · 파랑 0.70 — 인쇄 팔레트가 그러듯). 모든 색의 무게가 비슷해 판을 이기지 않는다.
+ * `dim` 은 데스크톱의 색 값 설정(settings.txt 43행).
+ */
+const INK_ANCHORS: readonly (readonly [number, number, number])[] = [
+  // [HSL 색상, 같은 이름 색의 Oklch 색상, 밝기]
+  [0, 29, 0.66], //    빨강 — 이김
+  [30, 52, 0.74], //   주황
+  [60, 98, 0.84], //   노랑
+  [120, 142, 0.8], //  초록 — 막상막하
+  [180, 200, 0.8], //  청록
+  [240, 262, 0.7], //  파랑 — 짐
+];
+const INK_CHROMA = 0.14;
+
+export function textInkAt(hue: number, dim = 1): Rgb {
+  const h = clamp(hue, 0, 240);
+  let i = 0;
+  for (let k = 0; k < INK_ANCHORS.length; k++) if (INK_ANCHORS[k]![0] <= h) i = k;
+  i = Math.min(i, INK_ANCHORS.length - 2);
+  const a = INK_ANCHORS[i]!;
+  const b = INK_ANCHORS[i + 1]!;
+  const t = (h - a[0]) / (b[0] - a[0]);
+  return oklch((a[2] + (b[2] - a[2]) * t) * dim, INK_CHROMA, a[1] + (b[1] - a[1]) * t);
+}
 
 /** 사다리 위치(0 = 짐 … 1 = 이김) → 색상(240° 파랑 … 0° 빨강). */
 export const textHue = (position: number): number => (1 - clamp(position, 0, 1)) * 240;
 
 export function textForTag(p: TagPalette, kind: TagKind, winRatePct?: number): TagText {
-  const light = 0.62 * clamp(p.value / 100, 0.6, 1);
+  const dim = clamp(p.value / 100, 0.6, 1);
   const hue =
     kind === "win" ? 0 : kind === "lose" ? 220 : textHue(ratePosition(p, winRatePct ?? 50));
-  return { ink: hslHex(hue, 0.95, light), outline: TAG_OUTLINE };
+  return {
+    ink: toHex(textInkAt(hue, dim)),
+    outline: TAG_OUTLINE,
+    bold: kind === "win" || kind === "lose",
+  };
 }
 
 /** 흰 글씨가 이 칩 위에서 4.5:1 을 넘는가. 시험이 사다리 전 구간에서 확인한다. */

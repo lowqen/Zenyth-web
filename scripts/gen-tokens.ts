@@ -23,6 +23,10 @@ import { toHex, type Rgb } from "../src/core/design/oklch.ts";
 import {
   LightScheme,
   DarkScheme,
+  AmoledScheme,
+  AMOLED_KEYS,
+  WoodLight,
+  WoodDark,
   type Scheme,
   type TokenValue,
 } from "../src/core/design/scheme.ts";
@@ -34,6 +38,7 @@ import {
   RADIUS,
   MOTION,
   LAYOUT,
+  RHYTHM,
 } from "../src/core/design/tokens.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -49,10 +54,9 @@ function value(v: TokenValue): string {
   return toHex(v as Rgb);
 }
 
-function colorBlock(s: Scheme, indent: string): string {
-  return Object.entries(s)
-    .map(([k, v]) => `${indent}--c-${k}: ${value(v)};`)
-    .join("\n");
+/** 스킴 하나를 CSS 변수로. `keys` 를 주면 그 토큰만(AMOLED 덧씌움 블록). */
+function colorBlock(s: Scheme, indent: string, keys: readonly string[] = Object.keys(s)): string {
+  return keys.map((k) => `${indent}--c-${k}: ${value(s[k]!)};`).join("\n");
 }
 
 function typeBlock(): string {
@@ -65,6 +69,9 @@ function typeBlock(): string {
   for (const [k, v] of Object.entries(SPACE)) lines.push(`  --space-${k}: ${v}px;`);
   for (const [k, v] of Object.entries(RADIUS)) lines.push(`  --radius-${k}: ${v}px;`);
   for (const [k, v] of Object.entries(MOTION)) lines.push(`  --motion-${k}: ${v}ms;`);
+  // camelCase → kebab-case: screenPadding → --screen-padding
+  for (const [k, v] of Object.entries(RHYTHM))
+    lines.push(`  --${k.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase())}: ${v}px;`);
   lines.push(`  --reading-width: ${LAYOUT.readingWidth}px;`);
   lines.push(`  --wide-min: ${LAYOUT.wideMin}px;`);
   return lines.join("\n");
@@ -104,6 +111,41 @@ ${colorBlock(DarkScheme, "  ")}
   color-scheme: light;
 
 ${colorBlock(LightScheme, "  ")}
+}
+
+/* 검은 배경(AMOLED) — 다크일 때만 덧씌운다(scheme.ts AmoledScheme, 앱 Theme.kt amoled()).
+ * data-amoled 는 theme-init.js 가 첫 프레임 전에 붙인다. 라이트에서는 아무것도 바꾸지 않는다. */
+@media (prefers-color-scheme: dark) {
+  :root[data-amoled]:not([data-theme="light"]) {
+${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
+  }
+}
+
+:root[data-theme="dark"][data-amoled] {
+${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
+}
+
+/* 보드 화면의 나무색 팔레트(scheme.ts woodScheme, 앱 WoodTheme) — data-wood 를 단 칸(셸이 보드에서 붙인다)
+ * 안에서만. 판 스킨 · 값 색은 바꾸지 않는다. 검은 배경에서는 면은 검정 그대로, 강조만 나무. */
+[data-wood] {
+${colorBlock(WoodLight, "  ")}
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) [data-wood] {
+${colorBlock(WoodDark, "    ")}
+  }
+  :root[data-amoled]:not([data-theme="light"]) [data-wood] {
+${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
+  }
+}
+
+:root[data-theme="dark"] [data-wood] {
+${colorBlock(WoodDark, "  ")}
+}
+
+:root[data-theme="dark"][data-amoled] [data-wood] {
+${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
 }
 `;
 

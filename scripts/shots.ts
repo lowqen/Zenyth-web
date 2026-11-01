@@ -43,13 +43,30 @@ const SCENES: ReadonlyArray<{ name: string; path: string }> = [
   { name: "settings", path: "/settings" },
 ];
 
-/** 넓은 폭(레일 · 2단)과 좁은 폭(하단 탭, 640 미만) × 라이트/다크. */
-const VARIANTS = [
+interface Variant {
+  theme: "light" | "dark";
+  width: "wide" | "narrow";
+  viewport: { width: number; height: number };
+  /** 검은 배경(AMOLED, 설정 «검은 배경») — 다크 위의 덧씌움. 이름 끝이 `-amoled`. */
+  amoled?: boolean;
+  /** 이 장면들만 찍는다(덧씌움 변형은 모든 화면을 다시 찍을 만큼 다르지 않다). */
+  scenes?: readonly string[];
+}
+
+/** 넓은 폭(레일 · 2단)과 좁은 폭(하단 탭, 640 미만) × 라이트/다크, 그리고 검은 배경 두 장. */
+const VARIANTS: readonly Variant[] = [
   { theme: "light", width: "wide", viewport: { width: 1280, height: 800 } },
   { theme: "dark", width: "wide", viewport: { width: 1280, height: 800 } },
   { theme: "light", width: "narrow", viewport: { width: 390, height: 844 } },
   { theme: "dark", width: "narrow", viewport: { width: 390, height: 844 } },
-] as const;
+  {
+    theme: "dark",
+    width: "wide",
+    viewport: { width: 1280, height: 800 },
+    amoled: true,
+    scenes: ["board", "settings"],
+  },
+];
 
 const only = (process.env.SHOTS_ONLY ?? "")
   .split(",")
@@ -57,12 +74,12 @@ const only = (process.env.SHOTS_ONLY ?? "")
   .filter(Boolean);
 const scenes = only.length ? SCENES.filter((s) => only.includes(s.name)) : SCENES;
 
-const shotName = (scene: string, v: (typeof VARIANTS)[number]) =>
-  `${scene}-${v.width}-${v.theme}.png`;
+const shotName = (scene: string, v: Variant) =>
+  `${scene}-${v.width}-${v.amoled ? "amoled" : v.theme}.png`;
 
-async function shootVariant(browser: Browser, v: (typeof VARIANTS)[number]) {
+async function shootVariant(browser: Browser, v: Variant) {
   const out: Array<{ name: string; png: Buffer; errors: string[] }> = [];
-  for (const scene of scenes) {
+  for (const scene of scenes.filter((s) => !v.scenes || v.scenes.includes(s.name))) {
     const context = await browser.newContext({
       viewport: v.viewport,
       deviceScaleFactor: 1,
@@ -71,6 +88,8 @@ async function shootVariant(browser: Browser, v: (typeof VARIANTS)[number]) {
       colorScheme: v.theme,
       reducedMotion: "reduce",
     });
+    // 저장된 선택은 첫 프레임 전에 읽힌다(theme-init.js) — 그보다 먼저 심는다.
+    if (v.amoled) await context.addInitScript(() => localStorage.setItem("rapfi.amoled", "1"));
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
@@ -80,6 +99,19 @@ async function shootVariant(browser: Browser, v: (typeof VARIANTS)[number]) {
     await page.waitForURL(`**${scene.path}`, { timeout: 5_000 }).catch(() => undefined);
     await page.evaluate(async () => {
       await document.fonts.ready;
+      // 세그먼트의 선택 알약이 자리를 잡을 때까지(useSlidingPill — 한 프레임 뒤 data-pill="ready").
+      // 잡기 전에는 칸이 자기 배경으로, 잡은 뒤에는 ::before 가 같은 모양을 그리는데 둥근 모서리의
+      // 계단 픽셀이 조금 달라 장면이 흔들렸다(Z3 board-wide-amoled, 채널 최대 6).
+      for (let i = 0; i < 60; i++) {
+        const pending = document.querySelectorAll('.pilltrack:not([data-pill="ready"])');
+        const unplaced = Array.from(pending).some((el) =>
+          el.querySelector(
+            ':scope > [aria-selected="true"], :scope > [aria-checked="true"], :scope > [aria-current="page"]',
+          ),
+        );
+        if (!unplaced) break;
+        await new Promise((r) => requestAnimationFrame(r));
+      }
       // 두 프레임 — 글꼴이 들어온 뒤의 배치가 칠해질 때까지.
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     });

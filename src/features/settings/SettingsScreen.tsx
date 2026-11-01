@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useGameStore, type BoardMode } from "../board/gameStore";
 import { useBoardStore } from "../board/boardStore";
 import { useThemeStore, type ThemeMode } from "../../app/theme";
+import { PageTitle } from "../../app/PageTitle";
 import {
   HASH_CHOICES_MB,
   MAX_DEPTH_LIMIT,
@@ -244,6 +245,12 @@ function ThemeControl() {
   );
 }
 
+function AmoledControl() {
+  const on = useThemeStore((s) => s.amoled);
+  const set = useThemeStore((s) => s.setAmoled);
+  return <Switch label={t("검은 배경")} on={on} onChange={set} />;
+}
+
 /** 언어(W10) — 항목 이름은 그 언어 자신의 이름으로(읽지 못하는 화면에서도 찾게). */
 const LANGS: readonly { value: Lang; label: string; lang: string }[] = [
   { value: "ko", label: "한국어", lang: "ko" },
@@ -385,6 +392,14 @@ const ROWS: readonly RowSpec[] = [
     keywords: "테마 dark theme light",
     wide: true,
     Control: ThemeControl,
+  },
+  {
+    id: "amoled",
+    sec: "basic",
+    label: msg("검은 배경"),
+    note: msg("어두운 테마에서 바탕을 검정으로"),
+    keywords: "amoled oled 블랙 검정 black 다크 dark",
+    Control: AmoledControl,
   },
   {
     id: "lang",
@@ -576,6 +591,7 @@ export function SettingsScreen() {
 
   return (
     <div className="settings">
+      <PageTitle>{t("설정")}</PageTitle>
       <div className="settings__head">
         <div className="search">
           <svg className="icon search__icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -608,7 +624,7 @@ export function SettingsScreen() {
             <section className="panel sadvanced" aria-labelledby="sg-advanced">
               <div className="sadvanced__text">
                 <h2 id="sg-advanced" className="sgroup__title">
-                  {t("고급 설정")}
+                  {t("고급 사용자 모드")}
                 </h2>
                 <p className="sgroup__desc">
                   {advanced
@@ -617,7 +633,7 @@ export function SettingsScreen() {
                 </p>
               </div>
               <Switch
-                label={t("고급 설정")}
+                label={t("고급 사용자 모드")}
                 on={advanced}
                 onChange={(v) => update({ showAdvanced: v })}
               />

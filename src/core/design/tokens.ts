@@ -32,11 +32,11 @@ export interface TypeSlot {
 }
 
 /**
- * **열다섯 슬롯 전부.** 셋만 손대고 열두 개를 Material 기본값에 두면 두 개의
+ * **열다섯 슬롯 전부** — 앱 `Type.kt` 와 같은 값. 셋만 손대고 열두 개를 Material 기본값에 두면 두 개의
  * 스케일이 동시에 도는 것이다 — 카드 제목과 그 아래 라벨이 다른 체계에서 온다.
  *
- * 읽기용 앱이 아니라 조밀한 분석 도구에 맞춰 조였고, 크기가 아니라 **굵기**가
- * 위계를 진다. 그래야 화면이 보드와 숫자에 더 남는다.
+ * 크기가 아니라 **굵기**가 위계를 진다. 2026-10-29 앱이 제목 · 본문을 한 단씩 키웠고(«너무 작고 빽빽하다»),
+ * 웹도 같이 간다(docs/앱-디자인-정렬-계획.md Z2). 라벨은 그대로다 — 칩 · 탭 · 수치 아래 글처럼 조밀한 자리다.
  */
 export const TYPE: Record<string, TypeSlot> = {
   "display-large": { weight: 400, size: 44, line: 52, tracking: -0.5 },
@@ -44,20 +44,28 @@ export const TYPE: Record<string, TypeSlot> = {
   "display-small": { weight: 400, size: 28, line: 36, tracking: -0.3 },
 
   "headline-large": { weight: 600, size: 28, line: 36, tracking: -0.4 },
-  "headline-medium": { weight: 600, size: 24, line: 32, tracking: -0.3 },
+  // 페이지 제목(앱 M2): 목록 화면의 큰 머리가 접히기 전에 보이는 것. 아주 굵게.
+  "headline-medium": { weight: 800, size: 34, line: 42, tracking: -0.6 },
   "headline-small": { weight: 600, size: 21, line: 28, tracking: -0.2 },
 
-  "title-large": { weight: 600, size: 20, line: 26, tracking: -0.2 },
-  "title-medium": { weight: 600, size: 16, line: 22, tracking: -0.1 },
-  "title-small": { weight: 500, size: 14, line: 20 },
+  "title-large": { weight: 600, size: 22, line: 28, tracking: -0.2 },
+  "title-medium": { weight: 600, size: 17, line: 24, tracking: -0.1 },
+  "title-small": { weight: 500, size: 15, line: 22 },
 
-  "body-large": { weight: 400, size: 15, line: 22 },
-  "body-medium": { weight: 400, size: 14, line: 20 },
-  "body-small": { weight: 400, size: 13, line: 18 },
+  "body-large": { weight: 400, size: 16, line: 24 },
+  "body-medium": { weight: 400, size: 15, line: 22 },
+  "body-small": { weight: 400, size: 14, line: 20 },
 
   "label-large": { weight: 500, size: 14, line: 20 },
   "label-medium": { weight: 500, size: 12, line: 16 },
   "label-small": { weight: 500, size: 11, line: 16 },
+
+  // ── 슬롯 밖, 앱이 따로 둔 셋 ──
+  // 그룹 행의 제목과 그 아래 줄(앱 `RowTitleStyle` · `RowNoteStyle`): 행은 크기가, 페이지 제목은 굵기가 진다.
+  "row-title": { weight: 400, size: 18, line: 26, tracking: -0.2 },
+  "row-note": { weight: 400, size: 15, line: 21 },
+  // 그룹 위의 섹션 머리(앱 `ConnectedGroup` 제목): 강조색 15 SemiBold — 색은 CSS 가 준다.
+  "section-title": { weight: 600, size: 15, line: 22 },
 };
 
 /** 콘솔과 좌표 줄. */
@@ -66,8 +74,11 @@ export const MONO = { size: 13, line: 18 } as const;
 /** 4dp 격자에 반 단계 하나. `Spacing.kt`. */
 export const SPACE = { xs: 2, s: 4, m: 8, l: 12, xl: 16, xxl: 24 } as const;
 
-/** 하나의 모서리 스케일, 다섯 단계. `Shape.kt`. */
-export const RADIUS = { xs: 4, s: 8, m: 12, l: 16, xl: 28 } as const;
+/**
+ * 하나의 모서리 스케일, 다섯 단계 + 카드. `Shape.kt` · `Tokens.kt`.
+ * `card` 20 은 앱 UI 개편 2차 M1 의 카드 · 그룹 면(테두리를 뺀 면은 모서리가 조금 더 둥글어야 면으로 읽힌다).
+ */
+export const RADIUS = { xs: 4, s: 8, m: 12, l: 16, card: 20, xl: 28 } as const;
 
 /**
  * 네 규칙, 예외 없음(`Motion.kt`):
@@ -75,6 +86,27 @@ export const RADIUS = { xs: 4, s: 8, m: 12, l: 16, xl: 28 } as const;
  * 증명 하트비트 500ms 는 그대로 둔다.
  */
 export const MOTION = { quick: 150, panel: 180, value: 200, heartbeat: 500 } as const;
+
+/**
+ * 화면의 리듬 — 앱 `Tokens.kt` 의 `ZenythTokens.Standard`. 2026-10-29 «화면이 빽빽하다»는 요청으로 앱이 한 단
+ * 넓혔고(그때 웹은 따라가지 않았다), Z2 에서 웹도 같은 값이 됐다.
+ */
+export const RHYTHM = {
+  /** 스크롤하는 모든 화면의 카드 둘레. 좁은 폭도 같다. */
+  screenPadding: 16,
+  /** 목록의 카드 사이. */
+  listGap: 12,
+  /** 카드 안쪽, 그리고 카드 안의 것들 사이. */
+  cardPadding: 20,
+  cardSpacing: 14,
+  /** 연결 그룹의 한 행 안쪽. */
+  rowPaddingH: 20,
+  rowPaddingV: 16,
+  /** 그룹 행의 최소 높이(앱 M2). */
+  rowMinHeight: 64,
+  /** Material 의 최소 터치 크기. */
+  minTouch: 48,
+} as const;
 
 /** 앱의 `WideLayoutMin` / `ReadingWidth` 상수를 그대로 쓴다. */
 export const LAYOUT = {
