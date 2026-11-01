@@ -41,9 +41,7 @@ export const RELEASE_NOTES: ReleaseNotes = {
     },
     {
       title: msg("이름"),
-      items: [
-        msg("RapfiWeb 의 새 이름은 Zenyth Web 입니다. 설정 ▸ 정보에서 둘러보기를 열 수 있습니다"),
-      ],
+      items: [msg("RapfiWeb 의 새 이름은 Zenyth Web 입니다")],
     },
   ],
 };

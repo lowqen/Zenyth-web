@@ -153,8 +153,8 @@ FEATURES = {
 }
 
 
-# --- 쇼케이스: 좁은 폭 골든 넷을 폰 틀에 ------------------------------------------
-SCREENS = ["welcome", "board", "joseki", "settings"]
+# --- 쇼케이스: 좁은 폭 골든 넷(보드 · 오프닝 · 정석 · 설정)을 폰 틀에 ------------------------------------------
+SCREENS = ["board", "explorer", "joseki", "settings"]
 
 
 def showcase(theme):

@@ -260,62 +260,8 @@ export const EN: Readonly<Record<string, string>> = {
   "결과가 난 판이 없습니다": "No decided games",
   "파일 고르기": "Choose file",
 
-  // ── 이름 · 첫 실행(Z8) ──
-  "언어 선택": "Language",
-  "Zenyth Web 에 오신 것을 환영합니다": "Welcome to Zenyth Web",
-  "브라우저 안에서 도는 진짜 오목 · 렌주 엔진": "A real gomoku & renju engine, in your browser",
-  "엔진이 브라우저 안에서 돌아 서버 · 계정 없이 동작합니다":
-    "The engine runs in the browser, with no server or account",
-  "렌주 금수(삼삼 · 사사 · 장련)를 엔진이 직접 판정합니다":
-    "The engine itself judges renju fouls: 3-3, 4-4 and overlines",
-  "기보 · 정석 · 통계는 이 브라우저 안에만 남습니다":
-    "Games, joseki and statistics stay in this browser",
+  // ── 새로워진 점 · 정보(Z8) ──
   시작하기: "Get started",
-  "쓸 언어를 고르세요. 나중에 설정에서 바꿀 수 있습니다":
-    "Choose the language. You can change it later in Settings",
-  "두고 분석하기": "Play and analyse",
-  "보드는 [분석] · [대국] 두 탭입니다. 판이 따로라 섞이지 않고, 둘 다 자동 저장됩니다":
-    "The board has two tabs, Analysis and Play. Each keeps its own position, and both are saved as you go",
-  "승률 71% · 깊이 18": "Win 71% · depth 18",
-  "값은 글자색으로": "Values in colour",
-  "따뜻한 빨강일수록 이기는 수, 차가운 파랑일수록 지는 수입니다":
-    "Warm red is a winning move, cool blue a losing one",
-  "열기 · .psq/.sav 저장 · 링크 복사 · 이미지로 내보내기":
-    "Open, save as .psq/.sav, copy a link, export an image",
-  연구하기: "Research",
-  "판 밖에서 국면과 오프닝을 깊이 파고듭니다":
-    "Dig into positions and openings away from the board",
-  "게임 리뷰": "Game review",
-  "끝난 판을 되짚으며 평가가 뒤집힌 지점을 짚어 줍니다":
-    "Walks a finished game back and marks where the evaluation turned",
-  "오프닝 익스플로러": "Opening explorer",
-  "주형 이름 249개와 흑 5수 유불리를 판 위에 보여 줍니다":
-    "249 opening names and the 5th-move verdicts, on the board",
-  "국면 증명 · 랭킹": "Prove position · Rankings",
-  "평가가 아니라 증명을 시키고, 26주형을 견줘 봅니다":
-    "Asks for a proof, not an evaluation, and compares the 26 openings",
-  "정해진 수순을 배우고, 내 정석을 모읍니다": "Learn the set sequences and keep your own",
-  "레슨마다 살펴보고, 수순을 직접 맞히며 익힙니다":
-    "Look through each lesson, then learn it by finding the moves",
-  "갈래 · 평가 기호 · 메모를 달고, 대칭까지 찾습니다":
-    "Branches, marks and notes, found in any symmetry",
-  "레슨 링크": "Lesson links",
-  "레슨마다 주소가 있어 그대로 주고받습니다. 앱에서도 열립니다":
-    "Every lesson has an address to share. It opens in the app too",
-  "화면 위 엔진 칩이 상태를 보여 줍니다. 꺼져 있으면 눌러서 켭니다":
-    "The engine chip at the top shows its state. When it is off, tap it to start",
-  "브라우저 안의 Rapfi": "Rapfi in the browser",
-  "WebAssembly 로 돌고, 격리된 페이지에서는 여러 스레드를 씁니다":
-    "It runs as WebAssembly, on several threads when the page is isolated",
-  "엔진 DB": "Engine DB",
-  "엔진이 배운 국면을 남겨 두고 다음에 이어 씁니다. 고급 사용자 모드의 DB 탭에서 봅니다":
-    "What the engine learns is kept for next time. See it in the DB tab of advanced mode",
-  둘러보기: "Tour",
-  이전: "Previous",
-  건너뛰기: "Skip",
-  쪽: "Pages",
-  "{n}쪽": "Page {n}",
-  다음: "Next",
   "새로워진 점": "What's new",
   "Zenyth Web {v}에 오신 것을 환영합니다": "Welcome to Zenyth Web {v}",
   "전체 변경 기록": "All changes",
@@ -340,8 +286,7 @@ export const EN: Readonly<Record<string, string>> = {
     "The real-game data card now leads the openings and rankings",
   "코스 카드에 레벨 배지와 진행 막대, 레슨의 살펴보기 · 학습은 미끄러지는 탭":
     "Course cards carry a level badge and a progress bar, and lessons switch modes with a sliding tab",
-  "RapfiWeb 의 새 이름은 Zenyth Web 입니다. 설정 ▸ 정보에서 둘러보기를 열 수 있습니다":
-    "RapfiWeb is now Zenyth Web. Settings ▸ About opens a tour",
+  "RapfiWeb 의 새 이름은 Zenyth Web 입니다": "RapfiWeb is now Zenyth Web",
   "오목 · 렌주 분석 · Rapfi 엔진 사용": "Gomoku & Renju analysis · powered by Rapfi",
   "버전 {v}": "Version {v}",
   "Rapfi 엔진을 브라우저 안에서 돌리는 오목 · 렌주 분석반입니다. Zenyth 앱의 웹판이며, 2026년 10월까지의 이름은 RapfiWeb 였습니다.":

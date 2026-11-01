@@ -72,14 +72,13 @@ function watchPage(page: Page): void {
 const contexts = new WeakSet<BrowserContext>();
 
 /**
- * 첫 방문 환영 · 새로워진 점(Z8)은 본 것으로 둔다 — 스모크마다 새 컨텍스트라 모두 «처음 온 사람»이 되어
- * 환영이 화면을 덮는다. 주소에 `firstvisit` 이 있으면 그대로 둔다(첫 방문 자체를 보는 스모크 · 골든).
+ * «새로워진 점»(Z8)은 본 것으로 둔다 — 스모크가 아무것도 심지 않은 채 다른 값을 쓰고 새로고침하면 «전에 온
+ * 사람»이 되어 창이 화면을 덮는다. 주소에 `firstvisit` 이 있으면 그대로 둔다(첫 방문 자체를 보는 스모크).
  * 골든 하네스(`shots.ts`)도 같은 스크립트를 쓴다.
  */
 export const SEEN_INTRO = () => {
   if (location.search.includes("firstvisit")) return;
   try {
-    localStorage.setItem("rapfi.welcome", "1");
     localStorage.setItem("rapfi.whatsnew", "99999999");
   } catch {
     /* 저장소가 막힌 컨텍스트 — 앱도 «전에 온 사람»으로 본다 */

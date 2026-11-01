@@ -603,8 +603,9 @@ try {
       fail("고급 사용자 모드를 켰는데 엔진 탭에 콘솔 카드가 없습니다");
   }
 
-  // ── 11. 첫 방문 · 새로워진 점 · 둘러보기(Z8) ──────────────────────────
-  // 다른 단계는 하네스가 환영을 본 것으로 둔다(csp-watch SEEN_INTRO) — 주소의 `firstvisit` 이 그것을 끈다.
+  // ── 11. 첫 방문 · 새로워진 점(Z8) ─────────────────────────────────
+  // 웹에는 첫 방문 환영 · 둘러보기가 없다(2026-11-02 걷음) — 처음 온 사람은 곧바로 보드이고 엔진도 바로 뜬다.
+  // 다른 단계는 하네스가 «새로워진 점»을 본 것으로 둔다(csp-watch SEEN_INTRO) — 주소의 `firstvisit` 이 그것을 끈다.
   {
     const ctx = await browser.newContext({
       viewport: { width: 390, height: 844 },
@@ -614,25 +615,21 @@ try {
     p.on("pageerror", (e) => errors.push(String(e)));
     const at = (path: string) => `http://localhost:${PORT}${path}?firstvisit=1`;
     await p.goto(at("/board"), { waitUntil: "networkidle" });
-    const welcome = p.locator('[data-k="welcome"]');
-    if (!(await welcome.isVisible())) fail("처음 온 사람에게 환영 화면이 없습니다");
-    const status = await p
-      .locator('[data-k="engine-indicator"]')
-      .first()
-      .getAttribute("data-status");
-    if (status !== "idle") fail(`환영이 떠 있는데 엔진이 기동했습니다: ${status}`);
-    if ((await p.locator('[data-k="whatsnew"][open]').count()) !== 0)
-      fail("처음 온 사람에게 «새로워진 점»이 떴습니다");
-    await p.reload({ waitUntil: "networkidle" });
-    if (!(await welcome.isVisible())) fail("환영을 끝내기 전에 새로고침하면 다시 떠야 합니다");
-    await p.locator(".langpill").click();
-    await p.getByRole("radio", { name: "English" }).click();
-    const title = await p.locator("#welcome-title").innerText();
-    if (!title.includes("Welcome")) fail(`언어 시트로 바꿨는데 환영이 영어가 아닙니다: ${title}`);
-    await p.locator('[data-k="welcome-start"]').click();
-    await welcome.waitFor({ state: "detached" });
-    await p.reload({ waitUntil: "networkidle" });
-    if ((await welcome.count()) !== 0) fail("환영을 마친 뒤에 다시 떴습니다");
+    if ((await p.locator('[role="dialog"][aria-modal="true"], dialog[open]').count()) !== 0)
+      fail("처음 온 사람에게 화면을 덮는 창이 떴습니다");
+    if ((await p.locator(".boardscreen").count()) !== 1)
+      fail("처음 온 사람이 보드를 보지 못합니다");
+    const booted = await p
+      .waitForFunction(
+        () =>
+          document.querySelector('[data-k="engine-indicator"]')?.getAttribute("data-status") !==
+          "idle",
+        null,
+        { timeout: 30_000, polling: 200 },
+      )
+      .then(() => true)
+      .catch(() => false);
+    if (!booted) fail("처음 온 사람인데 엔진 자동 기동이 시작되지 않았습니다");
 
     // 본 «새로워진 점»이 옛 판이면 한 번 뜨고, 닫으면 다시 뜨지 않는다.
     await p.evaluate(() => localStorage.setItem("rapfi.whatsnew", "1"));
@@ -648,15 +645,10 @@ try {
     await p.reload({ waitUntil: "networkidle" });
     if ((await news.count()) !== 0) fail("«새로워진 점»을 닫았는데 다시 떴습니다");
 
-    // 둘러보기 — 설정 ▸ 정보에서 열고, 네 쪽을 넘겨 닫는다.
+    // 설정 ▸ 정보에서 언제든 다시 연다. 둘러보기 단추는 없다.
     await p.goto(at("/settings/about"), { waitUntil: "networkidle" });
-    await p.locator('[data-k="open-tour"]').click();
-    const tour = p.locator('[data-k="tour"]');
-    await tour.waitFor();
-    for (let i = 0; i < 3; i++) await tour.locator(".onboard__go").click();
-    if ((await tour.getAttribute("data-page")) !== "3") fail("둘러보기가 네 쪽이 아닙니다");
-    await tour.locator(".onboard__go").click();
-    await tour.waitFor({ state: "detached" });
+    if ((await p.locator('[data-k="open-tour"]').count()) !== 0)
+      fail("정보에 둘러보기 단추가 남아 있습니다");
     await p.locator('[data-k="open-whatsnew"]').click();
     await news.waitFor();
     await p.keyboard.press("Escape");
@@ -672,7 +664,7 @@ try {
         `             자동 기동(${wantBoot}) · 상단 바 정리 · [분석]|[대국] 탭(기본 분석) · 탭 기억\n` +
         "             보드 2레이어 · 나무 렌더 · H8 착수 · 중복 착수 무시 · 다크 나무\n" +
         "             보드 옆 칸 · 툴바 · 평가 바(판 높이) · 설정 하위 화면(엔진 · 일반 · 디자인 · PC)·검색·고급·저장·좁은 폭 · 엔진 탭\n" +
-        "             첫 방문 환영(엔진 대기 · 언어 시트) · 새로워진 점 한 번 · 둘러보기 네 쪽",
+        "             첫 방문은 곧바로 보드(창 없음 · 엔진 기동) · 새로워진 점 한 번 · 정보에서 다시",
     );
   }
 } finally {

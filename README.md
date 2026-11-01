@@ -45,7 +45,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/showcase-dark.png">
-  <img src="docs/readme/showcase-light.png" width="100%" alt="Zenyth Web on a phone: welcome, board, joseki curriculum and settings">
+  <img src="docs/readme/showcase-light.png" width="100%" alt="Zenyth Web on a phone: board, opening explorer, joseki curriculum and settings">
 </picture>
 
 <p align="center"><sub>Shown in Korean on a phone, light theme. The site speaks English and Korean, and follows the system's dark theme.</sub></p>

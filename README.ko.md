@@ -45,7 +45,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/showcase-dark.png">
-  <img src="docs/readme/showcase-light.png" width="100%" alt="휴대폰에서 본 Zenyth Web: 환영 · 보드 · 정석 커리큘럼 · 설정">
+  <img src="docs/readme/showcase-light.png" width="100%" alt="휴대폰에서 본 Zenyth Web: 보드 · 오프닝 · 정석 커리큘럼 · 설정">
 </picture>
 
 <p align="center"><sub>휴대폰 · 라이트 테마. 사이트는 한국어와 영어로 말하고, 시스템의 다크 테마를 따른다.</sub></p>
