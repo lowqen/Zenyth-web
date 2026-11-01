@@ -99,8 +99,14 @@ function compare(name: string, actual: Buffer): string | null {
   if (want.width !== got.width || want.height !== got.height)
     return `크기가 다름 ${got.width}×${got.height} ≠ ${want.width}×${want.height}`;
   const diff = new PNG({ width: want.width, height: want.height });
-  // threshold 0.1 · 계단 현상(anti-aliasing) 픽셀은 세지 않는다 — pixelmatch 기본값.
-  const n = pixelmatch(want.data, got.data, diff.data, want.width, want.height, { threshold: 0.1 });
+  // **엄격하게: 한 픽셀 · 한 단계라도 다르면 다르다.** pixelmatch 기본값(threshold 0.1 · 계단 픽셀
+  // 무시)은 판 나무를 금색 #DAB673 → 메이플 #DBB487 로 바꾼 것을 «같다»고 보았다(Z0 첫 대조, 36장
+  // 다름 0). 이 골든이 지키려는 것이 바로 그런 색의 변화다. 같은 러너 · 같은 Chromium 의 그림은
+  // 바이트까지 같으므로 허용 오차가 필요 없다.
+  const n = pixelmatch(want.data, got.data, diff.data, want.width, want.height, {
+    threshold: 0,
+    includeAA: true,
+  });
   if (n === 0) return null;
   writeFileSync(join(DIFF, name), PNG.sync.write(diff));
   return `${n}픽셀 다름`;
