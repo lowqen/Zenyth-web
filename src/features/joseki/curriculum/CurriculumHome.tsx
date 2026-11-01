@@ -214,7 +214,7 @@ function CoursePage({
       <nav className="cur__bar">
         <button
           type="button"
-          className="iconbtn"
+          className="iconbtn iconbtn--back"
           aria-label={t("커리큘럼으로 돌아가기")}
           onClick={onBack}
         >

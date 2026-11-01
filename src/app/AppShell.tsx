@@ -1,5 +1,6 @@
-import { Suspense, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Suspense, useEffect, useRef } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useProMode } from "./proMode";
 import { NavRail } from "./NavRail";
 import { BottomTabs } from "./BottomTabs";
 import { TopBar } from "./TopBar";
@@ -24,6 +25,15 @@ export function AppShell() {
   const compact = useIsCompact();
   const { title } = titleFor(pathname);
   const inResearch = pathname.startsWith("/research");
+  // 고급 사용자 모드를 끄는 순간 DB 화면에 있으면 보드로(앱과 같다 — 탭이 사라진 화면에 남지 않게).
+  // 꺼진 채 주소로 DB 를 여는 것은 막지 않는다: 링크를 따라온 사람의 뜻이다.
+  const pro = useProMode();
+  const navigate = useNavigate();
+  const wasPro = useRef(pro);
+  useEffect(() => {
+    if (wasPro.current && !pro && pathname.startsWith("/database")) navigate("/board");
+    wasPro.current = pro;
+  }, [pro, pathname, navigate]);
   // 앱이 뜨면 엔진을 뒤에서 띄운다 — 셸은 화면을 옮겨도 남으므로 한 번만 돈다.
   useAutoBoot();
   // 나머지 화면 조각은 첫 화면이 다 그려진 뒤 한가할 때 받아 둔다 — 첫 화면과 다투지 않고, 옮길 때는 기다림이 없다.

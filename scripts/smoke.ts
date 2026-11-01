@@ -71,9 +71,14 @@ try {
   await page.waitForURL("**/board", { timeout: 5_000 }).catch(() => undefined);
   if (!page.url().endsWith("/board")) fail(`루트가 /board 로 가지 않았습니다: ${page.url()}`);
 
-  // 2. 레일 여섯 항목
+  // 2. 레일 다섯 항목 — 고급 사용자 모드가 꺼져 있으면 DB 가 없다(앱과 같다, Z3). 켜면 여섯(아래 9.).
   const rail = await page.locator(".rail__link").allInnerTexts();
-  if (rail.length !== 6) fail(`레일 항목이 6개가 아닙니다: ${rail.length} (${rail.join(", ")})`);
+  if (rail.length !== 5) fail(`레일 항목이 5개가 아닙니다: ${rail.length} (${rail.join(", ")})`);
+  if (rail.some((r) => r.trim() === "DB"))
+    fail("고급 사용자 모드가 꺼졌는데 레일에 DB 가 있습니다");
+  // 고른 항목은 채운 아이콘 + 알약(앱 M6) — 활성 항목이 하나이고 aria-current 를 단다.
+  if ((await page.locator('.rail__link[aria-current="page"]').count()) !== 1)
+    fail("레일에 지금 화면(aria-current)이 하나가 아닙니다");
 
   // 3. 상단 바가 현재 위치를 말한다
   const title = (await page.locator(".topbar__title").innerText()).trim();
@@ -113,7 +118,7 @@ try {
   await page.setViewportSize({ width: 480, height: 800 });
   await page.waitForTimeout(100);
   const bottom = await page.locator(".tabs__link").count();
-  if (bottom !== 6) fail(`좁은 폭에서 하단 탭이 6개가 아닙니다: ${bottom}`);
+  if (bottom !== 5) fail(`좁은 폭에서 하단 탭이 5개가 아닙니다: ${bottom}`);
   if ((await page.locator(".rail").count()) !== 0) fail("좁은 폭인데 레일이 남아 있습니다");
 
   // ── 8. 보드 (W2) ────────────────────────────────────────────────
@@ -373,13 +378,13 @@ try {
   await page.locator(".rail__link", { hasText: "설정" }).click();
   await page.waitForURL("**/settings");
   await page.locator(".settings .sgroup").first().waitFor();
-  // 처음에는 「자주 쓰는 설정」 카드 하나와 고급 설정 스위치만 — 고급은 접혀 있다.
+  // 처음에는 「자주 쓰는 설정」 카드 하나와 고급 사용자 모드 스위치만 — 고급은 접혀 있다.
   const basicGroups = await page.locator(".sgroup").count();
   const basicRows = await page.locator(".srow").count();
   if (basicGroups !== 1) fail(`고급을 접었는데 설정 카드가 하나가 아닙니다: ${basicGroups}`);
   if (basicRows < 5 || basicRows > 9) fail(`자주 쓰는 설정이 엄선되지 않았습니다: ${basicRows}줄`);
-  const advSwitch = page.getByRole("switch", { name: "고급 설정", exact: true });
-  if ((await advSwitch.count()) !== 1) fail("고급 설정 스위치가 없습니다");
+  const advSwitch = page.getByRole("switch", { name: "고급 사용자 모드", exact: true });
+  if ((await advSwitch.count()) !== 1) fail("고급 사용자 모드 스위치가 없습니다");
   // 대국·분석 설정은 보드 탭으로 갔다 — 여기에 남으면 같은 값의 조작부가 두 벌이다.
   for (const name of ["컴퓨터 백", "RIF 오프닝", "3초"]) {
     const n = await page.getByRole("button", { name, exact: true }).count();
@@ -432,8 +437,11 @@ try {
   const moved = await page.locator('.srow[data-row="boardTabs"]').count();
   if (moved !== 1) fail("«착수 시간» 검색이 대국·분석 길잡이 줄을 찾지 못합니다");
   await page.getByRole("searchbox", { name: "설정 검색" }).fill("");
-  // 고급을 펼치면 엔진·표시·시스템 카드가 이어진다.
+  // 고급을 펼치면 엔진·표시·시스템 카드가 이어지고, 레일에 DB 가 들어온다(고급 사용자 모드).
   await advSwitch.click();
+  const railPro = await page.locator(".rail__link").allInnerTexts();
+  if (railPro.length !== 6 || !railPro.some((r) => r.trim() === "DB"))
+    fail(`고급 사용자 모드를 켰는데 레일이 DB 를 포함한 여섯이 아닙니다: ${railPro.join(", ")}`);
   const groups = await page.locator(".sgroup").count();
   const rows = await page.locator(".srow").count();
   if (groups !== 4) fail(`고급을 펼쳤는데 설정 카드가 넷이 아닙니다: ${groups}`);
@@ -537,15 +545,27 @@ try {
   if ((await page.locator(".enginescreen .panel__badge").count()) !== 1) {
     fail("엔진 탭에 상태 표시가 없습니다");
   }
-  if ((await page.locator(".enginescreen__console").count()) !== 1) {
-    fail("엔진 탭에 콘솔 카드가 없습니다");
+  // 콘솔은 고급 사용자 모드에서만(앱: 엔진 화면은 연결만, Z3). 꺼진 채로는 없고, 켜면 있다.
+  const proNow = (await page.locator(".rail__link", { hasText: "DB" }).count()) === 1;
+  const consoles = await page.locator(".enginescreen__console").count();
+  if (consoles !== (proNow ? 1 : 0))
+    fail(`엔진 탭 콘솔이 ${consoles}개입니다(고급 사용자 모드 ${proNow ? "켬" : "끔"})`);
+  if (!proNow) {
+    await page.evaluate(() => {
+      const raw = JSON.parse(localStorage.getItem("rapfi.settings") ?? "{}") as object;
+      localStorage.setItem("rapfi.settings", JSON.stringify({ ...raw, showAdvanced: true }));
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.locator(".enginescreen").waitFor();
+    if ((await page.locator(".enginescreen__console").count()) !== 1)
+      fail("고급 사용자 모드를 켰는데 엔진 탭에 콘솔 카드가 없습니다");
   }
 
   if (errors.length) fail(`콘솔 오류 ${errors.length}건:\n  ${errors.join("\n  ")}`);
 
   if (!process.exitCode) {
     console.log(
-      "스모크 통과 — 레일 6 · 연구 탭 4 · 라우팅 · 토큰(라이트/다크) · 좁은 폭 전환\n" +
+      "스모크 통과 — 레일 5(고급 6) · 연구 탭 4 · 라우팅 · 토큰(라이트/다크) · 좁은 폭 전환\n" +
         `             자동 기동(${wantBoot}) · 상단 바 정리 · [분석]|[대국] 탭(기본 분석) · 탭 기억\n` +
         "             보드 2레이어 · 나무 렌더 · H8 착수 · 중복 착수 무시 · 다크 나무\n" +
         `             보드 옆 칸 2장 · 퀵 바 · 평가 바(판 높이) · 설정 ${basicRows}+${rows - basicRows}줄(고급 스위치·검색·저장·좁은 폭) · 엔진 탭`,

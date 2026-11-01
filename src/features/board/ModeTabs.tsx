@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from "react";
 import { useGameStore, type BoardMode } from "./gameStore";
+import { useSlidingPill } from "../../components/useSlidingPill";
 import { msg, t } from "../../i18n/i18n";
 
 /** 분석이 먼저다 — 처음 여는 사람의 기본 탭이기도 하다(`gameStore` 의 `loadMode`). */
@@ -20,6 +21,7 @@ export const MODE_PANEL_ID = "board-mode-panel";
 export function ModeTabs() {
   const mode = useGameStore((s) => s.mode);
   const setMode = useGameStore((s) => s.setMode);
+  const track = useSlidingPill<HTMLDivElement>(mode);
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
@@ -33,7 +35,13 @@ export function ModeTabs() {
   };
 
   return (
-    <div className="modetabs" role="tablist" aria-label={t("보드 모드")} onKeyDown={onKey}>
+    <div
+      ref={track}
+      className="modetabs pilltrack"
+      role="tablist"
+      aria-label={t("보드 모드")}
+      onKeyDown={onKey}
+    >
       {TABS.map((tab) => (
         <button
           key={tab.mode}

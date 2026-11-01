@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { RAIL, RESEARCH_TABS } from "./destinations";
+import { RESEARCH_TABS, visibleRail } from "./destinations";
+import { useProMode } from "./proMode";
 import { useEngineStore } from "../engine/engine-state";
 import { msg, t } from "../i18n/i18n";
 
 /**
- * 좌측 아이콘 레일 여섯 항목.
+ * 좌측 아이콘 레일 여섯 항목(고급 사용자 모드가 아니면 DB 를 뺀 다섯 — `visibleRail`).
  *
  * - **엔진 상태 점**은 «엔진» 항목에 붙는다 — 앱이 «연결» 탭에 붙이던 그 점이다.
  * - **두 묶음**: 보드 · 연구 · 정석이 위, 도구(DB · 엔진 · 설정)가 맨 아래로 떨어진다(`Dest.group`).
@@ -15,31 +16,36 @@ import { msg, t } from "../i18n/i18n";
 export function NavRail() {
   const { pathname } = useLocation();
   const status = useEngineStore((s) => s.status);
+  const rail = visibleRail(useProMode());
 
   return (
     <nav className="rail" aria-label={t("주 메뉴")}>
       <ul className="rail__list">
-        {RAIL.map((d, i) => {
+        {rail.map((d, i) => {
           const isResearch = d.path === "/research";
-          const firstTool = d.group === "tools" && RAIL[i - 1]?.group !== "tools";
+          const firstTool = d.group === "tools" && rail[i - 1]?.group !== "tools";
+          const on = pathname === d.path || pathname.startsWith(d.path + "/");
           return (
             <li key={d.path} className={"rail__item" + (firstTool ? " rail__item--tools" : "")}>
               <NavLink
                 to={d.path}
                 className={({ isActive }) => "rail__link" + (isActive ? " is-active" : "")}
-                aria-current={pathname.startsWith(d.path) ? "page" : undefined}
+                aria-current={on ? "page" : undefined}
               >
-                <svg className="rail__icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d={d.icon} />
-                </svg>
+                {/* 앱 M6: 고른 항목은 채운 아이콘 + 연한 알약 + 굵은 라벨, 나머지는 외곽선 아이콘. */}
+                <span className="rail__pill">
+                  <svg className="rail__icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d={on ? d.iconOn : d.icon} />
+                  </svg>
+                  {d.path === "/engine" && (
+                    <span
+                      className="rail__dot"
+                      data-status={status}
+                      title={t("엔진: {s}", { s: t(ENGINE_STATUS_TEXT[status]) })}
+                    />
+                  )}
+                </span>
                 <span className="rail__label">{t(d.label)}</span>
-                {d.path === "/engine" && (
-                  <span
-                    className="rail__dot"
-                    data-status={status}
-                    title={t("엔진: {s}", { s: t(ENGINE_STATUS_TEXT[status]) })}
-                  />
-                )}
               </NavLink>
 
               {isResearch && (

@@ -144,8 +144,8 @@ a:focus-visible {
   flex: 0 0 auto;
   width: 80px;
   padding: var(--space-l) var(--space-s);
+  /* 페이지와 같은 면, 선 없음(앱 M1 · M6) — 경계는 고른 항목의 알약이 말한다. */
   background: var(--c-background);
-  border-right: 1px solid var(--c-outline-variant);
 }
 .rail__list {
   display: flex;
@@ -160,23 +160,37 @@ a:focus-visible {
 .rail__item {
   position: relative;
 }
+/* 앱 M6(Material 내비 레일): 알약은 아이콘 뒤에만(56×32), 라벨은 그 아래. 고른 항목 = 채운 아이콘 +
+   연한 톤 알약 + 굵은 라벨, 나머지 = 외곽선 아이콘. */
 .rail__link {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-s);
   align-items: center;
-  padding: var(--space-m) var(--space-s);
+  padding: var(--space-s) 0 var(--space-m);
   color: var(--c-on-surface-variant);
-  border-radius: var(--radius-m);
+}
+.rail__pill {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 32px;
+  border-radius: 16px;
   transition: background var(--motion-quick) ease-out;
 }
-.rail__link:hover {
-  background: var(--c-surface-container);
+.rail__link:hover .rail__pill {
+  background: var(--c-surface-container-high);
 }
 .rail__link.is-active {
-  font-weight: 600;
+  color: var(--c-on-surface);
+}
+.rail__link.is-active .rail__pill {
   color: var(--c-on-secondary-container);
   background: var(--c-secondary-container);
+}
+.rail__link.is-active .rail__label {
+  font-weight: 700;
 }
 .rail__icon {
   width: 24px;
@@ -188,8 +202,8 @@ a:focus-visible {
 }
 .rail__dot {
   position: absolute;
-  top: 10px;
-  right: 18px;
+  top: 2px;
+  right: 12px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -240,32 +254,48 @@ a:focus-visible {
 }
 
 /* ── 하단 탭(좁은 폭) ───────────────────────────────────────────── */
+/* 앱 M6(Material 내비 바): 바 면 = surface-container, 선 없음. 고른 탭은 아이콘 뒤 연한 알약(64×32) +
+   채운 아이콘 + 굵은 라벨, 나머지는 외곽선 아이콘. */
 .tabs {
   display: flex;
   flex: 0 0 auto;
-  background: var(--c-surface-container-low);
-  border-top: 1px solid var(--c-outline-variant);
+  background: var(--c-surface-container);
 }
 .tabs__link {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-s);
   align-items: center;
-  padding: var(--space-m) 0 calc(var(--space-m) + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+  padding: var(--space-l) 0 calc(var(--space-l) + env(safe-area-inset-bottom, 0px));
   color: var(--c-on-surface-variant);
 }
+.tabs__pill {
+  display: grid;
+  place-items: center;
+  width: min(64px, 100%);
+  height: 32px;
+  border-radius: 16px;
+  transition: background var(--motion-quick) ease-out;
+}
 .tabs__link.is-active {
-  font-weight: 600;
+  color: var(--c-on-surface);
+}
+.tabs__link.is-active .tabs__pill {
   color: var(--c-on-secondary-container);
+  background: var(--c-secondary-container);
 }
 .tabs__icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   fill: currentColor;
 }
 .tabs__label {
-  font: var(--type-label-small);
+  font: var(--type-label-medium);
+}
+.tabs__link.is-active .tabs__label {
+  font-weight: 700;
 }
 
 /* ── 상단 바 ────────────────────────────────────────────────────── */
@@ -321,30 +351,36 @@ a:focus-visible {
 
 /* ── 연구 탭 ────────────────────────────────────────────────────── */
 /* 밑줄 탭 — 채운 알약 대신 글자색 + 2px 밑줄. 상단 바 바로 밑에서 면이 둘 겹치지 않게. */
+/* 연구 네 탭 — 폭을 똑같이 나눈 세그먼트(앱 P2 `RapfiSegmented(fill = true)`), 고른 알약이 미끄러진다. */
 .rtabs {
   display: flex;
-  gap: var(--space-l);
-  padding: 0 var(--space-xl);
-  overflow-x: auto;
-  background: var(--c-background);
-  border-bottom: 1px solid var(--c-outline-variant);
+  flex: none;
+  margin: 0 var(--screen-padding) var(--space-s);
+  padding: 3px;
+  background: var(--c-surface-container);
+  border-radius: var(--radius-xl);
+  --pill-r: var(--radius-xl);
 }
 .rtabs__tab {
-  flex: none;
-  padding: var(--space-l) var(--space-xs);
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--space-m) var(--space-s);
+  overflow: hidden;
   font: var(--type-label-large);
   color: var(--c-on-surface-variant);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: var(--radius-xl);
   transition: color var(--motion-quick) ease-out;
 }
-.rtabs__tab:hover {
+.rtabs__tab:hover:not(.is-active) {
   color: var(--c-on-surface);
 }
 .rtabs__tab.is-active {
   font-weight: 600;
-  color: var(--c-on-surface);
-  border-bottom-color: var(--c-primary);
+  color: var(--c-on-secondary-container);
+  background: var(--c-secondary-container);
 }
 
 /* ── 보드 ───────────────────────────────────────────────────────────
@@ -978,6 +1014,7 @@ a:focus-visible {
   background: var(--c-surface-container-high);
   border-radius: var(--radius-m);
   scrollbar-width: none;
+  --pill-r: calc(var(--radius-m) - 3px);
 }
 .seg__opt {
   flex: none;
@@ -1920,10 +1957,10 @@ a:focus-visible {
 .modetabs {
   display: inline-flex;
   flex: none;
-  padding: 2px;
+  padding: 3px;
   background: var(--c-surface-container);
-  border: 1px solid var(--c-outline-variant);
   border-radius: var(--radius-xl);
+  --pill-r: var(--radius-xl);
 }
 .modetabs__tab {
   height: 32px;
@@ -2006,10 +2043,12 @@ a:focus-visible {
   gap: var(--space-m);
   align-items: center;
   height: 32px;
-  padding: 0 var(--space-m);
+  padding: 0 var(--space-l);
   font: var(--type-label-medium);
   color: var(--c-on-surface-variant);
   white-space: nowrap;
+  /* 앱 M6: 외곽선 없는 연한 알약. */
+  background: var(--c-surface-container-high);
   border-radius: var(--radius-xl);
 }
 /* 기동 중에는 글자 칸의 폭을 고정한다 — 「가중치 받는 중 → 엔진 올리는 중 → 예열 중」으로 바뀔
@@ -4080,6 +4119,16 @@ button.theory__row:hover {
   width: 22px;
   height: 22px;
 }
+/* 화면을 한 층 올라가는 뒤로 — 원형 채움(앱 M3 · M6 `RoundBackButton`, 44). */
+.iconbtn--back {
+  width: 44px;
+  height: 44px;
+  color: var(--c-on-surface);
+  background: var(--c-surface-container-high);
+}
+.iconbtn--back:hover:not(:disabled) {
+  background: var(--c-surface-container-highest);
+}
 .iconbtn:hover:not(:disabled) {
   color: var(--c-on-surface);
   background: var(--c-surface-container-high);
@@ -4777,4 +4826,33 @@ li[data-level="error"] .sissues__dot {
 .menu__item:disabled {
   color: var(--c-outline);
   cursor: default;
+}
+
+/* ── 미끄러지는 선택 알약(useSlidingPill) ─────────────────────────────
+   묶음의 ::before 가 고른 칸 아래의 알약 하나다 — 칸을 옮기면 그 면이 미끄러진다(앱 P5 ①, 판 밖 크롬이라
+   허용 · 결정 D6). 자리를 잡기 전(JS 전 · 첫 프레임)에는 칸이 각자 배경으로 선택을 말하고, 자리를 잡은
+   뒤(data-pill="ready")에야 칸의 배경을 비우고 알약이 대신한다. 감속 모드는 전역 규칙이 즉시로 만든다. */
+.pilltrack {
+  position: relative;
+  isolation: isolate;
+}
+.pilltrack[data-pill="ready"]::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: var(--pill-w, 0);
+  height: var(--pill-h, 0);
+  content: "";
+  background: var(--c-secondary-container);
+  border-radius: var(--pill-r, var(--radius-xl));
+  transform: translate(var(--pill-x, 0), var(--pill-y, 0));
+  transition:
+    transform 220ms cubic-bezier(0.2, 0, 0, 1),
+    width 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+.pilltrack[data-pill="ready"] > [aria-selected="true"],
+.pilltrack[data-pill="ready"] > [aria-checked="true"],
+.pilltrack[data-pill="ready"] > [aria-current="page"] {
+  background: transparent;
 }

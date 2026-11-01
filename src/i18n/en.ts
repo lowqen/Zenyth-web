@@ -839,7 +839,7 @@ export const EN: Readonly<Record<string, string>> = {
   "대국은 그대로입니다": "The game is kept",
   "설정 검색": "Search settings",
   "「{q}」에 맞는 설정이 없습니다.": "No settings match “{q}”.",
-  "고급 설정": "Advanced settings",
+  "고급 사용자 모드": "Advanced mode",
   "해시 · 스타일 · 깊이 · 노드 · 표시": "Hash · style · depth · nodes · display",
   "{n}개 숨김": "{n} hidden",
   "멀티스레드 · relaxed SIMD": "Multi thread · relaxed SIMD",
@@ -1137,6 +1137,7 @@ export const EN: Readonly<Record<string, string>> = {
   "파일과 통계는 {here} 남습니다.": "The file and statistics stay {here}.",
   "보드로 가기": "Go to the board",
   "본문 글꼴": "Body typeface",
+  "아이콘 경로": "Icon paths",
   // ── 정석 커리큘럼 — 체스닷컴 구조(목록 · 코스 · 레슨) ──
   "정해진 차례대로 오프닝 정석을 배웁니다": "Learn opening joseki in a set order",
   시작: "Start",

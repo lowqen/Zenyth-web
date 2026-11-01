@@ -624,7 +624,7 @@ export function SettingsScreen() {
             <section className="panel sadvanced" aria-labelledby="sg-advanced">
               <div className="sadvanced__text">
                 <h2 id="sg-advanced" className="sgroup__title">
-                  {t("고급 설정")}
+                  {t("고급 사용자 모드")}
                 </h2>
                 <p className="sgroup__desc">
                   {advanced
@@ -633,7 +633,7 @@ export function SettingsScreen() {
                 </p>
               </div>
               <Switch
-                label={t("고급 설정")}
+                label={t("고급 사용자 모드")}
                 on={advanced}
                 onChange={(v) => update({ showAdvanced: v })}
               />

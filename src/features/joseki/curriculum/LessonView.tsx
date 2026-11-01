@@ -188,7 +188,7 @@ export function LessonView({
         <header className="lessonpanel__head">
           <button
             type="button"
-            className="iconbtn"
+            className="iconbtn iconbtn--back"
             aria-label={t("코스로 돌아가기")}
             onClick={onBack}
           >
