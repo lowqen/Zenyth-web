@@ -120,6 +120,3 @@ export function titleFor(pathname: string): { title: string } {
   const dest = activeDest(pathname);
   return { title: dest ? t(dest.label) : "Zenyth Web" };
 }
-
-/** 내비의 아이콘 짝 — 둘러보기(Z8)가 각 장소의 머리 아이콘으로 같은 것을 쓴다. */
-export { ICON as NAV_ICON };

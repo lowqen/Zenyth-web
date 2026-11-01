@@ -88,9 +88,8 @@ function Ext({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-/** 마크 · 이름 · 한 줄 · 판, 그리고 둘러보기 · 바뀐 점(Z8 — 앱 `AboutDialog`). */
+/** 마크 · 이름 · 한 줄 · 판, 그리고 바뀐 점(Z8 — 앱 `AboutDialog`). */
 function Brand() {
-  const openTour = useFirstVisit((s) => s.openTour);
   const openWhatsNew = useFirstVisit((s) => s.openWhatsNew);
   return (
     <section className="panel about__brand" aria-label="Zenyth Web">
@@ -108,10 +107,12 @@ function Brand() {
         )}
       </p>
       <div className="about__actions">
-        <button type="button" className="btn btn--tonal" onClick={openTour} data-k="open-tour">
-          {t("둘러보기")}
-        </button>
-        <button type="button" className="btn" onClick={openWhatsNew} data-k="open-whatsnew">
+        <button
+          type="button"
+          className="btn btn--tonal"
+          onClick={openWhatsNew}
+          data-k="open-whatsnew"
+        >
           {t("이번 버전에서 바뀐 점")}
         </button>
       </div>

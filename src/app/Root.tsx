@@ -1,7 +1,7 @@
 import { RouterProvider } from "react-router-dom";
 import { useLang } from "../i18n/i18n";
 import { router } from "./routes";
-import { TourScreen, WelcomeScreen, WhatsNewWindow } from "./Onboarding";
+import { WhatsNewWindow } from "./WhatsNew";
 
 /**
  * 언어가 바뀌면 화면을 뿌리부터 다시 그린다(`key`) — 문구는 그릴 때 `t()` 로 만들어지므로 컴포넌트마다
@@ -12,9 +12,7 @@ export function Root() {
   return (
     <>
       <RouterProvider key={lang} router={router} />
-      {/* Z8: 처음 온 사람의 환영 · 둘러보기 · 새로워진 점 — 셸 밖에서 화면 전체를 덮는다. */}
-      <WelcomeScreen />
-      <TourScreen />
+      {/* 새로워진 점(Z8) — 셸 밖의 모달. 웹에는 첫 방문 환영 · 둘러보기가 없다(2026-11-02 걷음). */}
       <WhatsNewWindow />
     </>
   );
