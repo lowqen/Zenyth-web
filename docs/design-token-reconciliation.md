@@ -123,3 +123,29 @@ Color.kt 주석:  tone 42 on its grid (#7A5A2B -> #7B5E22)
 
 판 스킨은 이때 앱과 같게 옮겼다(라이트 `Maple` 76 · 70 · 40 · 30, 다크 `WoodNight` 33 · 26 · 52 · 70).
 역할 배정(페이지 · 면 · 강조)은 `docs/앱-디자인-정렬-계획.md` Z1 에서 옮긴다.
+
+## 6. 2026-11-01 — 역할 배정도 앱과 같게(Z1 ~ Z4)
+
+램프가 같아도 **어느 톤을 어디에 쓰는지**가 다르면 화면은 다르다. 앱 `Theme.kt` 의 `lightColors` · `darkColors` ·
+`amoled()` 와 `WoodTheme` 을 `scheme.ts` 가 그대로 옮긴다. 이것은 골든 JSON 이 아니라 아래 표와 시험이 묶는다.
+
+| 역할 | 라이트 | 다크 | 검은 배경(다크 위) |
+|---|---|---|---|
+| 페이지 `background` · `surface` | `Mist` 99 | `Mist` 10 | `Mist` 0 |
+| 면 `surface-container` (= `--c-card`) | `Mist` 95 | `Mist` 18 | `Mist` 10 |
+| `surface-container-low · high · highest` | `Mist` 96 · 92 · 90 | `Mist` 14 · 22 · 26 | 6 · 14 · 19 |
+| `primary` / `on-primary` | `Violet` 40 / `Mist` 100 | `Violet` 80 / 20 | 그대로 |
+| `secondary-container` / `on-…` | `Lilac` 90 / 20 | `Lilac` 30 / 92 | 그대로 |
+| `on-surface` · `on-surface-variant` | `Mist` 10 · `MistVariant` 30 | `Mist` 92 · `MistVariant` 80 | 그대로 |
+| `outline` · `outline-variant` | `MistVariant` 50 · 82 | `MistVariant` 60 · 30 | 그대로 |
+| 판 나무 · 가장자리 · 격자 · 좌표 | `Maple` 76 · 70 · 40 · 30 | `WoodNight` 33 · 26 · 52 · 70 | 다크 그대로 |
+
+- **나무색 팔레트**(`[data-wood]`, 보드 화면만): 페이지 `Maple` 채도 0.014(다크 0.012) · 잉크 0.018 · 연한 키 0.035,
+  `primary` 는 돌의 색. 검은 배경에서는 면만 검정.
+- **시험**(`ramps.test.ts` 의 역할 · 대비 묶음): 글 · 면 대비 쌍 전부 AA(라이트 · 다크 · 검은 배경 · 나무 셋), 면/페이지 ≥ 1.06:1
+  (테두리가 없으니 이것이 경계), `primary` ↔ 의미색(흑승 · 백승 · 오류 · positive · caution) OKLab ≥ 0.08, 검은
+  배경은 면 토큰만 바꾼다. 앱 `ThemeContrastTest` 와 같은 성질이다.
+- 결과색 · 판 돌 · 의미색은 옛 `Neutral` · 결과 램프 그대로다 — 앱도 그것들은 옮기지 않았다.
+
+정확한 톤 값은 `scheme.ts` 가 정본이다(위 표에서 «그대로»는 다크 값을 덮지 않는다는 뜻).
+

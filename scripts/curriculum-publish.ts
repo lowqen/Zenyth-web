@@ -126,6 +126,6 @@ if (pushed.status !== 0)
   fail("push 하지 못했습니다 — 커밋은 남아 있습니다. git pull --rebase 뒤 git push");
 console.log(
   branch === "main"
-    ? "✓ push — 몇 분 뒤 https://rapfiweb.pages.dev/joseki 와 Zenyth 앱이 새 커리큘럼을 받습니다"
+    ? "✓ push — 몇 분 뒤 https://zenythweb.pages.dev/joseki 와 Zenyth 앱이 새 커리큘럼을 받습니다"
     : `! ${branch} 브랜치에 push 했습니다. 배포는 main 에서만 됩니다`,
 );

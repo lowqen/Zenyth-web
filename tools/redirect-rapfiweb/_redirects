@@ -1,0 +1,4 @@
+# 옛 주소(rapfiweb.pages.dev)는 새 주소로 모든 경로를 그대로 넘긴다(Z10, 2026-11-01 — 이름이 Zenyth Web 이 됨).
+# deploy.yml 이 새 주소 배포 · 검증이 끝난 뒤 이 폴더만 옛 Pages 프로젝트에 올린다. 질의(?p= · ?lesson=)는
+# Pages 가 붙여 넘긴다 — 배포 검증이 확인한다(앱이 받는 /joseki/curriculum.json 도 같은 경로로).
+/*  https://zenythweb.pages.dev/:splat  301

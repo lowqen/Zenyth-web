@@ -1,27 +1,54 @@
 <div align="center">
 
-# Zenyth Web
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/logo/zenyth-web-lockup-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/readme/logo/zenyth-web-lockup-light.svg">
+  <img alt="Zenyth Web" src="docs/readme/logo/zenyth-web-lockup-light.svg" width="420" height="auto">
+</picture>
 
-**세계 정상급 오목 · 렌주 엔진을 브라우저 하나로.**<br>
-대국 · 분석 · 복기 · 연구까지. 서버도, 설치도, 계정도 필요 없다.
+<p>
+  <b>세계 정상급 오목 · 렌주 엔진을 브라우저 하나로.</b><br>
+  대국 · 분석 · 복기 · 연구까지. 서버도, 설치도, 계정도 필요 없다.
+</p>
 
-[**▶ 라이브 데모: rapfiweb.pages.dev**](https://rapfiweb.pages.dev)
-
-[![CI](https://img.shields.io/github/actions/workflow/status/lowqen/Zenyth-web/web.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/lowqen/Zenyth-web/actions/workflows/web.yml)
-[![Deploy](https://img.shields.io/github/actions/workflow/status/lowqen/Zenyth-web/deploy.yml?branch=main&label=deploy&logo=cloudflare&logoColor=white)](https://github.com/lowqen/Zenyth-web/actions/workflows/deploy.yml)
-[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
-<br>
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
-[![WebAssembly](https://img.shields.io/badge/WebAssembly-SIMD%20%2B%20threads-654FF0?logo=webassembly&logoColor=white)](https://webassembly.org/)
-[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-F38020?logo=cloudflarepages&logoColor=white)](https://pages.cloudflare.com/)
-
-[English](README.md) · **한국어**
-
-<img src="docs/assets/analysis.png" alt="Zenyth Web 분석 화면 — 엔진이 31수 필승을 찾아 수순을 판 위에 그린다" width="860">
+<p>
+  <a href="https://github.com/lowqen/Zenyth-web/actions/workflows/web.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/lowqen/Zenyth-web/web.yml?branch=main&style=flat-square&label=CI"></a>
+  <a href="https://github.com/lowqen/Zenyth-web/actions/workflows/deploy.yml"><img alt="Deploy" src="https://img.shields.io/github/actions/workflow/status/lowqen/Zenyth-web/deploy.yml?branch=main&style=flat-square&label=deploy"></a>
+  <a href="LICENSE"><img alt="Licence" src="https://img.shields.io/badge/licence-GPL--3.0--or--later-65528A?style=flat-square"></a>
+  <img alt="WebAssembly SIMD + threads" src="https://img.shields.io/badge/WebAssembly-SIMD%20%2B%20threads-654FF0?style=flat-square&logo=webassembly&logoColor=white">
+</p>
 
 </div>
+
+<p align="center">
+  <a href="https://zenythweb.pages.dev">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/badges/open-dark.svg">
+      <img alt="Open Zenyth Web: zenythweb.pages.dev" src="docs/readme/badges/open-light.svg" height="56">
+    </picture>
+  </a>
+  <a href="https://github.com/lowqen/Zenyth">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/badges/android-dark.svg">
+      <img alt="Zenyth, the Android app" src="docs/readme/badges/android-light.svg" height="56">
+    </picture>
+  </a>
+  <a href="README.md">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/badges/readme-en-dark.svg">
+      <img alt="English README" src="docs/readme/badges/readme-en-light.svg" height="56">
+    </picture>
+  </a>
+</p>
+
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/screenshots-dark.svg"><img src="docs/readme/sections/screenshots-light.svg" height="32" align="top" alt=""></picture> 스크린샷
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/showcase-dark.png">
+  <img src="docs/readme/showcase-light.png" width="100%" alt="휴대폰에서 본 Zenyth Web: 환영 · 보드 · 정석 커리큘럼 · 설정">
+</picture>
+
+<p align="center"><sub>휴대폰 · 라이트 테마. 사이트는 한국어와 영어로 말하고, 시스템의 다크 테마를 따른다.</sub></p>
 
 ---
 
@@ -35,9 +62,9 @@ Zenyth Web 은 그것을 **WebAssembly** 로 옮기고 분석반 전체를 얹�
 - **정적 파일을 올릴 수 있는 곳이면 어디든.** 백엔드 · API 키 · 원격 수집이 없다.
 - **빠르다.** 멀티스레드 SIMD 탐색, 약 20MB 가중치는 처음 한 번만 받는다.
 
-## ✨ 핵심 기능
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/features-dark.svg"><img src="docs/readme/sections/features-light.svg" height="32" align="top" alt=""></picture> 핵심 기능
 
-### 🧠 C++ 엔진을 WASM 멀티스레드로
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/engine-dark.svg"><img src="docs/readme/features/engine-light.svg" height="28" align="top" alt=""></picture> C++ 엔진을 WASM 멀티스레드로
 - Emscripten 으로 **네 변형**을 빌드한다: `{단일, 멀티} 스레드 × {SIMD128, Relaxed SIMD}`.
   브라우저 능력을 재서 가장 빠른 것부터 띄우고, 안 되면 한 단계씩 물러선다.
 - 교차 출처 격리(COOP/COEP)가 되면 `SharedArrayBuffer` 위의 pthread, 아니면 시간 분할 단일 스레드.
@@ -45,21 +72,21 @@ Zenyth Web 은 그것을 **WebAssembly** 로 옮기고 분석반 전체를 얹�
 - 엔진 패치는 감이 아니라 측정으로 고른다. SPRT 대국 · 필승 묶음 · 고정 깊이 벤치가 CI 에서 돈다.
   배포 빌드는 순정 Rapfi WASM 빌드보다 **Elo +100**(1 스레드 · 수당 500ms, [분석](docs/gomocalc-대국-분석.md)).
 
-### ⚡ 브라우저 안 고속 기보 변환
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/convert-dark.svg"><img src="docs/readme/features/convert-light.svg" height="28" align="top" alt=""></picture> 브라우저 안 고속 기보 변환
 - RenjuNet 기보(`.rif`, 43MB, 약 11만 9천 판)를 **아무 화면에나 끌어다 놓으면** 워커가 바이트를
   스트리밍으로 읽고, 64비트 증분 Zobrist 해시로 국면을 세어 15MB 통계 팩을 만든다.
 - **안드로이드 크롬 실기기 3.7초 · Celeron N4500 4.6초**, 워커 메모리 피크 50~57MB. 오프닝 빈도 ·
   선수/색/규칙별 랭킹 · 대국 목록이 곧바로 뜬다.
 - 데스크톱 도구의 팩과 국면마다(116,191국면) 일치함을 대조했다.
 
-### 📊 대국 자동 복기 · 11단계 착수 평가 리포트
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/review-dark.svg"><img src="docs/readme/features/review-light.svg" height="28" align="top" alt=""></picture> 대국 자동 복기 · 11단계 착수 평가 리포트
 - 국면마다 상위 두 후보를 읽고(`YXNBEST 2`), 수마다 **11등급**(명수 · 최선 … 실수 · 대실수 · 놓친 승리)과
   쪽마다 정확도를 매긴다.
 - 여러 기보를 큐로 돌리고 국면마다 체크포인트를 남긴다. 탭을 닫아도 그 자리부터 잇는다.
 - **CSV · Markdown · 한 파일 HTML 리포트**(판 · 형세 그래프 · 최악의 수)로 내보낸다.
 - 그 밖에 필승을 증명하는 **AND/OR 국면 증명**, 지금 돌에 이르는 모든 수순을 세는 **수순 탐색**.
 
-### 💾 완전한 클라이언트 사이드 · 로컬 영구 저장
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/storage-dark.svg"><img src="docs/readme/features/storage-light.svg" height="28" align="top" alt=""></picture> 완전한 클라이언트 사이드 · 로컬 영구 저장
 - 두고 무른 수까지 자동 저장. 새로고침해도 이어진다.
 - 엔진 자체의 국면 **DB**(yixindb)를 Emscripten 메모리 FS 와 IndexedDB 사이에서 주고받는다.
   주석 · 라벨 · `.db`/CSV 가져오기 · 내보내기.
@@ -68,18 +95,15 @@ Zenyth Web 은 그것을 **WebAssembly** 로 옮기고 분석반 전체를 얹�
 - **정석 편집기**: 갈래 트리, 좌표 링크가 되는 마크다운 메모, 분류 자동, 대칭까지 보는 국면 찾기.
 - `.psq` · `.sav` · `.pos` 열기/저장, `?p=h8i9j10` 국면 링크, 데스크톱 `settings.txt` 바이트 단위 왕복.
 
-### 🌏 한국어 / 영어 · 반응형 · 접근성
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/lang-dark.svg"><img src="docs/readme/features/lang-light.svg" height="28" align="top" alt=""></picture> 한국어 / 영어 · 반응형 · 접근성
 - **한국어 · 영어 전체 UI**(문구 약 900개). 브라우저 언어 자동 감지, 설정에서 전환. 시험이 소스를
   훑어 번역이 빠진 문구가 나가지 않게 한다.
 - **360px 휴대폰부터 데스크톱까지**, 세로 · 가로, 라이트 · 다크.
 - **접근성 기본 탑재**: 모든 판에서 키보드 착수(방향키 + Enter), 화면 읽기 안내, 뜨면 초점을 받고 Esc 로
   닫히는 확인 상자, 24px 이상 터치 타깃, 두 테마 모두 **명암비 4.5:1**. Playwright 스모크가 지킨다.
 
-<div align="center">
-<img src="docs/assets/mobile.png" alt="휴대폰에서 본 Zenyth Web — 한국어 · 라이트 테마" width="300">
-</div>
 
-## 🏗 아키텍처
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/architecture-dark.svg"><img src="docs/readme/sections/architecture-light.svg" height="32" align="top" alt=""></picture> 아키텍처
 
 ```
 ┌──────────────────────────── 브라우저 탭 (메인 스레드) ─────────────────────────────┐
@@ -115,7 +139,7 @@ Zenyth Web 은 그것을 **WebAssembly** 로 옮기고 분석반 전체를 얹�
 | 품질 | TypeScript strict, Vitest (시험 파일 50개 이상), Playwright 스모크, ESLint, Prettier |
 | 배포 | GitHub Actions → Cloudflare Pages (스레드용 COOP/COEP 헤더) |
 
-## 🚀 시작하기
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/start-dark.svg"><img src="docs/readme/sections/start-light.svg" height="32" align="top" alt=""></picture> 시작하기
 
 **필요한 것:** Node.js 20.11 이상(CI 는 26)과 pnpm.
 
@@ -154,7 +178,7 @@ WebAssembly SIMD 와 CSP 의 `'wasm-unsafe-eval'` 이 필수다: **Chrome/Edge 9
 
 이 웹 빌드는 **렌주** 가중치만 싣는다(Cloudflare 파일당 25MB 상한).
 
-## 📚 문서
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/docs-dark.svg"><img src="docs/readme/sections/docs-light.svg" height="32" align="top" alt=""></picture> 문서
 
 | 문서 | 내용 |
 |---|---|
@@ -163,7 +187,7 @@ WebAssembly SIMD 와 CSP 의 `'wasm-unsafe-eval'` 이 필수다: **Chrome/Edge 9
 | [`docs/gomocalc-대국-분석.md`](docs/gomocalc-대국-분석.md) | Elo +100 의 근거가 된 대국 분석 |
 | [`public/engine/README.md`](public/engine/README.md) | 엔진 변형 · 빌드 출처 · 가중치 캐시 |
 
-## ⚖️ 라이선스와 자료
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/licence-dark.svg"><img src="docs/readme/sections/licence-light.svg" height="32" align="top" alt=""></picture> 라이선스와 자료
 
 배포물에 Rapfi 엔진이 들어 있으므로 **[GNU GPL v3.0 이상](LICENSE)** 으로 배포한다. 이 저장소가 직접 쓴
 코드는 BSD 2-Clause 로도 쓸 수 있다. 함께 싣거나 이식한 구성요소(Rapfi · rapfi-networks · Yixin-Board ·
@@ -173,7 +197,7 @@ Zenyth · npm 의존성)와 엔진의 대응 소스 위치는 [**THIRD_PARTY_NOT
 파일을 *그 브라우저 안에서만* 처리하고 아무것도 올리지 않는다. `.gitignore` 와 CI 게이트가 `.rif` 파생
 파일을 저장소와 모든 배포물에서 막는다.
 
-## 🙏 감사
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/credits-dark.svg"><img src="docs/readme/sections/credits-light.svg" height="32" align="top" alt=""></picture> 감사
 
 - [**dhbloo/rapfi**](https://github.com/dhbloo/rapfi) · [**rapfi-networks**](https://github.com/dhbloo/rapfi-networks): 엔진과 가중치
 - Kai Sun 의 [**Yixin-Board**](https://github.com/accreator/Yixin-Board) 와 [dhbloo 의 fork](https://github.com/dhbloo/Yixin-Board): 프로토콜과 리뷰 로직을 따른 데스크톱 GUI

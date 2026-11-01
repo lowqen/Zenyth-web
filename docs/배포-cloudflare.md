@@ -26,13 +26,13 @@ W0 에서 **COOP/COEP 헤더가 필요 없어졌습니다** — 배포 경로가
 
 **Pages 프로젝트는 손으로 만들지 않아도 됩니다** — 배포 워크플로가 없으면 만듭니다
 (`wrangler pages project create`, 아래 토큰 권한으로 됩니다). 이름은
-`.github/workflows/deploy.yml` 의 `PROJECT`(기본 `rapfiweb`)를 씁니다.
+`.github/workflows/deploy.yml` 의 `PROJECT`(기본 `zenythweb` — 2026-11-01 까지는 `rapfiweb`, 지금은 301 로만 남는다)를 씁니다.
 
 > 처음에는 대시보드에서 먼저 만들라고 안내했는데, 그러면 「비밀값은 넣었는데
 > 프로젝트가 없어서」 배포가 실패합니다 — 실제로 한 번 걸렸습니다
 > (`Project not found`, code 8000007). 그 단계를 없앴습니다.
 
-만들어지면 주소가 생깁니다: `https://rapfiweb.pages.dev`
+만들어지면 주소가 생깁니다: `https://zenythweb.pages.dev`
 
 ### 1-2. Account ID
 
@@ -90,18 +90,18 @@ Cloudflare 를 건드리기 전에 결과물을 확인하고 싶을 때 쓰세�
 배포가 끝나면 로그 마지막에 주소가 찍힙니다:
 
 ```
-✨ Deployment complete! Take a peek over at https://<해시>.rapfiweb.pages.dev
+✨ Deployment complete! Take a peek over at https://<해시>.zenythweb.pages.dev
 ```
 
-- `https://rapfiweb.pages.dev` — 프로덕션(= `main`)
-- `https://<브랜치>.rapfiweb.pages.dev` — 브랜치별 미리보기
+- `https://zenythweb.pages.dev` — 프로덕션(= `main`)
+- `https://<브랜치>.zenythweb.pages.dev` — 브랜치별 미리보기
 
 ---
 
 ### 엔진 쇼케이스 — `/showcase/`
 
 같은 배포에 **엔진 쇼케이스**(`showcase/` — gomocalc 대국 · 연산 속도 · 최적화 여정)가 함께 나간다:
-`https://rapfiweb.pages.dev/showcase/`. `deploy.yml` 의 「쇼케이스 빌드」가 `SHOWCASE_BASE=/showcase/ SHOWCASE_OUT=dist/showcase`
+`https://zenythweb.pages.dev/showcase/`. `deploy.yml` 의 「쇼케이스 빌드」가 `SHOWCASE_BASE=/showcase/ SHOWCASE_OUT=dist/showcase`
 로 앱의 `dist/` 안에 굽고, 「배포 검증 — /showcase/」가 실제 주소에서 문서 · 자산 MIME 을 확인한다.
 `public/_redirects` 의 `/showcase → /showcase/ 301` 은 SPA 폴백보다 먼저 와야 한다. 숫자를 바꾸려면
 `showcase/src/data/` 를 고쳐 `main` 에 푸시하면 된다(`docs/gomocalc-대국-분석.md` §7).
