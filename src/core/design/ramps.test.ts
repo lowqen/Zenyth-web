@@ -17,7 +17,7 @@ import golden from "./tokens.golden.json";
  * 어긋나던 이유가 Float/double 차이가 아니라 반올림 규칙을 잘못 옮긴 것이었기 때문이다
  * (`oklch.ts` 의 `toHex` 주석, `docs/design-token-reconciliation.md`).
  */
-describe("Kotlin 덤프와 정확 대조 (9램프 × 톤 101)", () => {
+describe("Kotlin 덤프와 정확 대조 (14램프 × 톤 101)", () => {
   const ramps = golden.ramps as Record<string, string[]>;
 
   it("덤프가 Color.kt 의 문서화된 앵커를 재현한다", () => {

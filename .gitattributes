@@ -4,3 +4,6 @@
 
 # upstream 패치는 git apply 가 줄 끝까지 맞춰 읽는다 — 어느 OS 에서 받아도 LF 로.
 *.patch text eol=lf
+
+# 그림은 바이너리 — 줄 끝 변환 대상이 아니다(스크린샷 골든 shots/golden/ 등).
+*.png binary

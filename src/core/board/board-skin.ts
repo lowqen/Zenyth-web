@@ -93,10 +93,11 @@ export function readBoardSkin(root: Element): BoardSkin {
 
 /** 시험과 SSR 용. 브라우저 밖에서도 렌더러를 부를 수 있어야 한다. */
 export const FALLBACK_SKIN: BoardSkin = {
-  wood: "#DAB673",
-  woodEdge: "#C9A15C",
-  line: "#7E5D14",
-  label: "#5F460A",
+  // 나무 넷은 라이트 스킴의 메이플(Maple 76 · 70 · 40 · 30)과 같다.
+  wood: "#DBB487",
+  woodEdge: "#CAA377",
+  line: "#79562B",
+  label: "#603F11",
   blackHigh: "#3D362C",
   blackLow: "#100A03",
   blackRim: "#070300",

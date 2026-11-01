@@ -1,5 +1,5 @@
 /**
- * `core/designsystem/theme/Color.kt` 의 이식본 — 아홉 개의 램프.
+ * `core/designsystem/theme/Color.kt` 의 이식본 — 열네 개의 램프(앱과 같은 순서).
  *
  * **먹과 한지.** 크롬(카드·바·칩·버튼)은 따뜻하고 거의 무채색이고, 화면에서
  * 채도 있는 색은 보드의 것이다: 분석의 값 칩, 나무, 등급 표시. 취향이 아니라
@@ -31,8 +31,36 @@ export const Sage = ramp(148, 0.06);
  */
 export const Clay = ramp(82, 0.095);
 
-/** 등불 아래의 같은 나무. **재료**가 바뀐 것이라 톤이 아니라 램프를 따로 둔다. */
-export const WoodNight = ramp(82, 0.05);
+/**
+ * 2026-10-29 부터 앱의 판 나무: 메이플. [Clay] 의 금색에서 살구빛 쪽으로 한 걸음.
+ * 82° 금색은 판이 지켜야 하는 중간 밝기에서 폰 화면에 탁한 올리브로 읽혔다(앱 «탁한 올리브판»).
+ * **색상각만** 옮겼다 — 톤 76 은 그대로 판의 밝기다. 값 칩과 흰 돌의 대비가 그 밝기에 묶여 있다.
+ * 웹도 같은 판을 쓴다(docs/앱-디자인-정렬-계획.md Q2). [Clay] 는 «주의» 색으로 남는다.
+ */
+export const Maple = ramp(70, 0.075);
+
+/** 등불 아래의 같은 나무. **재료**가 바뀐 것이라 톤이 아니라 램프를 따로 둔다. [Maple] 의 색상각을 따른다. */
+export const WoodNight = ramp(70, 0.05);
+
+/**
+ * 강조색: 채운 버튼 · 선택된 탭과 칩 · 스위치 · 툴바의 ▶ — 조작하는 것, 그리고 값을 싣지 않는 것.
+ * 로열 블루가 아니라 딥 바이올렛인 것은 측정 때문이다: 270° 면 다크 버튼이 «흑 승» 파랑(245°)과
+ * OKLab 0.050 로 붙는다. 298° 면 가장 가까운 의미색이 0.085(다크) · 0.09(라이트) 떨어진다.
+ */
+export const Violet = ramp(298, 0.09);
+
+/** 강조색의 조용한 짝: 선택된 칩 · 세그먼트 · 내비게이션 알약. */
+export const Lilac = ramp(298, 0.035);
+
+/**
+ * 페이지와 면(앱 UI 개편 2차 M1): 강조색 쪽으로 아주 살짝 기운 흰색. 종이와 강조가 한 색상각이라
+ * 한 팔레트로 읽히고, 따뜻한 판의 나무가 그 위에서 선다. [Neutral] · [NeutralVariant] 는 결과색과
+ * 판의 돌이 계속 쓴다.
+ */
+export const Mist = ramp(298, 0.005);
+
+/** 페이지의 회색 글자와 윤곽 — [Mist] 보다 몸이 조금 더 있는 것. */
+export const MistVariant = ramp(298, 0.012);
 
 /** 오류, 금수, 손실 — 유일하게 큰 소리를 내는 가족. */
 export const Signal = ramp(27, 0.13);
@@ -49,7 +77,12 @@ export const ALL_RAMPS = {
   NeutralVariant,
   Sage,
   Clay,
+  Maple,
   WoodNight,
+  Violet,
+  Lilac,
+  Mist,
+  MistVariant,
   Signal,
   ResultBlue,
   ResultGreen,

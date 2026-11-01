@@ -16,6 +16,7 @@ import {
   NeutralVariant,
   Sage,
   Clay,
+  Maple,
   WoodNight,
   Signal,
   ResultBlue,
@@ -88,12 +89,13 @@ function scheme(dark: boolean): Scheme {
     caution: t(Clay, 40, 76),
 
     // ── 보드 스킨 (BoardSkin.kt) ─────────────────────────────────────
-    // 다크 모드는 나무 자체가 다르다(Clay → WoodNight): 톤 변화가 아니라
-    // **재료** 변화다. 낮의 채도는 어두운 명도에서 나무가 아니라 주황 플라스틱으로 읽힌다.
-    "board-wood": dark ? WoodNight.tone(33) : Clay.tone(76),
-    "board-wood-edge": dark ? WoodNight.tone(26) : Clay.tone(68),
-    "board-line": dark ? WoodNight.tone(52) : Clay.tone(42),
-    "board-label": dark ? WoodNight.tone(70) : Clay.tone(32),
+    // 낮의 판은 메이플(Maple, 앱 2026-10-29 — 금색 Clay 82° 는 탁한 올리브로 읽혔다). 밝기(톤 76)는
+    // 그대로라 값 칩 · 흰 돌 대비가 바뀌지 않는다. 다크 모드는 나무 자체가 다르다(Maple → WoodNight):
+    // 톤 변화가 아니라 **재료** 변화다. 낮의 채도는 어두운 명도에서 나무가 아니라 주황 플라스틱으로 읽힌다.
+    "board-wood": dark ? WoodNight.tone(33) : Maple.tone(76),
+    "board-wood-edge": dark ? WoodNight.tone(26) : Maple.tone(70),
+    "board-line": dark ? WoodNight.tone(52) : Maple.tone(40),
+    "board-label": dark ? WoodNight.tone(70) : Maple.tone(30),
     "board-black-high": t(Ink, 28, 26),
     "board-black-low": t(Ink, 6, 4),
     "board-black-rim": t(Ink, 2, 1),
