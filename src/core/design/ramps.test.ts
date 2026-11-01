@@ -6,6 +6,8 @@ import {
   DarkScheme,
   AmoledScheme,
   AMOLED_KEYS,
+  WoodLight,
+  WoodDark,
   CONTRAST_PAIRS,
   type TokenValue,
 } from "./scheme";
@@ -82,6 +84,17 @@ const SCHEMES = [
   { name: "light", s: LightScheme },
   { name: "dark", s: DarkScheme },
   { name: "amoled", s: AmoledScheme },
+  // 보드 화면의 나무색 팔레트 — 앱 WoodTheme. 검은 배경에서는 면을 검정으로 되돌린다(tokens.css 와 같은 순서).
+  { name: "wood light", s: { ...LightScheme, ...WoodLight } },
+  { name: "wood dark", s: { ...DarkScheme, ...WoodDark } },
+  {
+    name: "wood amoled",
+    s: {
+      ...AmoledScheme,
+      ...WoodDark,
+      ...Object.fromEntries(AMOLED_KEYS.map((k) => [k, AmoledScheme[k]!])),
+    },
+  },
 ] as const;
 
 describe("대비", () => {

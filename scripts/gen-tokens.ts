@@ -25,6 +25,8 @@ import {
   DarkScheme,
   AmoledScheme,
   AMOLED_KEYS,
+  WoodLight,
+  WoodDark,
   type Scheme,
   type TokenValue,
 } from "../src/core/design/scheme.ts";
@@ -120,6 +122,29 @@ ${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
 }
 
 :root[data-theme="dark"][data-amoled] {
+${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
+}
+
+/* 보드 화면의 나무색 팔레트(scheme.ts woodScheme, 앱 WoodTheme) — data-wood 를 단 칸(셸이 보드에서 붙인다)
+ * 안에서만. 판 스킨 · 값 색은 바꾸지 않는다. 검은 배경에서는 면은 검정 그대로, 강조만 나무. */
+[data-wood] {
+${colorBlock(WoodLight, "  ")}
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) [data-wood] {
+${colorBlock(WoodDark, "    ")}
+  }
+  :root[data-amoled]:not([data-theme="light"]) [data-wood] {
+${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
+  }
+}
+
+:root[data-theme="dark"] [data-wood] {
+${colorBlock(WoodDark, "  ")}
+}
+
+:root[data-theme="dark"][data-amoled] [data-wood] {
 ${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
 }
 `;

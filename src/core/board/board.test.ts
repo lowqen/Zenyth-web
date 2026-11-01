@@ -13,9 +13,10 @@ import {
   LADDER_STOPS,
   textForTag,
   textHue,
+  textInkAt,
   TAG_OUTLINE,
 } from "./ladder";
-import { luminanceOf } from "../design/oklch";
+import { luminanceOf, contrastRatio } from "../design/oklch";
 import { label, moveKey, fromKey } from "../model/move";
 
 describe("기하", () => {
@@ -200,6 +201,39 @@ describe("판 위 글자 색(칩 없이 글자만)", () => {
       prev = hue;
     }
     expect(textHue(ratePosition(DEFAULT_PALETTE, 50))).toBeCloseTo(120); // 막상막하 = 초록
+  });
+
+  it("잉크는 Oklch 채도 0.14 를 넘지 않는다 — 형광이 판을 이기지 않게(앱 textInkAt)", () => {
+    // sRGB → OKLab(Ottosson) 의 채도. 옛 HSL 95 % 잉크는 0.2 를 넘었다.
+    const chroma = (c: { r: number; g: number; b: number }) => {
+      const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+      const [r, g, b] = [lin(c.r), lin(c.g), lin(c.b)];
+      const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+      const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+      const s2 = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+      const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s2;
+      const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s2;
+      return Math.hypot(A, B);
+    };
+    for (let hue = 0; hue <= 240; hue += 10) expect(chroma(textInkAt(hue))).toBeLessThan(0.145);
+  });
+
+  it("잉크는 외곽선 위에서 4.5:1 이상이다(모든 색)", () => {
+    for (let hue = 0; hue <= 240; hue += 10) {
+      expect(contrastRatio(textInkAt(hue), rgbOf(TAG_OUTLINE))).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("노랑이 가장 밝고 빨강 · 파랑이 더 깊다 — 색마다 밝기를 준다", () => {
+    const L = (h: number) => luminanceOf(textInkAt(h));
+    expect(L(60)).toBeGreaterThan(L(0));
+    expect(L(60)).toBeGreaterThan(L(240));
+  });
+
+  it("확정 승 · 패만 굵게", () => {
+    expect(textForTag(DEFAULT_PALETTE, "win").bold).toBe(true);
+    expect(textForTag(DEFAULT_PALETTE, "lose").bold).toBe(true);
+    expect(textForTag(DEFAULT_PALETTE, "rate", 63).bold).toBe(false);
   });
 
   it("글자는 밝고 외곽선은 어둡다 — 나무 위에서 읽히게", () => {

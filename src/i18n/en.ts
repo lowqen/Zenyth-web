@@ -1103,8 +1103,6 @@ export const EN: Readonly<Record<string, string>> = {
   "이 레슨의 링크입니다. 복사해 쓰세요": "This is the link to the lesson. Copy it.",
   "링크를 복사했습니다": "Link copied",
   // ── UI 개편(calm-design) — 한 줄 안내 · 펼침 머리 · 엔진 수치 ──
-  "▶ 를 누르면 엔진이 이 국면의 최선수를 찾습니다":
-    "Press ▶ and the engine looks for the best move here",
   "▶ 를 누르면 엔진이 최선수를 찾습니다": "Press ▶ and the engine looks for the best move",
   노드: "Nodes",
   속도: "Speed",

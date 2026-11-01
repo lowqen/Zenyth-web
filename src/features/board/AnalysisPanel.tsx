@@ -105,12 +105,7 @@ export function AnalysisPanel() {
         </p>
       )}
 
-      {blank && (
-        <p className="panel__hint" data-k="analysis-empty">
-          {t("▶ 를 누르면 엔진이 이 국면의 최선수를 찾습니다")}
-        </p>
-      )}
-
+      {/* 아직 읽은 것이 없을 때의 한 줄 안내는 판 아래 요약 줄이 한다 — 카드에 같은 말을 두 번 두지 않는다. */}
       {/* 앱(2026-11-01)처럼 승률 · 평가 · 깊이 세 타일이 카드의 머리다. 최선수는 판 아래 요약 줄이 크게
           말한다(`SummaryLine`, data-k="summary-best"). 시간 · 노드 · 속도는 «세부 수치»를 켰을 때만.
           칸은 data-k 로 집는다(스모크). */}

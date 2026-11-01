@@ -191,6 +191,11 @@ function drawStone(
  * 한 교점의 값 — **글자만**(UI 개편 2차). 예전의 동그라미 칩을 걷어 판 위에 승률 · DB 값 · 정석 기호를
  * 글자로만 쓴다(데스크톱 Yixin 처럼). 색은 `textForTag`(색상이 값), 어두운 외곽선이 나무 위에서 글자를
  * 띄운다. 글자는 한 칸 폭을 넘지 않게 줄인다 — 옆 칸 글자와 붙지 않게.
+ *
+ * **길이 부류마다 한 크기**(앱 2026-10-29). 예전에는 글자마다 자기 폭에 맞춰 줄여서, 칸을 넘는 두 자리 `63` 만
+ * 작아지고 한 자리 `5` 는 그대로였다 — 지는 수가 가장 크게 그려져 크기가 중요도로 읽혔다. 이제 두 글자 이하는
+ * 가장 넓은 두 글자(`W8`, 굵게)가 칸에 들어가는 크기, 세 글자는 `W88` 기준, 네 글자 이상만 자기 폭에 맞춘다.
+ * 굵기는 확정 승 · 패(W · L)만 굵게(850), 승률은 760 — 앱과 같다.
  */
 function drawTag(
   ctx: CanvasRenderingContext2D,
@@ -203,14 +208,13 @@ function drawTag(
 ): void {
   const scale = Math.min(1.4, Math.max(0.6, textScale));
   let size = g.radius * (text.length >= 4 ? 0.8 : text.length === 3 ? 0.9 : 1.05) * scale;
-  ctx.font = `800 ${size}px ${FONT}`;
-  // 외곽선까지 한 칸의 84% 안 — 옆 칸 글자와 틈이 남는다(«87%83%» 처럼 붙지 않게).
+  const reference = text.length <= 2 ? "W8" : text.length === 3 ? "W88" : text;
+  // 굵은 굵기로 재고, 제 굵기로 그린다. 외곽선까지 한 칸의 84% 안 — 옆 칸 글자와 틈이 남는다.
+  ctx.font = `850 ${size}px ${FONT}`;
   const room = g.step * 0.84;
-  const width = ctx.measureText(text).width * 1.2;
-  if (width > room) {
-    size *= room / width;
-    ctx.font = `800 ${size}px ${FONT}`;
-  }
+  const width = ctx.measureText(reference).width * 1.2;
+  if (width > room) size *= room / width;
+  ctx.font = `${colors.bold ? 850 : 760} ${size}px ${FONT}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";

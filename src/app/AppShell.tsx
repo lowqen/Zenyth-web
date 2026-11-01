@@ -48,7 +48,8 @@ export function AppShell() {
   return (
     <div className="shell" data-compact={compact || undefined}>
       {!compact && <NavRail />}
-      <div className="shell__main">
+      {/* 보드 화면은 판의 나무색으로 물든다(앱 WoodTheme — tokens.css 의 [data-wood] 블록). 레일 · 하단 탭은 그대로. */}
+      <div className="shell__main" data-wood={pathname.startsWith("/board") || undefined}>
         <TopBar title={title} />
         {inResearch && <ResearchTabs />}
         <main className="shell__content">
