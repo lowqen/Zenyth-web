@@ -644,8 +644,8 @@ a:focus-visible {
   box-shadow: 0 -1px 6px rgb(0 0 0 / 0.08);
   /* 쉬는 동안은 시트 어디를 끌어도 시트가 움직인다 — 브라우저 스크롤에 넘기지 않는다. */
   touch-action: none;
-  /* 놓으면 가까운 멈춤 자리로 스프링처럼(넘침 조금). 끄는 동안은 손가락을 그대로 따라간다. */
-  transition: transform 420ms cubic-bezier(0.2, 0.9, 0.25, 1.04);
+  /* 놓으면 가까운 멈춤 자리로 스프링(spatial, Z9 — 넘침 조금). 끄는 동안은 손가락을 그대로 따라간다. */
+  transition: transform var(--spring-spatial-ms) var(--spring-spatial);
   will-change: transform;
 }
 .boardsheet[data-dragging],
@@ -723,7 +723,7 @@ a:focus-visible {
   background: var(--c-secondary-container);
   border-radius: calc(var(--h) * 0.42);
   transition:
-    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-radius var(--spring-spatial-fast-ms) var(--spring-spatial-fast),
     background var(--motion-quick) ease-out,
     color var(--motion-quick) ease-out;
 }
@@ -882,7 +882,7 @@ a:focus-visible {
   border-radius: 999px;
   transition:
     background var(--motion-quick) ease-out,
-    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius var(--spring-spatial-fast-ms) var(--spring-spatial-fast);
 }
 .panel__actions button:hover:not(:disabled) {
   background: var(--c-surface-container-highest);
@@ -1056,7 +1056,7 @@ a:focus-visible {
   border-radius: 999px;
   transition:
     background var(--motion-quick) ease-out,
-    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius var(--spring-spatial-fast-ms) var(--spring-spatial-fast);
 }
 .btn:hover:not(:disabled) {
   background: var(--c-surface-container-highest);
@@ -1862,7 +1862,7 @@ a:focus-visible {
   border-radius: 32px 32px 0 0;
 }
 .sheet[open] {
-  animation: sheet-rise 320ms cubic-bezier(0.2, 0.9, 0.25, 1.02);
+  animation: sheet-rise var(--spring-spatial-ms) var(--spring-spatial);
 }
 .sheet:focus {
   outline: none;
@@ -2043,7 +2043,7 @@ a:focus-visible {
   background: var(--c-surface-container-high);
   border-radius: 16px;
   transition:
-    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-radius var(--spring-spatial-fast-ms) var(--spring-spatial-fast),
     background var(--motion-quick) ease-out;
 }
 .filekey .icon {
@@ -2773,7 +2773,6 @@ button.theory__row:hover {
   display: block;
   height: 100%;
   background: var(--c-primary);
-  transition: width var(--motion-quick) ease-out;
 }
 .review__log {
   margin-top: var(--space-l);
@@ -3939,7 +3938,6 @@ button.theory__row:hover {
   height: 100%;
   background: var(--c-primary);
   border-radius: 3px;
-  transition: width 240ms cubic-bezier(0.2, 0, 0, 1);
 }
 .rifjob__meta {
   display: flex;
@@ -4517,7 +4515,7 @@ button.theory__row:hover {
   border-radius: 999px;
   transition:
     filter var(--motion-quick) ease-out,
-    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius var(--spring-spatial-fast-ms) var(--spring-spatial-fast);
 }
 .cta:hover {
   filter: brightness(1.08);
@@ -5272,8 +5270,8 @@ li[data-level="error"] .sissues__dot {
   border-radius: var(--pill-r, var(--radius-xl));
   transform: translate(var(--pill-x, 0), var(--pill-y, 0));
   transition:
-    transform 220ms cubic-bezier(0.2, 0, 0, 1),
-    width 220ms cubic-bezier(0.2, 0, 0, 1);
+    transform var(--spring-spatial-fast-ms) var(--spring-spatial-fast),
+    width var(--spring-spatial-fast-ms) var(--spring-spatial-fast);
 }
 .pilltrack[data-pill="ready"] > [aria-selected="true"],
 .pilltrack[data-pill="ready"] > [aria-checked="true"],
@@ -5438,7 +5436,7 @@ a.slink:hover {
   background: var(--c-surface-container-high);
   border-radius: 20px;
   transition:
-    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-radius var(--spring-spatial-fast-ms) var(--spring-spatial-fast),
     background var(--motion-quick) ease-out,
     color var(--motion-quick) ease-out;
 }
@@ -5485,8 +5483,8 @@ a.slink:hover {
   transform: scale(0.6);
   transition:
     opacity var(--motion-quick) ease-out,
-    transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform var(--spring-spatial-fast-ms) var(--spring-spatial-fast),
+    border-radius var(--spring-spatial-fast-ms) var(--spring-spatial-fast);
 }
 .checkcircle .icon {
   width: 18px;
@@ -5779,7 +5777,7 @@ a.slink:hover {
   background: var(--c-outline-variant);
   border-radius: 999px;
   transition:
-    width 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    width var(--spring-spatial-fast-ms) var(--spring-spatial-fast),
     background var(--motion-quick) ease-out;
 }
 .pagedots__dot[aria-selected="true"] {
@@ -5958,4 +5956,69 @@ a.slink:hover {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-m);
+}
+
+/* ── 모션 마감(Z9 — 앱 ChromeEffects · ChromeMotion, P5 · M7) ─────────────────────────────
+   판 밖에서만. 판 · 평가 바 · 실시간 숫자는 «미끄러지지 않는다 · 200ms 이하» 그대로(tokens.ts MOTION). */
+
+/* 진행 막대: 앞으로 가는 걸음만 미끄러진다(SmoothFill). 뒤로 · 처음 · 끝은 바로. */
+.smoothfill {
+  display: block;
+  height: 100%;
+  background: var(--c-primary);
+  border-radius: 999px;
+}
+.smoothfill[data-glide] {
+  transition: width var(--motion-value) cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* 목록의 첫 등장(useStagger): 처음 10개가 40ms 간격으로 12px 떠오른다. */
+@keyframes stagger-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.stagger > :nth-child(-n + 10) {
+  animation: stagger-rise var(--spring-spatial-ms) var(--spring-spatial) both;
+}
+.stagger > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.stagger > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.stagger > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.stagger > :nth-child(5) {
+  animation-delay: 160ms;
+}
+.stagger > :nth-child(6) {
+  animation-delay: 200ms;
+}
+.stagger > :nth-child(7) {
+  animation-delay: 240ms;
+}
+.stagger > :nth-child(8) {
+  animation-delay: 280ms;
+}
+.stagger > :nth-child(9) {
+  animation-delay: 320ms;
+}
+.stagger > :nth-child(10) {
+  animation-delay: 360ms;
+}
+.settings__groups {
+  display: contents;
+}
+
+/* 감속 모드면 전부 끈다 — 위의 전역 규칙은 길이만 줄이므로 지연(스태거)과 스프링 모양도 걷는다. */
+@media (prefers-reduced-motion: reduce) {
+  .stagger > * {
+    animation: none !important;
+  }
+  .smoothfill[data-glide] {
+    transition: none;
+  }
 }

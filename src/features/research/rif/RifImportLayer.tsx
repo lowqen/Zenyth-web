@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RIF_PHASE_TEXT } from "./protocol";
+import { SmoothFill } from "../../../components/SmoothFill";
 import { fmtInt, fmtMB, fmtSec, rifFrom } from "./format";
 import { useRifStore } from "./rifStore";
 import { t } from "../../../i18n/i18n";
@@ -123,7 +124,7 @@ function RifProgressCard() {
           aria-valuenow={pct}
           aria-label={t("변환 진행")}
         >
-          <span style={{ width: `${pct}%` }} />
+          <SmoothFill fraction={job.fraction} />
         </div>
         <p className="rifjob__meta tnum">
           {job.phase === "read"
