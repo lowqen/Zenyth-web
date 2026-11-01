@@ -69,3 +69,7 @@ __pycache__/
 Thumbs.db
 npm-debug.log*
 pnpm-debug.log*
+
+# 스크린샷 골든(scripts/shots.ts) — 골든(shots/golden/)만 커밋한다. 찍은 그림 · 차이 그림은 매번 다시 생긴다.
+/shots/actual/
+/shots/diff/

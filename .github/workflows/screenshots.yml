@@ -1,0 +1,63 @@
+name: screenshots
+
+# 스크린샷 골든(scripts/shots.ts) — 화면 9개 × 라이트/다크 × 넓은/좁은 폭을 찍어 shots/golden/ 과 대조한다.
+# docs/앱-디자인-정렬-계획.md Z0: 디자인을 단계마다 바꾸는 동안 «이 단계가 바꾼 화면은 이것뿐»을 그림으로 보인다.
+#
+# **골든은 이 러너에서만 유효하다** — 글자 래스터가 OS · 글꼴에 따라 달라 로컬 그림과는 맞지 않는다.
+# 그래서 러너 이미지를 ubuntu-latest 가 아니라 판으로 고정한다(latest 가 넘어가는 날 골든 전부가 빨개지지 않게).
+#
+#   verify(push · PR 마다): 다르면 실패하고, 찍은 그림(actual)과 차이 그림(diff)을 아티팩트로 올린다.
+#   record(수동, mode=record): 찍은 그림을 아티팩트로 올린다 — 내려받아 shots/golden/ 에 커밋한다.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "spike/**"
+      - "tools/**"
+      - "bench/**"
+      - "**/*.md"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "verify(대조) 또는 record(골든 후보 기록)"
+        type: choice
+        options: [verify, record]
+        default: verify
+
+permissions:
+  contents: read
+
+concurrency:
+  group: screenshots-${{ github.ref }}-${{ inputs.mode || 'verify' }}
+  cancel-in-progress: true
+
+jobs:
+  shots:
+    name: 스크린샷 — ${{ inputs.mode || 'verify' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          playwright: "true"
+
+      # 엔진 릴리스 없이 앱만 — 장면은 엔진을 띄우지 않는다(?autoboot=0).
+      - name: 빌드
+        run: pnpm gen:tokens && pnpm exec vite build
+
+      - name: 찍기
+        env:
+          MODE: ${{ inputs.mode || 'verify' }}
+        run: pnpm exec tsx scripts/shots.ts "$MODE"
+
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shots-${{ inputs.mode || 'verify' }}
+          path: |
+            shots/actual/
+            shots/diff/
+          if-no-files-found: ignore
