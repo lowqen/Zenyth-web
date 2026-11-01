@@ -124,7 +124,11 @@ public final class ToneDump {
         return String.format("#%02X%02X%02X", pack8(rgb[0]), pack8(rgb[1]), pack8(rgb[2]));
     }
 
-    // ── Color.kt 의 아홉 램프 ────────────────────────────────────────
+    // ── Color.kt 의 열네 램프(앱과 같은 순서) ───────────────────────
+    //
+    // 2026-10-29 앱 UI 개편 2차가 다섯을 더하고(Maple · Violet · Lilac · Mist · MistVariant)
+    // WoodNight 를 82° → 70° 로 옮겼다(판 색 교체 — 메이플). 웹도 같이 간다
+    // (docs/앱-디자인-정렬-계획.md Z0 ②).
 
     record Ramp(String name, float hue, float chroma) {}
 
@@ -134,7 +138,12 @@ public final class ToneDump {
         new Ramp("NeutralVariant", 74f, 0.016f),
         new Ramp("Sage", 148f, 0.060f),
         new Ramp("Clay", 82f, 0.095f),
-        new Ramp("WoodNight", 82f, 0.050f),
+        new Ramp("Maple", 70f, 0.075f),
+        new Ramp("WoodNight", 70f, 0.050f),
+        new Ramp("Violet", 298f, 0.09f),
+        new Ramp("Lilac", 298f, 0.035f),
+        new Ramp("Mist", 298f, 0.005f),
+        new Ramp("MistVariant", 298f, 0.012f),
         new Ramp("Signal", 27f, 0.130f),
         new Ramp("ResultBlue", 245f, 0.085f),
         new Ramp("ResultGreen", 155f, 0.085f),
@@ -157,7 +166,7 @@ public final class ToneDump {
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         sb.append("  \"_\": [\n");
-        sb.append("    \"Color.kt 의 아홉 램프를 톤 0..100 전부 덤프한 것. 웹 이식의 기준값이다.\",\n");
+        sb.append("    \"Color.kt 의 열네 램프를 톤 0..100 전부 덤프한 것. 웹 이식의 기준값이다.\",\n");
         sb.append("    \"생성: java tools/tone-dump/ToneDump.java  (.github/workflows/tone-dump.yml)\",\n");
         sb.append("    \"근거: Kotlin Float = Java float, kotlin.math = java.lang.Math,\",\n");
         sb.append("    \"      Compose 의 sRGB Color 는 (v*255f + 0.5f).toInt() 로 8비트 패킹한다(반올림).\",\n");
