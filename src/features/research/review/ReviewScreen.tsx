@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SmoothFill } from "../../../components/SmoothFill";
 import { DurationField, Segmented, Switch } from "../../../components/controls";
 import { Disclosure } from "../../../components/Disclosure";
 import { REVIEW_TIME_SPEC } from "../../../core/settings/duration";
@@ -114,7 +115,7 @@ export function ReviewScreen() {
         {p && (
           <div className="review__progress" role="status" aria-live="polite">
             <div className="review__bar">
-              <span style={{ width: `${Math.min(100, (100 * p.index) / (p.total + 1))}%` }} />
+              <SmoothFill fraction={p.index / (p.total + 1)} />
             </div>
             <p className="tnum" data-k="review-progress">
               {p.queueTotal > 1

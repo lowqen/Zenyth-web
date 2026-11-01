@@ -15,6 +15,7 @@ import { ICON } from "../../../components/icon-paths";
 import { JosekiComment } from "../JosekiComment";
 import { LessonView } from "./LessonView";
 import { useAdminTools } from "../admin";
+import { useStagger } from "../../../components/useStagger";
 
 /**
  * 공식 정석 커리큘럼 — 코스 목록 · 코스 · 레슨 세 층(docs/공식-정석-설계.md §4). 모든 사용자에게 읽기
@@ -52,6 +53,7 @@ export function CurriculumHome() {
   const [params, setParams] = useSearchParams();
   const admin = useAdminTools((a) => a.on);
   const navigate = useNavigate();
+  const stagger = useStagger("curriculum-courses");
   const open = params.get("lesson");
   const courseId = params.get("course");
   const mode = params.get("mode") === "learn" ? "learn" : "browse";
@@ -152,7 +154,7 @@ export function CurriculumHome() {
       {file.courses.length === 0 ? (
         <p className="cur__empty">{t("아직 실린 코스가 없습니다.")}</p>
       ) : (
-        <ul className="cards" aria-label={t("코스")}>
+        <ul className={"cards" + stagger} aria-label={t("코스")}>
           {file.courses.map((c) => {
             const done = c.lessons.filter((l) => progress[l.id]).length;
             const first = c.lessons[0];
@@ -204,6 +206,7 @@ function CoursePage({
   onLesson: (id: string) => void;
 }) {
   const lessons = course.lessons;
+  const stagger = useStagger(`course-${course.id}`);
   const done = lessons.filter((l) => progress[l.id]).length;
   // 「시작」은 아직 안 한 첫 레슨으로 — 다 했으면 첫 레슨부터 다시.
   const target = lessons.find((l) => !progress[l.id]) ?? lessons[0];
@@ -253,7 +256,7 @@ function CoursePage({
         </div>
       </header>
 
-      <ol className="cards lessonlist" aria-label={t("레슨")}>
+      <ol className={"cards lessonlist" + stagger} aria-label={t("레슨")}>
         {lessons.map((l, i) => {
           const p = progress[l.id];
           return (

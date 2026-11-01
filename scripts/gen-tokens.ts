@@ -41,6 +41,8 @@ import {
   RHYTHM,
 } from "../src/core/design/tokens.ts";
 
+import { SPRINGS, SPRING_FALLBACK, springEasing } from "../src/core/design/springs.ts";
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(HERE, "../src/styles/tokens.css");
 
@@ -59,6 +61,15 @@ function colorBlock(s: Scheme, indent: string, keys: readonly string[] = Object.
   return keys.map((k) => `${indent}--c-${k}: ${value(s[k]!)};`).join("\n");
 }
 
+const kebab = (k: string) => k.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase());
+
+/** 스프링의 진짜 곡선 — `linear()` 를 아는 브라우저만. */
+function springBlock(): string {
+  return (Object.keys(SPRINGS) as (keyof typeof SPRINGS)[])
+    .map((k) => `    --spring-${kebab(k)}: ${springEasing(SPRINGS[k]).easing};`)
+    .join("\n");
+}
+
 function typeBlock(): string {
   const lines = [`  --font-sans: ${FONT_STACKS.sans};`, `  --font-mono: ${FONT_STACKS.mono};`];
   for (const [name, s] of Object.entries(TYPE)) {
@@ -69,9 +80,15 @@ function typeBlock(): string {
   for (const [k, v] of Object.entries(SPACE)) lines.push(`  --space-${k}: ${v}px;`);
   for (const [k, v] of Object.entries(RADIUS)) lines.push(`  --radius-${k}: ${v}px;`);
   for (const [k, v] of Object.entries(MOTION)) lines.push(`  --motion-${k}: ${v}ms;`);
+  // 크롬 스프링(Z9): 멈출 때까지의 시간과, `linear()` 를 모르는 브라우저를 위한 3차 곡선. 진짜 곡선은 아래
+  // @supports 블록이 덮는다.
+  for (const k of Object.keys(SPRINGS) as (keyof typeof SPRINGS)[]) {
+    const name = kebab(k);
+    lines.push(`  --spring-${name}: ${SPRING_FALLBACK[k]};`);
+    lines.push(`  --spring-${name}-ms: ${springEasing(SPRINGS[k]).ms}ms;`);
+  }
   // camelCase → kebab-case: screenPadding → --screen-padding
-  for (const [k, v] of Object.entries(RHYTHM))
-    lines.push(`  --${k.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase())}: ${v}px;`);
+  for (const [k, v] of Object.entries(RHYTHM)) lines.push(`  --${kebab(k)}: ${v}px;`);
   lines.push(`  --reading-width: ${LAYOUT.readingWidth}px;`);
   lines.push(`  --wide-min: ${LAYOUT.wideMin}px;`);
   return lines.join("\n");
@@ -88,6 +105,13 @@ const css = `/* 생성물입니다 — 손으로 고치지 마세요.
 ${colorBlock(LightScheme, "  ")}
 
 ${typeBlock()}
+}
+
+/* 크롬 스프링(Z9 — springs.ts, 앱 ChromeMotion). 판에는 쓰지 않는다. */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+${springBlock()}
+  }
 }
 
 /* 시스템 설정이 다크이고, 사용자가 라이트를 **명시**하지 않았을 때.

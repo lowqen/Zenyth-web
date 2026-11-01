@@ -1,6 +1,7 @@
 import { Icon } from "../../../components/icons";
 import { ICON } from "../../../components/icon-paths";
 import { Sheet } from "../../../components/Sheet";
+import { SmoothFill } from "../../../components/SmoothFill";
 import { t } from "../../../i18n/i18n";
 import { RIF_PHASE_TEXT } from "./protocol";
 import { RENJUNET_DOWNLOADS, fmtInt } from "./format";
@@ -140,7 +141,7 @@ function Building() {
         aria-valuenow={pct}
         aria-label={t("변환 진행")}
       >
-        <span style={{ width: `${pct}%` }} />
+        <SmoothFill fraction={job.fraction} />
       </div>
       <p className="gamedata__note">{t("다른 화면으로 가도 계속됩니다")}</p>
       <button type="button" className="ghostbtn" onClick={cancel}>

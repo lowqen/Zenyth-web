@@ -25,6 +25,7 @@ import { useAdminTools } from "../joseki/admin";
 import { MAPPED_IDS } from "../../core/settings/desktop-bridge";
 import { ALL_SPECS } from "../../core/settings/desktop-settings";
 import { msg, pick, setLang, t, useLang, type Lang } from "../../i18n/i18n";
+import { useStagger } from "../../components/useStagger";
 
 /**
  * 설정 — 앱 UI 개편 2차 M3: **목록 → 하위 화면**.
@@ -713,6 +714,7 @@ function RootPage() {
   const pro = useProMode();
   const update = useSettingsStore((s) => s.update);
   const found = useMemo(() => (q ? ROWS.filter((r) => matches(r, q)) : []), [q]);
+  const stagger = useStagger("settings-root");
 
   return (
     <>
@@ -752,7 +754,7 @@ function RootPage() {
           ))
         )
       ) : (
-        <>
+        <div className={"settings__groups" + stagger}>
           <Group id="pages">
             <LinkRow
               to="design"
@@ -807,7 +809,7 @@ function RootPage() {
               note={t("Zenyth Web · 라이선스")}
             />
           </Group>
-        </>
+        </div>
       )}
     </>
   );
