@@ -10,6 +10,8 @@ import { useOpeningTables } from "../../data/opening-tables";
 import { useBoardStore } from "../board/boardStore";
 import { useJosekiStore } from "./josekiStore";
 import { langOf, t } from "../../i18n/i18n";
+import { Icon } from "../../components/icons";
+import { ICON } from "../../components/icon-paths";
 
 /**
  * 정석 목록 — 찾기(제목 · 분류 · 태그 · 메모 전문) · 분류/태그 거르기 · **지금 보드 국면으로 찾기**
@@ -155,11 +157,16 @@ export function JosekiList() {
           <ul className="jlist" data-k="joseki-list">
             {shown.map(({ tree, c, n }) => (
               <li key={tree.id}>
+                <span className="icontile" aria-hidden="true">
+                  <Icon d={ICON.fileOpen} />
+                </span>
                 <button type="button" className="jlist__open" onClick={() => s.open(tree.id)}>
-                  <span className="jlist__title">{tree.title}</span>
+                  <span className="jlist__title">
+                    {tree.title} <span className="pillbadge tnum">{t("{n}수", { n })}</span>
+                  </span>
                   <span className="jlist__meta">
                     <span lang={langOf(t(c.category))}>{t(c.category)}</span>
-                    {c.group ? ` · ${c.group}` : ""} · {t("{n}수", { n })} ·{" "}
+                    {c.group ? ` · ${c.group}` : ""} ·{" "}
                     {new Date(tree.updatedAt).toLocaleDateString()}
                     {tree.tags.length ? ` · ${tree.tags.map((x) => `#${x}`).join(" ")}` : ""}
                   </span>

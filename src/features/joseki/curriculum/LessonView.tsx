@@ -21,6 +21,7 @@ import { JosekiComment } from "../JosekiComment";
 import { Icon } from "../../../components/icons";
 import { ICON } from "../../../components/icon-paths";
 import { TreeView } from "../TreeView";
+import { useSlidingPill } from "../../../components/useSlidingPill";
 
 /**
  * 공식 커리큘럼의 레슨 하나 — **살펴보기**(트리 · 판 · 해설을 자유롭게)와 **학습**(수순을 맞히며 따라 두기,
@@ -176,6 +177,7 @@ export function LessonView({
   };
   const linkLabel = copied ? t("링크를 복사했습니다") : t("링크 복사");
 
+  const tabsTrack = useSlidingPill<HTMLDivElement>(mode);
   return (
     <div className="lesson" data-k="lesson" data-lesson={lesson.id} data-mode={mode}>
       <div className="lesson__stage">
@@ -205,13 +207,18 @@ export function LessonView({
           )}
         </header>
 
-        <div className="lessontabs" role="tablist" aria-label={t("레슨 모드")}>
+        <div
+          ref={tabsTrack}
+          className="modetabs pilltrack lessontabs"
+          role="tablist"
+          aria-label={t("레슨 모드")}
+        >
           {(["browse", "learn"] as const).map((m) => (
             <button
               key={m}
               type="button"
               role="tab"
-              className="lessontabs__tab"
+              className="modetabs__tab lessontabs__tab"
               data-mode={m}
               aria-selected={mode === m}
               onClick={() => onMode(m)}
