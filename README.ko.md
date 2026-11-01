@@ -70,7 +70,7 @@ Zenyth Web 은 그것을 **WebAssembly** 로 옮기고 분석반 전체를 얹�
 - 교차 출처 격리(COOP/COEP)가 되면 `SharedArrayBuffer` 위의 pthread, 아니면 시간 분할 단일 스레드.
 - 가중치는 한 번 받아 **SHA-256 으로 검증**한 뒤 Cache Storage 에서 꺼내 쓴다.
 - 엔진 패치는 감이 아니라 측정으로 고른다. SPRT 대국 · 필승 묶음 · 고정 깊이 벤치가 CI 에서 돈다.
-  배포 빌드는 순정 Rapfi WASM 빌드보다 **Elo +100**(1 스레드 · 수당 500ms, [분석](docs/gomocalc-대국-분석.md)).
+  배포 빌드는 순정 Rapfi WASM 빌드보다 **Elo +100**(1 스레드 · 수당 500ms, [분석](docs/engineering-notes.md) §3).
 
 ### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/convert-dark.svg"><img src="docs/readme/features/convert-light.svg" height="28" align="top" alt=""></picture> 브라우저 안 고속 기보 변환
 - RenjuNet 기보(`.rif`, 43MB, 약 11만 9천 판)를 **아무 화면에나 끌어다 놓으면** 워커가 바이트를
@@ -183,8 +183,7 @@ WebAssembly SIMD 와 CSP 의 `'wasm-unsafe-eval'` 이 필수다: **Chrome/Edge 9
 | 문서 | 내용 |
 |---|---|
 | [`docs/기능-안내.md`](docs/기능-안내.md) | 화면별 상세 기능 안내 |
-| [`docs/최적화-마스터플랜.md`](docs/최적화-마스터플랜.md) | 엔진 최적화 기록: 패치마다 측정과 판정 |
-| [`docs/gomocalc-대국-분석.md`](docs/gomocalc-대국-분석.md) | Elo +100 의 근거가 된 대국 분석 |
+| [`docs/engineering-notes.md`](docs/engineering-notes.md) | 개발 기록: 엔진 탑재 · 최적화(패치마다 측정과 판정) · Elo +100 의 대국 분석 · 보안 · 디자인 결정 |
 | [`public/engine/README.md`](public/engine/README.md) | 엔진 변형 · 빌드 출처 · 가중치 캐시 |
 
 ## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/licence-dark.svg"><img src="docs/readme/sections/licence-light.svg" height="32" align="top" alt=""></picture> 라이선스와 자료

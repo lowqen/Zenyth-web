@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * SPRT 러너 — Gomocup 엔진 둘(A = 시험, B = 기준)을 렌주 26개 표준 개시에서 **색을 바꿔 두 판씩** 맞붙이고,
- * 판이 끝날 때마다 Wald SPRT 의 LLR 을 쌓아 경계를 넘으면 멈춘다. docs/최적화-마스터플랜.md Phase 3 의 선행 작업.
+ * 판이 끝날 때마다 Wald SPRT 의 LLR 을 쌓아 경계를 넘으면 멈춘다. docs/engineering-notes.md §2 판정 규칙 2 의 도구.
  *
  *   node bench/sprt/runner.mjs --a "<명령줄>" --b "<명령줄>" [옵션]
  *

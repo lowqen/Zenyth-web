@@ -265,7 +265,7 @@ describe("RIF 오프닝", () => {
 describe("Soosorv-8 · 스왑2 는 없다", () => {
   it("개시 목록이 셋뿐이다", () => {
     // 엔진이 `yxsoosorvstep*` / `yxswap2step*` 를 모르기 때문이다
-    // (docs/오프닝-협상-엔진-지원.md). 목록이 늘어나면 이 시험이 먼저 깨진다.
+    // (docs/engineering-notes.md §5). 목록이 늘어나면 이 시험이 먼저 깨진다.
     expect(Object.keys(OPENING_LABEL).sort()).toEqual(["none", "rif", "swapFirst"]);
   });
 

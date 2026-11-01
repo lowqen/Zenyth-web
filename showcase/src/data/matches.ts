@@ -1,6 +1,6 @@
 /**
  * gomocalc 대조 대국 — `bench/sprt/match-report.mjs` 가 CI 기보(match-gomocalc.yml)에서 만든 JSON 그대로.
- * 다시 만들려면 보고서 `docs/gomocalc-대국-분석.md` 의 「재현」 절.
+ * 다시 만들려면 `docs/engineering-notes.md` §3 의 「재현」.
  */
 // 있는 것만 싣는다 — CPU 별 재측정(match-relaxed-<cpu>.json)은 런이 끝나 파일이 생기면 저절로 화면에 나온다.
 const FILES = import.meta.glob<MatchReport>("./match-*.json", { eager: true, import: "default" });

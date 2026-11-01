@@ -1,6 +1,6 @@
 name: A4 관문 0 — 정책 재계산 비율(정책 결과 캐시 착수 판단)
 
-# 카드 ④(정책 결과 캐시 — docs/최적화-마스터플랜.md 2부 §8.12)를 짓기 전의 싼 관문.
+# 카드 ④(정책 결과 캐시 — docs/engineering-notes.md §2 A4)를 짓기 전의 싼 관문.
 # 배포 구성(P2-2 · A1 · P4-1 · A3) + 측정 전용 a4-diag-policy-reuse.patch 를 WASM 으로 짓고(결과 불변 — BENCH 해시 관문),
 # 고정 깊이(--det 와 같은 설정)로 국면을 풀며 evaluatePolicy 가 「이미 같은 칸들로 계산한 국면」을 다시 부르는 비율을
 # 표 크기 2^8 ~ 2^16 의 직접 사상 표로 흉내 내 센다 — bench/a4/policy-reuse.mjs.

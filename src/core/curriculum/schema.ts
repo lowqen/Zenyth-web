@@ -10,7 +10,7 @@ import {
 
 /**
  * 공식 정석 커리큘럼 — 관리자가 만들어 저장소의 정적 자산(`public/joseki/curriculum.json`)으로 싣고,
- * 모든 사용자가 읽기 전용으로 배운다. 설계는 `docs/공식-정석-설계.md`.
+ * 모든 사용자가 읽기 전용으로 배운다. 설계는 `docs/engineering-notes.md` §6.
  *
  * 마디는 «내 정석»의 `JosekiNode` 와 같은 모양이다 — 다른 것은 해설이 두 언어를 받을 수 있다는 것뿐
  * (`Text`). 그래서 화면은 언어를 고른 뒤 `JosekiNode` 로 바꿔(`resolveNode`) 트리 · 판 · 마크다운을 그대로 쓴다.

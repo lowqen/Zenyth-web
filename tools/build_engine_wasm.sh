@@ -42,7 +42,7 @@ ENABLE_LTO="${ENABLE_LTO:-ON}"
 #   EXTRA_VARIANTS     공백 구분. multi-simd128-relaxed / single-simd128-relaxed
 #                      (-DUSE_WASM_SIMD_RELAXED=ON). **배포 릴리스는 둘 다 켠다**
 #                      (engine-release.yml) — 같은 소스에서 NPS +23%, BENCH 해시 동일
-#                      (docs/gomocalc-엔진-비교.md). 앱이 지원을 감지해 먼저 띄운다.
+#                      (docs/engineering-notes.md §3 G0). 앱이 지원을 감지해 먼저 띄운다.
 #   PRELOAD_SET=full   벤치 전용(bench-gomocalc.yml). upstream 프리로드(가중치 4종, 40.3MB)를
 #                      그대로 굽는다 — BENCH 국면 10개 중 7개가 프리스타일·스탠다드라서.
 #                      25MB 를 넘어 배포 불가.
@@ -56,10 +56,10 @@ RELEASE_TAG="${RELEASE_TAG:-}"
 EXTRA_LDFLAGS="${EXTRA_LDFLAGS:-}"
 # upstream 패치(공백 구분, 저장소 루트 기준 경로 — 예: tools/patches/p2-1-codebook-pipeline.patch).
 # **기본값은 비움 = 패치 없음.** Phase 2 의 결과 불변 패치를 BENCH 해시로 판정할 때 켜고
-# (docs/최적화-마스터플랜.md 1부 §4 Phase 2, engine-patch.yml), 채택된 것은 engine-release.yml 이 잡 env 로
+# (docs/engineering-notes.md §2 판정 규칙 1, engine-patch.yml), 채택된 것은 engine-release.yml 이 잡 env 로
 # 넘긴다(P2-2 부터 — 릴리스 본문이 밝히고 패치 파일을 자산으로 함께 낸다). 적용한 패치는 ENGINE_VERSION.txt 에 적힌다.
 RAPFI_PATCHES="${RAPFI_PATCHES:-}"
-# .wasm 후처리 패스(예: "-O4 --converge" — docs/최적화-마스터플랜.md 2-i · P2-6). **기본값은 비움 = 하지
+# .wasm 후처리 패스(예: "-O4 --converge" — docs/engineering-notes.md §2 P2-6). **기본값은 비움 = 하지
 # 않음.** emcc 가 링크 때 이미 wasm-opt 를 돌리므로 이것은 그 위에 얹는 추가 패스다. 켜면 [4.5/6] 에서
 # 변형마다 그 변형이 쓰는 기능만 켜고 돌린다(wasm_features). 적용 여부는 ENGINE_VERSION.txt 에 적힌다.
 WASM_OPT_POST="${WASM_OPT_POST:-}"

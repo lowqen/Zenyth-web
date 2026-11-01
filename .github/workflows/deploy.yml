@@ -239,8 +239,8 @@ jobs:
           echo "/showcase → $code"
           echo "- 쇼케이스: $BASE_URL/showcase/" >> "$GITHUB_STEP_SUMMARY"
 
-      # 보안 헤더가 **실제 응답**에 붙었는가 — 페이지 · 엔진 워커 스크립트 · 엔진 산출물(docs/보안-강화-계획.md
-      # Phase 1). 워커는 자기 응답의 CSP 를 따르므로 워커 스크립트도 본다. 소스맵은 배포본에서 뺐으므로
+      # 보안 헤더가 **실제 응답**에 붙었는가 — 페이지 · 엔진 워커 스크립트 · 엔진 산출물(docs/engineering-notes.md
+      # §4 Phase 1). 워커는 자기 응답의 CSP 를 따르므로 워커 스크립트도 본다. 소스맵은 배포본에서 뺐으므로
       # .map 주소는 SPA 폴백(HTML)이 나와야 한다 — 상태 코드가 아니라 내용이 맵인지로 본다.
       - name: 배포 검증 — 보안 헤더 · 소스맵
         if: env.TARGET == 'cloudflare'

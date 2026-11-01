@@ -3,7 +3,7 @@ import { cleanCurriculum, type CurriculumFile } from "../core/curriculum/schema"
 import { msg } from "../i18n/i18n";
 
 /**
- * 공식 정석 커리큘럼 받기 · 진도(docs/공식-정석-설계.md).
+ * 공식 정석 커리큘럼 받기 · 진도(docs/engineering-notes.md §6).
  *
  * 커리큘럼은 같은 출처의 정적 자산 `public/joseki/curriculum.json` 이다 — 앱 번들과 따로 캐시되고, 관리자가
  * 그 파일만 바꿔 배포한다. 받은 JSON 은 검증을 거친 것만 쓴다(`cleanCurriculum`).

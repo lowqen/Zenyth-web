@@ -12,7 +12,7 @@
  * 없어 **classical 폴백 평가**로 돈다(web-baseline.json). 그 경로는 relaxed 에서 값이 갈린다 —
  * 2026-09-30 릴리스 런에서 relaxed BENCH 가 dd5e1c73(7,387,373 노드)로, 일반 2b7c7da9
  * (7,170,518)와 달랐다. 반면 가중치 4종 빌드(10개 모두 NNUE)에서는 relaxed = 일반
- * (4100a973, docs/gomocalc-엔진-비교.md §4.3). 앱은 렌주만 두고 렌주는 늘 NNUE 로 평가하므로,
+ * (4100a973, docs/engineering-notes.md §3 G0). 앱은 렌주만 두고 렌주는 늘 NNUE 로 평가하므로,
  * 판정해야 할 것은 **렌주 국면에서의 동등성**이다.
  *
  * ## 무엇을 비교하나

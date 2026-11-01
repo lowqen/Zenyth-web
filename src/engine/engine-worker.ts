@@ -44,7 +44,7 @@ import type { Move } from "../core/model/move";
  * 변경·새 명령은 **그 경계에서** 처리된다. 해시 테이블이 유지되므로 재탐색 비용은
  * 크지 않다. 대가는 「즉시 정지」가 「최대 한 조각 뒤 정지」가 되는 것이다.
  *
- * ## 멀티스레드 변형에서는 반대다 (W0c, `docs/W0c-결과.md`)
+ * ## 멀티스레드 변형에서는 반대다 (W0c, `docs/engineering-notes.md` §1 C1 · C2)
  *
  * 엔진이 자기 pthread 에서 돌고 `sendCommand` 는 **즉시** 돌아온다. 답은 엔진
  * 스레드가 이 워커로 되돌려 보내는 줄로 **비동기로** 온다. 그래서 멀티 변형은
@@ -626,7 +626,7 @@ async function boot(msg: Extract<ToWorker, { type: "boot" }>) {
   if (msg.settings?.length) sendAll(msg.settings);
 
   // 예열 — 「떴다」를 알리기 **전에** 돈다. 첫 탐색이 치르던 가중치 풀기(0.4~0.9초)와
-  // JIT 승격 전 구간(첫 탐색 10~26% 느림, docs/gomocalc-엔진-비교.md §4.2)을 여기서
+  // JIT 승격 전 구간(첫 탐색 10~26% 느림, docs/engineering-notes.md §3 G0(냉 탐색))을 여기서
   // 치르고, 이 변형이 **실제로 탐색하는지**까지 확인한다 — 여기서 던지면 클라이언트가 다음
   // 변형으로 물러선다(relaxed 가 이 기기에서 이상하면 일반 SIMD 로).
   if (msg.warmupMs && msg.warmupMs > 0) post({ type: "phase", phase: "warmup" });

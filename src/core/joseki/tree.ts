@@ -22,7 +22,7 @@ export const MARK_LABEL: Readonly<Record<JosekiMark, string>> = localized({
 });
 
 /**
- * 갈래의 쓰임 — 평가 기호와 따로 단다(공식 커리큘럼, docs/공식-정석-설계.md §3).
+ * 갈래의 쓰임 — 평가 기호와 따로 단다(공식 커리큘럼, docs/engineering-notes.md §6 데이터).
  *   `trap`   함정수 — 그럴듯하지만 걸려드는 수, 또는 상대가 놓는 덫
  *   `refute` 응징 · 대응 — 나쁜 수나 함정을 벌하는 답
  */

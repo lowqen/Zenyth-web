@@ -1,12 +1,12 @@
 # 정적 호스팅용 헤더(Cloudflare Pages 가 읽는다). **보안 · 격리 헤더의 원본은 이 파일 하나다** —
 # vite.config.ts(개발 서버 · 미리보기)와 scripts/isolation.ts(스모크 서버)가 scripts/headers.ts 로 아래
 # `/*` 블록을 읽어 같은 헤더를 붙인다. 그러니 여기를 고치면 스모크가 곧 그 정책의 시험이 된다.
-# 근거와 검토는 docs/보안-강화-계획.md(Phase 1).
+# 근거와 검토는 docs/engineering-notes.md §4 Phase 1.
 #
 # **COOP/COEP 로 교차 출처 격리를 켠다(스레드 조절 2단계).** 멀티스레드 엔진
 # (multi-simd128)은 SharedArrayBuffer 가 있어야 pthread 를 세우고, 그것은
 # crossOriginIsolated 일 때만 열린다. W0c 에서 헤더 없이는 세 브라우저 모두 멀티
-# 엔진이 무응답이었다(docs/W0c-결과.md).
+# 엔진이 무응답이었다(docs/engineering-notes.md §1 C1).
 #
 # 헤더를 붙일 수 없는 호스팅(GitHub Pages 등)이나 격리를 모르는 브라우저에서는 앱이
 # 이것을 감지해 **단일 스레드 엔진으로 물러선다**(engine-client.ts detectCapabilities)

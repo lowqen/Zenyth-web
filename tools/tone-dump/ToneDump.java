@@ -128,7 +128,7 @@ public final class ToneDump {
     //
     // 2026-10-29 앱 UI 개편 2차가 다섯을 더하고(Maple · Violet · Lilac · Mist · MistVariant)
     // WoodNight 를 82° → 70° 로 옮겼다(판 색 교체 — 메이플). 웹도 같이 간다
-    // (docs/앱-디자인-정렬-계획.md Z0 ②).
+    // (docs/engineering-notes.md §8 Z0).
 
     record Ramp(String name, float hue, float chroma) {}
 

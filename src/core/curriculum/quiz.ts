@@ -2,7 +2,7 @@ import { sameMove, type Move } from "../model/move";
 import type { JosekiNode } from "../joseki/tree";
 
 /**
- * 커리큘럼 학습(퀴즈) 판정 — 순수 함수(docs/공식-정석-설계.md §5). 화면은 이 상태를 들고 있다가
+ * 커리큘럼 학습(퀴즈) 판정 — 순수 함수(docs/engineering-notes.md §6 학습). 화면은 이 상태를 들고 있다가
  * 판을 누를 때마다 `answer` 로 다음 상태를 받는다.
  *
  *   - 학습자 차례에 **추천 수**(주 변화 `[0]`)나 **좋은 수**(`!!` `!` `!?`, 함정 아님)를 두면 정답 —

@@ -5,7 +5,7 @@ import { create } from "zustand";
  * 레슨으로» 단추를 연다.
  *
  * **보안 장치가 아니다.** 누구나 켤 수 있고, 켜서 할 수 있는 일은 초안을 고치고 JSON 파일을 내려받는 것까지다. 배포본의
- * 커리큘럼을 바꾸는 권한은 저장소에 쓸 권한(git · CODEOWNERS)이다(docs/공식-정석-설계.md §2).
+ * 커리큘럼을 바꾸는 권한은 저장소에 쓸 권한(git · CODEOWNERS)이다(docs/engineering-notes.md §6 권한).
  */
 const KEY = "rapfi.adminTools";
 

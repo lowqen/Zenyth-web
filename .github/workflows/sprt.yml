@@ -1,7 +1,7 @@
 name: SPRT (네이티브 대국)
 
 # bench/sprt/runner.mjs 로 네이티브 Rapfi 둘을 렌주 26개 표준 개시에서 쌍 대국시키고 SPRT 로 판정한다 —
-# docs/최적화-마스터플랜.md Phase 3 의 「트리를 바꾸는 변경」 게이트. 탐색 변경은 네이티브(wasm 보다 2~4배 빠름)에서
+# docs/engineering-notes.md §2 판정 규칙 2(트리를 바꾸는 변경)의 게이트. 탐색 변경은 네이티브(wasm 보다 2~4배 빠름)에서
 # Elo 로 판정하고, 통과한 것만 wasm 으로 옮긴다(탐색 트리는 네이티브와 wasm 이 같다).
 #
 #   기준(B) = base_patches 를 얹은 빌드 · 시험(A) = base_patches + test_patches
