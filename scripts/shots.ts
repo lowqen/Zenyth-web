@@ -22,6 +22,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PNG } from "pngjs";
 import { CURRICULUM_FIXTURE, serveDist } from "./serve-dist.ts";
+import { SEEN_INTRO } from "./csp-watch.ts";
 
 const PORT = Number(process.env.SMOKE_PORT ?? 4183);
 const MODE = process.argv[2] === "record" ? "record" : "verify";
@@ -44,6 +45,8 @@ const SCENES: ReadonlyArray<{ name: string; path: string }> = [
   // 설정 하위 화면(Z5) — 미리보기 카드 · 테마 단추 · 체크 원이 있는 둘.
   { name: "settings-design", path: "/settings/design" },
   { name: "settings-general", path: "/settings/general" },
+  // 처음 온 사람의 환영(Z8) — 화면 전체를 덮는 한 장.
+  { name: "welcome", path: "/board?firstvisit=1" },
 ];
 
 interface Variant {
@@ -95,12 +98,17 @@ async function shootVariant(browser: Browser, v: Variant) {
     if (v.amoled) await context.addInitScript(() => localStorage.setItem("rapfi.amoled", "1"));
     // 데이터 없이 오프닝 · 랭킹을 처음 열 때 한 번 뜨는 시트(Z7)는 본 것으로 — 화면 자체를 찍는다.
     await context.addInitScript(() => localStorage.setItem("rapfi.dataPrompt.sheet", "1"));
+    // 첫 방문 환영 · 새로워진 점(Z8)도 — `welcome` 장면(`?firstvisit`)만 그것을 찍는다.
+    await context.addInitScript(SEEN_INTRO);
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
-    await page.goto(`http://localhost:${PORT}${scene.path}?autoboot=0`, {
-      waitUntil: "networkidle",
-    });
+    await page.goto(
+      `http://localhost:${PORT}${scene.path}${scene.path.includes("?") ? "&" : "?"}autoboot=0`,
+      {
+        waitUntil: "networkidle",
+      },
+    );
     await page.waitForURL(`**${scene.path}`, { timeout: 5_000 }).catch(() => undefined);
     await page.evaluate(async () => {
       await document.fonts.ready;

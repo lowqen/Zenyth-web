@@ -1,0 +1,16 @@
+{
+  "name": "Zenyth Web",
+  "short_name": "Zenyth",
+  "description": "Rapfi 엔진을 브라우저에서 돌리는 오목·렌주 분석반",
+  "start_url": "./board",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FCFCFF",
+  "theme_color": "#FCFCFF",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

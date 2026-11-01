@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import engineManifest from "../../engine/engine-manifest.json";
 import { msg, t } from "../../i18n/i18n";
+import { ZenythMark } from "../../components/ZenythMark";
+import { RELEASE_NAME, useFirstVisit } from "../../app/firstVisit";
 
 /**
  * 설정 ▸ 정보 — GPLv3 §0 · §5(d) 의 «적절한 법적 고지»(Appropriate Legal Notices).
@@ -86,7 +88,47 @@ function Ext({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
+/** 마크 · 이름 · 한 줄 · 판, 그리고 둘러보기 · 바뀐 점(Z8 — 앱 `AboutDialog`). */
+function Brand() {
+  const openTour = useFirstVisit((s) => s.openTour);
+  const openWhatsNew = useFirstVisit((s) => s.openWhatsNew);
+  return (
+    <section className="panel about__brand" aria-label="Zenyth Web">
+      <div className="about__brandhead">
+        <ZenythMark size={56} />
+        <div className="about__brandtext">
+          <p className="about__appname">Zenyth Web</p>
+          <p className="about__tagline">{t("오목 · 렌주 분석 · Rapfi 엔진 사용")}</p>
+          <p className="about__version tnum">{t("버전 {v}", { v: RELEASE_NAME })}</p>
+        </div>
+      </div>
+      <p className="about__intro">
+        {t(
+          "Rapfi 엔진을 브라우저 안에서 돌리는 오목 · 렌주 분석반입니다. Zenyth 앱의 웹판이며, 2026년 10월까지의 이름은 RapfiWeb 였습니다.",
+        )}
+      </p>
+      <div className="about__actions">
+        <button type="button" className="btn btn--tonal" onClick={openTour} data-k="open-tour">
+          {t("둘러보기")}
+        </button>
+        <button type="button" className="btn" onClick={openWhatsNew} data-k="open-whatsnew">
+          {t("이번 버전에서 바뀐 점")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function AboutPanel() {
+  return (
+    <>
+      <Brand />
+      <AboutLegal />
+    </>
+  );
+}
+
+function AboutLegal() {
   return (
     <section className="panel about" aria-labelledby="sg-about">
       <header className="sgroup__head">

@@ -5643,3 +5643,319 @@ a.slink:hover {
 .jlist li:has(> .icontile) {
   align-items: center;
 }
+
+/* ── 이름 · 첫 실행(Z8 — 앱 SetupScreen · TourScreen · WhatsNew · AboutDialog) ─────────────────
+   환영 · 둘러보기는 화면 전체를 덮는 불투명 면(아래의 판 · 바가 눌리지 않게), 가운데 480 기둥. */
+.onboard {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  color: var(--c-on-surface);
+  background: var(--c-surface);
+  outline: none;
+}
+.onboard__top {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  padding: 0 var(--space-xl);
+}
+.onboard__scroll {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.onboard__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-m) var(--space-xxl) var(--space-xl);
+  text-align: center;
+}
+/* 짧으면 가운데, 길면 위에서부터 스크롤(앱 StepPage). */
+.onboard__col--center {
+  margin: auto 0;
+}
+.onboard__welcome {
+  margin: 28px 0 0;
+  font: 800 30px/38px var(--font-sans);
+  text-wrap: balance;
+}
+.onboard__title {
+  margin: 28px 0 0;
+  font: 800 30px/38px var(--font-sans);
+  text-wrap: balance;
+}
+.onboard__lead {
+  margin: var(--space-xl) 0 0;
+  font: var(--type-body-large);
+  color: var(--c-on-surface-variant);
+  text-wrap: balance;
+}
+.onboard__features {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  margin: 36px 0 0;
+  padding: 0;
+  text-align: left;
+  list-style: none;
+}
+.feature {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.feature__solo {
+  font: var(--type-row-title);
+  text-wrap: pretty;
+}
+.feature__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.feature__text b {
+  font: var(--type-row-title);
+  font-weight: 600;
+}
+.feature__text span {
+  font: var(--type-row-note);
+  color: var(--c-on-surface-variant);
+}
+.onboard__foot {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  padding: var(--space-xl) var(--space-xxl) calc(var(--space-xl) + env(safe-area-inset-bottom));
+}
+.onboard__go {
+  width: 100%;
+  max-width: 432px;
+  min-height: 56px;
+  font-weight: 700;
+}
+.onboard__skip {
+  font-weight: 600;
+}
+/* 언어 알약 — 첫 화면 위 왼쪽(앱 LanguagePill). */
+.langpill {
+  display: inline-flex;
+  gap: var(--space-m);
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-xl) 0 var(--space-l);
+  font: var(--type-label-large);
+  color: var(--c-on-surface);
+  background: var(--c-surface-container-high);
+  border-radius: 999px;
+}
+.langpill .icon {
+  width: 18px;
+  height: 18px;
+}
+/* 쪽 점 — 지금 쪽은 강조색 알약으로 늘어난다(앱 PageDots). */
+.pagedots {
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+}
+.pagedots__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  background: var(--c-outline-variant);
+  border-radius: 999px;
+  transition:
+    width 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background var(--motion-quick) ease-out;
+}
+.pagedots__dot[aria-selected="true"] {
+  width: 24px;
+  background: var(--c-primary);
+}
+/* 둘러보기 그림 — 진짜 부품을 누를 수 없는 틀에(앱 PictureCard). */
+.tourpic {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  width: 100%;
+  margin-top: 28px;
+  padding: 20px;
+  text-align: left;
+  background: var(--c-surface-container-low);
+  border: 1px solid color-mix(in srgb, var(--c-outline-variant) 60%, transparent);
+  border-radius: 28px;
+}
+.tourpic__board {
+  flex: none;
+  width: 112px;
+  height: 112px;
+  border-radius: 14px;
+}
+.tourpic__text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.tourpic__label {
+  font: var(--type-label-large);
+  color: var(--c-on-surface-variant);
+}
+.tourpic__best {
+  font: 600 28px/36px var(--font-sans);
+}
+.pillbadge--accent {
+  color: var(--c-on-secondary-container);
+  background: var(--c-secondary-container);
+}
+/* 새로워진 점 — 가운데 카드(최대 480), 아래로 더 있으면 흐려진다. */
+.whatsnew {
+  width: calc(100% - 40px);
+  max-width: 480px;
+  max-height: calc(100dvh - 64px);
+  padding: 0;
+  color: var(--c-on-surface);
+  background: var(--c-surface-container-high);
+  border: 0;
+  border-radius: 28px;
+}
+.whatsnew:focus {
+  outline: none;
+}
+.whatsnew::backdrop {
+  background: color-mix(in srgb, var(--c-scrim) 32%, transparent);
+}
+.whatsnew__card {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 64px);
+  padding: var(--space-xxl) var(--space-l) 20px var(--space-xxl);
+}
+.whatsnew__head {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: flex-start;
+}
+.whatsnew__titles {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+}
+.whatsnew__kicker {
+  font: var(--type-label-large);
+  color: var(--c-primary);
+}
+.whatsnew__title {
+  margin: 0;
+  font: var(--type-headline-small);
+  text-wrap: balance;
+}
+.whatsnew__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  max-height: 440px;
+  margin-top: 18px;
+  padding-right: var(--space-l);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.whatsnew__body.has-more {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent);
+}
+.whatsnew__intro {
+  margin: 0;
+  font: var(--type-body-large);
+}
+.whatsnew__group h3 {
+  margin: 0 0 10px;
+  font: var(--type-title-small);
+  font-weight: 600;
+  color: var(--c-primary);
+}
+.whatsnew__group ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* 첫 줄에 앉은 작은 돌. */
+.whatsnew__group li {
+  position: relative;
+  padding-left: 18px;
+  font: var(--type-body-medium);
+}
+.whatsnew__group li::before {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  content: "";
+  background: color-mix(in srgb, var(--c-on-surface-variant) 60%, transparent);
+  border-radius: 50%;
+}
+.whatsnew__foot {
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+  justify-content: flex-end;
+  padding: var(--space-xl) var(--space-l) 0 0;
+}
+.whatsnew__foot .ghostbtn {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-primary);
+}
+/* 설정 ▸ 정보의 머리(앱 AboutDialog). */
+.about__brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-l);
+}
+.about__brandhead {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: center;
+}
+.about__brandtext p {
+  margin: 0;
+}
+.about__appname {
+  font: var(--type-title-large);
+}
+.about__tagline {
+  font: var(--type-body-medium);
+  color: var(--c-on-surface-variant);
+}
+.about__version {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.about__intro {
+  margin: 0;
+  font: var(--type-body-medium);
+}
+.about__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-m);
+}
