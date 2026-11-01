@@ -3661,6 +3661,8 @@ button.theory__row:hover {
   display: grid;
   gap: var(--space-xl);
   width: 100%;
+  /* 넓은 화면(랭킹은 한 단)에서도 휴대폰 폭의 한 기둥 — 840px 알약은 단추로 읽히지 않는다. */
+  max-width: 480px;
   margin: var(--space-xxl) 0 0;
   padding: 0;
   text-align: left;
@@ -3690,6 +3692,7 @@ button.theory__row:hover {
   flex-direction: column;
   align-items: center;
   width: 100%;
+  max-width: 480px;
   margin-top: var(--space-xxl);
 }
 .gamedata__how {
