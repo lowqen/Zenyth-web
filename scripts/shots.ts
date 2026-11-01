@@ -93,6 +93,8 @@ async function shootVariant(browser: Browser, v: Variant) {
     });
     // 저장된 선택은 첫 프레임 전에 읽힌다(theme-init.js) — 그보다 먼저 심는다.
     if (v.amoled) await context.addInitScript(() => localStorage.setItem("rapfi.amoled", "1"));
+    // 데이터 없이 오프닝 · 랭킹을 처음 열 때 한 번 뜨는 시트(Z7)는 본 것으로 — 화면 자체를 찍는다.
+    await context.addInitScript(() => localStorage.setItem("rapfi.dataPrompt.sheet", "1"));
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));

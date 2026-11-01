@@ -1,14 +1,12 @@
 import { useRef, useState } from "react";
 import { Segmented } from "../../../components/controls";
-import { Disclosure } from "../../../components/Disclosure";
-import { useRifStore } from "./rifStore";
-import { RENJUNET_DOWNLOADS, fmtInt, pct } from "./format";
+import { RIF_ACCEPT, useRifStore } from "./rifStore";
+import { fmtInt, pct } from "./format";
 import { t } from "../../../i18n/i18n";
-import { rich } from "../../../i18n/rich";
 
 /**
- * W7 의 작은 부품들 — 승·무·패 막대, `.rif` 가져오기 안내, 자료 출처 줄. 랭킹 · 오프닝 화면이
- * 함께 쓴다.
+ * W7 의 작은 부품들 — 승·무·패 막대, 파일 고르기 단추, 자료 출처 줄. 랭킹 · 오프닝 화면이 함께 쓴다.
+ * 데이터가 없을 때의 안내는 `GameData.tsx`(Z7).
  */
 
 /**
@@ -76,7 +74,7 @@ export function PickRifButton({ label, tonal }: { label?: string; tonal?: boolea
       <input
         ref={input}
         type="file"
-        accept=".rif,.xml,application/xml,text/xml"
+        accept={RIF_ACCEPT}
         hidden
         data-k="rif-input"
         onChange={(e) => {
@@ -86,88 +84,6 @@ export function PickRifButton({ label, tonal }: { label?: string; tonal?: boolea
         }}
       />
     </>
-  );
-}
-
-/**
- * `.rif` 가져오기 안내 — RenjuNet 팩이 없을 때. 세 걸음(받기 → 놓기 → 몇 초)을 그대로 보여 주고,
- * 이 파일과 통계가 기기 밖으로 나가지 않는다는 것을 말한다(왜 앱이 대신 받아 주지 않는지도).
- */
-export function RifImportCard({ compact }: { compact?: boolean }) {
-  // 받는 방법 세 걸음 — 처음 화면(랭킹)에서는 펼쳐 두고, 오프닝 화면의 작은 카드에서는 접는다.
-  const steps = (
-    <ol className="rifsteps">
-      <li>
-        <span className="rifsteps__n" aria-hidden="true">
-          1
-        </span>
-        <span>
-          {rich(
-            t(
-              "{link}에서 {xml} 버튼을 눌러 기보 파일(약 43MB)을 받습니다. 옆의 [XML.GZ] 는 압축본이라 읽지 못합니다.",
-            ),
-            {
-              link: (
-                <a href={RENJUNET_DOWNLOADS} target="_blank" rel="noreferrer noopener">
-                  {t("renju.net 기보 화면")}
-                </a>
-              ),
-              xml: <b>[XML]</b>,
-            },
-          )}
-        </span>
-      </li>
-      <li>
-        <span className="rifsteps__n" aria-hidden="true">
-          2
-        </span>
-        <span>
-          {rich(t("받은 파일을 {drop} 아래에서 고릅니다."), {
-            drop: <b>{t("이 앱의 아무 화면에나 끌어다 놓거나")}</b>,
-          })}
-        </span>
-      </li>
-      <li>
-        <span className="rifsteps__n" aria-hidden="true">
-          3
-        </span>
-        <span>{t("몇 초 뒤 랭킹과 오프닝 통계가 열립니다. 다음부터는 바로 뜹니다.")}</span>
-      </li>
-    </ol>
-  );
-  return (
-    <section
-      className={"panel rifcard" + (compact ? " rifcard--compact" : "")}
-      aria-labelledby="rifcard-title"
-    >
-      <h2 id="rifcard-title" className="panel__title">
-        {t("RenjuNet 기보로 통계 만들기")}
-      </h2>
-      <p className="rifcard__lead">
-        {t(
-          "세계 렌주 대국 약 12만 판으로 오프닝 통계와 랭킹을 봅니다. 파일은 한 번만 넣으면 됩니다.",
-        )}
-      </p>
-      {!compact && steps}
-      <div className="panel__actions">
-        <PickRifButton tonal />
-        <a className="btn" href={RENJUNET_DOWNLOADS} target="_blank" rel="noreferrer noopener">
-          {t("renju.net 열기")}
-        </a>
-      </div>
-      {compact && (
-        <div className="panel__fold">
-          <Disclosure id="rif-howto" level={3} title={t("받는 방법")}>
-            {steps}
-          </Disclosure>
-        </div>
-      )}
-      <p className="panel__hint rifcard__legal">
-        {rich(t("파일과 통계는 {here} 남습니다."), {
-          here: <b>{t("이 브라우저 안에만")}</b>,
-        })}
-      </p>
-    </section>
   );
 }
 

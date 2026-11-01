@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { RIF_PHASE_TEXT } from "./protocol";
 import { fmtInt, fmtMB, fmtSec, rifFrom } from "./format";
 import { useRifStore } from "./rifStore";
@@ -78,8 +78,12 @@ export function RifImportLayer() {
   );
 }
 
+/** 이 화면들은 맨 위의 «실전 대국 데이터» 카드(Z7)가 진행 · 결과를 보인다 — 떠 있는 카드는 겹친다. */
+const OWN_PROGRESS = ["/research/explorer", "/research/ranking"];
+
 /** 변환 진행 · 결과 · 실패 — 오른쪽 아래(좁은 화면은 아래 탭 위)에 한 장. */
 function RifProgressCard() {
+  const { pathname } = useLocation();
   const job = useRifStore((s) => s.job);
   const done = useRifStore((s) => s.done);
   const error = useRifStore((s) => s.error);
@@ -95,6 +99,7 @@ function RifProgressCard() {
     return () => window.clearInterval(id);
   }, [job]);
 
+  if (OWN_PROGRESS.some((p) => pathname.endsWith(p))) return null;
   if (job) {
     const pct = Math.round(job.fraction * 100);
     // 시계 상태는 작업보다 먼저 잡혔을 수 있다 — 음수로 보이지 않게.

@@ -77,6 +77,19 @@ export const activePack = (s: Pick<RifState, "pack" | "local" | "source">): Renj
 /** `.rif` 로 볼 만한 파일인가 — 이름으로만 본다(내용은 워커가 확인한다). */
 export const isRifFile = (f: File): boolean => /\.(rif|xml)$/i.test(f.name);
 
+/** `.rif` 를 고르는 브라우저 창을 띄운다 — 화면에 붙은 `<input>` 없이(고르는 동안 시트가 닫혀도 받는다). */
+export function pickRifFile(): void {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = RIF_ACCEPT;
+  input.addEventListener("change", () => {
+    const f = input.files?.[0];
+    if (f) void useRifStore.getState().importFile(f);
+  });
+  input.click();
+}
+export const RIF_ACCEPT = ".rif,.xml,application/xml,text/xml";
+
 let worker: Worker | null = null;
 let ensuring: Promise<void> | null = null;
 

@@ -259,16 +259,34 @@ export const EN: Readonly<Record<string, string>> = {
     "Black wins {b} ({bp}%) · draws {d} ({dp}%) · White wins {w} ({wp}%)",
   "결과가 난 판이 없습니다": "No decided games",
   "파일 고르기": "Choose file",
-  "RenjuNet 기보로 통계 만들기": "Build statistics from RenjuNet games",
-  "{link}에서 {xml} 버튼을 눌러 기보 파일(약 43MB)을 받습니다. 옆의 [XML.GZ] 는 압축본이라 읽지 못합니다.":
-    "On the {link}, press the {xml} button to download the games file (about 43 MB). The [XML.GZ] next to it is compressed and cannot be read.",
-  "renju.net 기보 화면": "renju.net games page",
-  "받은 파일을 {drop} 아래에서 고릅니다.": "{drop} or choose it below.",
-  "이 앱의 아무 화면에나 끌어다 놓거나": "Drop the file anywhere in this app",
-  "몇 초 뒤 랭킹과 오프닝 통계가 열립니다. 다음부터는 바로 뜹니다.":
-    "Rankings and opening statistics open a few seconds later. After that they load instantly.",
+
+  // ── 실전 대국 데이터 안내(Z7) ──
+  "실전 대국 데이터를 추가하세요": "Add the real-game data",
+  "RenjuNet 의 실제 대국 기록으로 이 브라우저 안에서 만듭니다. 기록은 이 기기 밖으로 나가지 않습니다":
+    "Built in this browser from RenjuNet's records of real games. They never leave this device",
+  "다음 수마다 실전 빈도와 승률": "Real-game frequency and score for every next move",
+  "26주형과 5수 모양의 실전 승률 · 빈도":
+    "Real-game scores of the 26 openings and the 5th-move shapes",
+  "실제 기보": "Real games",
+  "이 국면을 지난 실제 대국을 보드에 올리기":
+    "Put the real games through this position on the board",
+  "만들지 못했습니다: {why}": "The build did not finish: {why}",
+  "① renju.net 에서 «XML» 기보 파일(약 43MB)을 받고 ② 아래에서 고르거나 아무 화면에 끌어다 놓으면, 몇 초 만에 만듭니다":
+    "① Download the «XML» game file from renju.net (about 43 MB), ② pick it below or drop it on any screen, and the data is built in seconds",
+  "받은 파일 고르기": "Pick the file",
+  나중에: "Later",
+  "다른 화면으로 가도 계속됩니다": "It goes on if you open another screen",
+  중지: "Stop",
+  "데이터가 준비됐습니다 · 대국 {n}판": "The data is ready · {n} {n|game|games}",
+  "실전 대국 데이터가 없습니다": "No real-game data",
+  "지금은 내 기보로만 셉니다": "Counting your own games only",
+  "빈도 · 승률 · 실제 기보가 비어 있습니다": "Frequencies, scores and games are empty",
+  추가: "Add",
+  "실전 대국 데이터를 추가할까요?": "Add the real-game data?",
+  "오프닝의 실전 빈도 · 승률 · 실제 기보와 랭킹의 실전 표는 RenjuNet 대국 데이터로 채워집니다. renju.net 에서 «XML» 파일을 받아 고르면 몇 초 만에 만듭니다.":
+    "The openings' real-game frequencies, scores and games and the rankings' tables come from RenjuNet's game data. Download the «XML» file from renju.net and pick it, and it is built in seconds.",
+  "대국 데이터를 넣으면 표시": "Shown once game data is added",
   "renju.net 열기": "Open renju.net",
-  "이 브라우저 안에만": "in this browser only",
   자료: "Data",
   "내 기보": "My games",
   "{n}판 · {date} 판": "{n} {n|game|games} · {date} release",
@@ -341,8 +359,6 @@ export const EN: Readonly<Record<string, string>> = {
   간접주형: "Indirect",
   "다섯 수를 넘긴 판이 없습니다.": "No games went past five moves.",
   "규칙 밖": "Non standard",
-  "아직 저장한 기보도 없습니다. 보드에서 둔 판이나 연 기보가 쌓이면 여기서 내 기보로도 셉니다.":
-    "No saved games yet. Games you play or open on the board will be counted here as my games.",
 
   // ── 연구 ▸ 오프닝 ──
   무: "Draw",
@@ -1160,10 +1176,6 @@ export const EN: Readonly<Record<string, string>> = {
   "읽는 중": "Reading",
   "첫 5수 건너뜀": "First 5 moves skipped",
   "리뷰한 대국이 여기에 쌓입니다.": "Reviewed games appear here.",
-  "세계 렌주 대국 약 12만 판으로 오프닝 통계와 랭킹을 봅니다. 파일은 한 번만 넣으면 됩니다.":
-    "See opening statistics and rankings from about 120,000 world renju games. You only add the file once.",
-  "받는 방법": "How to get the file",
-  "파일과 통계는 {here} 남습니다.": "The file and statistics stay {here}.",
   "보드로 가기": "Go to the board",
   "본문 글꼴": "Body typeface",
   "아이콘 경로": "Icon paths",
