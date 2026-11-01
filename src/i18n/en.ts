@@ -1188,7 +1188,7 @@ export const EN: Readonly<Record<string, string>> = {
     "Reading the new position · showing the analysis after move {n}",
   "정지됨 · 직전 국면({n}수)의 분석": "Stopped · showing the analysis after move {n}",
 
-  // 공식 정석 커리큘럼(docs/공식-정석-설계.md)
+  // 공식 정석 커리큘럼(docs/engineering-notes.md §6)
   "curriculum.json 내려받기": "Download curriculum.json",
   "{a} / {b}수": "{a} of {b} {b|move|moves}",
   "{a}/{b} 레슨": "{a}/{b} {b|lesson|lessons}",

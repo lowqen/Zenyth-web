@@ -2,7 +2,7 @@ name: 엔진 프로파일 (wasm 핫패스)
 
 # 배포와 **같은 소스·같은 플래그**에 `--profiling-funcs`(wasm 이름 섹션 유지 — 최적화는 그대로)만
 # 더해 빌드하고, bench/gomocalc/profile.mjs 로 V8 CPU 프로파일을 함수 이름별 자기 시간으로 모은다.
-# docs/최적화-마스터플랜.md 의 핫패스 표가 이 결과다. 결과는 로그·잡 요약에 남긴다(아티팩트 없음).
+# docs/engineering-notes.md §2 질문 2 의 핫패스가 이 결과다. 결과는 로그·잡 요약에 남긴다(아티팩트 없음).
 # 수동 실행이다. 산출물은 배포·릴리스하지 않는다.
 on:
   workflow_dispatch:

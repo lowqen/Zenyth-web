@@ -73,7 +73,7 @@ inside one browser tab.
 - Weights are fetched once, **SHA-256 verified**, and served from Cache Storage afterwards.
 - Engine patches are measured, not guessed: SPRT matches, mate suites and fixed-depth benches
   run in CI. The deployed build scores **+100 Elo** over a stock Rapfi WASM build at 1 thread,
-  500 ms/move ([report](docs/gomocalc-대국-분석.md)).
+  500 ms/move ([report](docs/engineering-notes.md), §3).
 
 ### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/convert-dark.svg"><img src="docs/readme/features/convert-light.svg" height="28" align="top" alt=""></picture> In-browser game archive conversion
 - Drop the RenjuNet archive (`.rif`, 43 MB, ~119,000 games) **onto any screen**. A worker
@@ -195,8 +195,7 @@ This web build ships **Renju** weights only (Cloudflare's 25 MB per-file limit).
 | Document | Contents |
 |---|---|
 | [`docs/기능-안내.md`](docs/기능-안내.md) | Detailed feature guide, screen by screen (Korean) |
-| [`docs/최적화-마스터플랜.md`](docs/최적화-마스터플랜.md) | Engine optimization log: every patch, its measurement and verdict |
-| [`docs/gomocalc-대국-분석.md`](docs/gomocalc-대국-분석.md) | Match analysis behind the +100 Elo figure |
+| [`docs/engineering-notes.md`](docs/engineering-notes.md) | Engineering notes (Korean): engine port, optimization log with every verdict, the match behind +100 Elo, security and design decisions |
 | [`public/engine/README.md`](public/engine/README.md) | Engine variants, build provenance, weight caching |
 
 ## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/licence-dark.svg"><img src="docs/readme/sections/licence-light.svg" height="32" align="top" alt=""></picture> License & data

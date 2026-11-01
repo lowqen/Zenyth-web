@@ -258,7 +258,7 @@ export function threadCommand(
 
 /**
  * 기동 메시지에 실을 설정 — `INFO` 목록(`hash_size` 등)과 이 변형의 `thread_num`.
- * 워커가 START 뒤·**예열 전에** 보낸다(docs/최적화-마스터플랜.md P1-1). 예열 뒤에 스레드
+ * 워커가 START 뒤·**예열 전에** 보낸다(docs/engineering-notes.md §2 P1-1). 예열 뒤에 스레드
  * 수가 바뀌면 엔진이 스레드를 다시 세우며 예열이 푼 가중치를 버린다(0.73~0.85초).
  *
  * 엔진이 알릴 상한(`MAX_THREAD_NUM`)은 아직 모르므로 코어 수로만 자른다. 기동 뒤

@@ -952,7 +952,7 @@ node bench/sprt/match-report.mjs --games games.jsonl --summary summary.json --js
       <footer className="footer">
         <p>
           Zenyth Web · GPL-3.0-or-later · 엔진 Rapfi(dhbloo) · 숫자의 출처:{" "}
-          <code>docs/gomocalc-대국-분석.md</code> · <code>docs/최적화-마스터플랜.md</code>
+          <code>docs/engineering-notes.md</code> §2 · §3
           {MAIN.run && (
             <>
               {" "}

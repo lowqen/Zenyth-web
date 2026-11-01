@@ -5,7 +5,7 @@
  *   pnpm exec tsx scripts/shots.ts record                   # shots/actual/ 에 쓰기만
  *   SHOTS_ONLY=board,settings pnpm exec tsx scripts/shots.ts # 일부 장면만
  *
- * 앱의 P0(Roborazzi 골든)과 같은 역할이다(docs/앱-디자인-정렬-계획.md Z0). 디자인을 단계마다 바꾸는
+ * 앱의 P0(Roborazzi 골든)과 같은 역할이다(docs/engineering-notes.md §8 Z0). 디자인을 단계마다 바꾸는
  * 동안 «이 단계가 바꾼 화면은 이것뿐»을 그림으로 보인다. 그래서 골든은 바꾸기 **전** 코드에서 기록한다.
  *
  * **골든은 CI 러너에서만 유효하다.** 글자 래스터는 OS · 글꼴 설치 · GPU 에 따라 다르다. 로컬 실행은

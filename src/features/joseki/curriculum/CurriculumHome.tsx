@@ -18,7 +18,7 @@ import { useAdminTools } from "../admin";
 import { useStagger } from "../../../components/useStagger";
 
 /**
- * 공식 정석 커리큘럼 — 코스 목록 · 코스 · 레슨 세 층(docs/공식-정석-설계.md §4). 모든 사용자에게 읽기
+ * 공식 정석 커리큘럼 — 코스 목록 · 코스 · 레슨 세 층(docs/engineering-notes.md §6 화면). 모든 사용자에게 읽기
  * 전용이다. 고치는 길은 관리자의 내보내기(정석 편집기)와 저장소 커밋뿐이다.
  *
  * **배치는 체스닷컴 레슨을 따른다**(UI 개편): 맨 위는 그림 · 제목 · 한 줄의 머리와 썸네일 카드 목록,

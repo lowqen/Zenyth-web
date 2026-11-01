@@ -69,7 +69,7 @@ export function swappedSide(side: ComputerSide): ComputerSide {
  * `yxswap2step*` 로 **엔진에게 협상을 시킨다.** 그 명령은 Yixin 의 것이고
  * Rapfi 의 명령표(`command/gomocup.cpp` @3c94c2a9)에 없다 — GUI 모드는 모르는
  * 명령을 오류도 없이 삼키므로 답이 영영 오지 않는다. 근거와 확인 경위는
- * `docs/오프닝-협상-엔진-지원.md`.
+ * `docs/engineering-notes.md` §5.
  *
  * 그래서 남은 셋은 **엔진의 협상 명령이 필요 없는 것들**이다: 협상이 아예
  * 없거나(none), 첫 세 수를 사람이 놓거나(rif), 교환 여부를 우리가 정한다

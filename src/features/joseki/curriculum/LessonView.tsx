@@ -26,7 +26,7 @@ import { copyOrShow } from "../../../components/copySheetStore";
 
 /**
  * 공식 커리큘럼의 레슨 하나 — **살펴보기**(트리 · 판 · 해설을 자유롭게)와 **학습**(수순을 맞히며 따라 두기,
- * `core/curriculum/quiz.ts`). 고칠 길은 없다 — 읽기 전용이다(docs/공식-정석-설계.md §4 · §5).
+ * `core/curriculum/quiz.ts`). 고칠 길은 없다 — 읽기 전용이다(docs/engineering-notes.md §6 화면 · 학습).
  *
  * **배치는 체스닷컴 레슨 화면을 따른다**(UI 개편): 판이 왼쪽에서 크게, 오른쪽 칸은 위에서부터 ← · 코스 ›
  * 레슨 제목 · 모드 탭 · 코치 말풍선(둘 차례 + 해설/판정) · 바닥(진행 막대 · 힌트 · 처음부터 · 링크 · 수 이동).

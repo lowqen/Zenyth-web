@@ -4,7 +4,7 @@ Rapfi WebAssembly 산출물 — **네 변형**이 같은 빌드(릴리스 `engin
 
 `a4` 는 `w8` 에 `tools/patches/a4-policy-cache.patch` 를 얹었다 — 같은 국면의 정책 출력을 스레드별
 2^12 표로 재사용한다(결과 불변, 스레드마다 ~3.9MB). BENCH 는 `w8` 과 같고, 같은 트리 속도는 relaxed 에서
-+5.0 ~ +5.5%(docs/최적화-마스터플랜.md 2부 §8.12). `w8` 은 `a3` 에 `tools/patches/w8-export-fs.patch` 를
++5.0 ~ +5.5%(docs/engineering-notes.md §2 A4). `w8` 은 `a3` 에 `tools/patches/w8-export-fs.patch` 를
 얹어 글루가 Emscripten `FS` 를 내보내게(`EXPORTED_RUNTIME_METHODS` 에 `'FS'`) 한 판이다 — 엔진 DB 파일
 `rapfi.db` 를 워커가 메모리 FS 로 넣고 꺼낸다(W8, `src/features/database/`).
 

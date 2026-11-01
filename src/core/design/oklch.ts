@@ -164,7 +164,7 @@ export const ramp = (hue: number, chroma: number) => new TonalRamp(hue, chroma);
  * 이 한 줄 때문에 W1 의 골든 앵커가 `#DAB572` 로 나왔다(정답 `#DAB673`).
  * 181.83 과 114.87 이 둘 다 «정수 바로 아래»여서 Float/double 차이처럼 보였지만
  * 아니었다 — 반올림 규칙을 잘못 옮긴 것이다.
- * 자세히: `docs/design-token-reconciliation.md`
+ * 자세히: `docs/engineering-notes.md` §7
  */
 export function toHex(c: Rgb): string {
   const ch = (v: number) =>

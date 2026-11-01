@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 하드 필승 묶음(mate-suite-hard.json) 만들기 — docs/최적화-마스터플랜.md 「하드 국면 묶음」 설계.
+ * 하드 필승 묶음(mate-suite-hard.json) 만들기 — docs/engineering-notes.md §2 P1-3 의 하드 묶음.
  * 지금 묶음(mate-suite.json)은 가장 어려운 국면도 ~1.7초에 풀려, 깊은 탐색 변경(P3-1 등)을 재지 못한다.
  * 목표: CI WASM(single-simd128 · 1 스레드 · 해시 128MB)에서 **첫 +M 이 10~60초**에 나오는 국면 30~50개.
  *

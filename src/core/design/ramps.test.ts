@@ -24,7 +24,7 @@ import golden from "./tokens.golden.json";
  *
  * W1 에서는 이 대조가 ±1 을 허용했는데, 이제 **정확히 같아야 한다.**
  * 어긋나던 이유가 Float/double 차이가 아니라 반올림 규칙을 잘못 옮긴 것이었기 때문이다
- * (`oklch.ts` 의 `toHex` 주석, `docs/design-token-reconciliation.md`).
+ * (`oklch.ts` 의 `toHex` 주석, `docs/engineering-notes.md` §7).
  */
 describe("Kotlin 덤프와 정확 대조 (14램프 × 톤 101)", () => {
   const ramps = golden.ramps as Record<string, string[]>;
@@ -57,7 +57,7 @@ describe("Clay 앵커 — Color.kt 주석의 두 값", () => {
 
   it("톤 42 = #7E5D14 — 주석의 #7B5E22 는 틀렸다", () => {
     // Kotlin 이 실제로 내는 값이 #7E5D14 다(위 덤프). 주석은 낡았다.
-    // 판정 근거와 처리는 docs/design-token-reconciliation.md 에 적었고,
+    // 판정 근거와 처리는 docs/engineering-notes.md §7 에 적었고,
     // Zenyth 쪽 주석도 고쳤다.
     expect(clay[42]).toBe("#7E5D14");
   });

@@ -1,6 +1,6 @@
 # Design System: Zenyth Web
 
-> 2026-11-01 다시 씀(앱 디자인 정렬 Z0 ~ Z10, `docs/앱-디자인-정렬-계획.md`). 2026-10-11 의 «먹과 한지»(따뜻한 종이 ·
+> 2026-11-01 다시 씀(앱 디자인 정렬 Z0 ~ Z10, `docs/engineering-notes.md` §8). 2026-10-11 의 «먹과 한지»(따뜻한 종이 ·
 > 흰 카드 + 테두리 · 초록 강조)를 걷고 **Zenyth 앱(안드로이드)의 지금 모습**을 따른다. 출처는 앱 코드
 > `core/designsystem/**`(`Color.kt` · `Theme.kt` · `BoardSkin.kt` · `Tokens.kt` · `Type.kt` · `ChromeMotion.kt` …)이고,
 > 값은 시험이 묶는다: 14램프 1,414값(`tokens.golden.json`), 대비 쌍, 스크린샷 골든 50장.

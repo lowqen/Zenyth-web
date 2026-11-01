@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * 대국 결과(runner.mjs 의 --out games.jsonl · --summary summary.json) → 분석 묶음(JSON) · 마크다운 표.
- * gomocalc 대조(match-gomocalc.yml)의 보고서 `docs/gomocalc-대국-분석.md` 와 쇼케이스(`showcase/`)가 같은 숫자를 쓰게 한다.
+ * gomocalc 대조(match-gomocalc.yml)의 결과(`docs/engineering-notes.md` §3 G1)와 쇼케이스(`showcase/`)가 같은 숫자를 쓰게 한다.
  *
  *   node bench/sprt/match-report.mjs --games g.jsonl --summary s.json --label "본 매치" [--run ID] [--runner CPU] [--json out.json] [--md out.md]
  *

@@ -4265,7 +4265,7 @@ button.theory__row:hover {
   white-space: nowrap;
 }
 
-/* ── 정석 ▸ 공식 커리큘럼(docs/공식-정석-설계.md) ─────────────────────── */
+/* ── 정석 ▸ 공식 커리큘럼(docs/engineering-notes.md §6) ─────────────────────── */
 .josekiscreen {
   display: flex;
   flex-direction: column;

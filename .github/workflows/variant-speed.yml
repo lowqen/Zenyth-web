@@ -1,7 +1,7 @@
 name: 배포 변형 속도 대조 (빌드 없음 · 고정 깊이)
 
 # 배포 실물(엔진 릴리스 + gomocalc 배포본)의 변형끼리 순수 속도를 **같은 런 · 같은 국면 · 짝**으로 잰다 — 빌드하지 않는다.
-# docs/gomocalc-대국-분석.md §4 의 물음: relaxed ↔ 일반 NPS 가 Xeon 8488C 대국에서 +58%, AMD(B2) 에서는 +19.6% — CPU 의존인가.
+# docs/engineering-notes.md §3 G1-r 의 물음: relaxed ↔ 일반 NPS 가 Xeon 8488C 대국에서 +58%, AMD(B2) 에서는 +19.6% — CPU 의존인가.
 #
 #   simd     = rapfiweb single-simd128          (기준 — 첫 엔진)
 #   control  = simd 와 같은 파일을 다른 프로세스로 — A/A 대조. 구간이 0 을 품어야 하네스를 믿는다

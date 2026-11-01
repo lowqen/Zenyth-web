@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CSP_KEYS, ISOLATION_KEYS, omit, parseHeaders, siteHeaders } from "./headers";
 
 /**
- * `public/_headers` 의 보안 정책을 못 박는다(docs/보안-강화-계획.md Phase 1). 스모크가 «이 정책 아래서
+ * `public/_headers` 의 보안 정책을 못 박는다(docs/engineering-notes.md §4 Phase 1). 스모크가 «이 정책 아래서
  * 앱이 도는가»를 보고, 이 시험은 «정책이 느슨해지거나 어긋나지 않았는가»를 본다.
  */
 

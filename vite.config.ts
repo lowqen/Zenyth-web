@@ -7,7 +7,7 @@ import { studioPlugin } from "./scripts/studio-plugin";
 /**
  * 헤더는 `public/_headers` 의 `/*` 블록을 그대로 쓴다(`scripts/headers.ts` — 원본은 그 파일 하나).
  * 교차 출처 격리(COOP/COEP)가 있어야 멀티스레드 엔진(multi-simd128)이 SharedArrayBuffer 를 얻는다
- * (docs/W0c-결과.md). 격리가 안 되는 곳에서는 앱이 단일 스레드 엔진으로 물러선다.
+ * (docs/engineering-notes.md §1 C1). 격리가 안 되는 곳에서는 앱이 단일 스레드 엔진으로 물러선다.
  *
  * - 미리보기(`pnpm preview`)는 배포와 **똑같다** — CSP 까지.
  * - 개발 서버는 CSP 를 뺀다. Vite 개발 클라이언트와 React Refresh 가 인라인 스크립트와 `<style>` 을
@@ -48,7 +48,7 @@ export default defineConfig(({ command }) => ({
     target: "es2022",
     // .map 은 만들되 번들에 `sourceMappingURL` 로 잇지 않는다. 배포(deploy.yml)는 .map 을 CI
     // 아티팩트로 옮기고 배포본에서 지운다 — 원본 TS 가 소스 탭에 그대로 보이던 것을 막고, 프로덕션
-    // 오류 스택은 아티팩트의 맵으로 맞춰 본다(docs/보안-강화-계획.md F2).
+    // 오류 스택은 아티팩트의 맵으로 맞춰 본다(docs/engineering-notes.md §4 F2).
     sourcemap: "hidden",
     // .wasm/.data 는 우리가 public/engine 에 그대로 둔다 — 번들러가 손대면
     // Emscripten 글루의 locateFile 규약이 깨진다.

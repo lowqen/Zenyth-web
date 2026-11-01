@@ -104,7 +104,7 @@ Cloudflare 를 건드리기 전에 결과물을 확인하고 싶을 때 쓰세�
 `https://zenythweb.pages.dev/showcase/`. `deploy.yml` 의 「쇼케이스 빌드」가 `SHOWCASE_BASE=/showcase/ SHOWCASE_OUT=dist/showcase`
 로 앱의 `dist/` 안에 굽고, 「배포 검증 — /showcase/」가 실제 주소에서 문서 · 자산 MIME 을 확인한다.
 `public/_redirects` 의 `/showcase → /showcase/ 301` 은 SPA 폴백보다 먼저 와야 한다. 숫자를 바꾸려면
-`showcase/src/data/` 를 고쳐 `main` 에 푸시하면 된다(`docs/gomocalc-대국-분석.md` §7).
+`showcase/src/data/` 를 고쳐 `main` 에 푸시하면 된다(`docs/engineering-notes.md` §3 재현).
 
 ## 4. 엔진 채우기
 

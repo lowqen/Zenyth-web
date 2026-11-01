@@ -5,7 +5,7 @@ name: 엔진 벤치 (gomocalc 대조)
 # 돈다 — 가중치 4종을 구운 우리 엔진이 필요하다).
 #
 # ⚠ 비공개 저장소의 ubuntu-latest 는 **논리 2개**(2026-09-29 실측, Xeon 8370C)다. 4 스레드는
-#   초과 구독이라 스레드 확장은 물리 4코어 이상에서 따로 재야 한다(docs/gomocalc-엔진-비교.md §7).
+#   초과 구독이라 스레드 확장은 물리 4코어 이상에서 따로 재야 한다(docs/engineering-notes.md §3 한계).
 #
 #   rapfiweb       배포 중인 릴리스(렌주 전용 .data)
 #   rapfiweb-full  같은 소스·같은 플래그 + 가중치 4종 + relaxed SIMD 멀티 변형 — 벤치 전용,
@@ -119,7 +119,7 @@ jobs:
             grep -m1 -E "^\s+LINK_FLAGS = " "$nj" | cut -c1-600 || true
           done
 
-      # Phase 2 패치 대조(docs/최적화-마스터플랜.md 1부 §5.3 「결과 불변 변경」) — 배포 릴리스가 아니라
+      # Phase 2 패치 대조(docs/engineering-notes.md §2 판정 규칙 1 「결과 불변 변경」) — 배포 릴리스가 아니라
       # **이 러너에서 같은 툴체인으로** A(그대로)·B(패치 그리고/또는 wasm-opt 후처리) 두 빌드를 만들어
       # 그 둘만 잰다 — 엔진 이름은 rapfiweb-base(A) · rapfiweb-patch(B). 배포 렌주 구성
       # (PRELOAD_SET=renju) 그대로다. B 빌드는 BENCH 해시 게이트를 먼저 통과해야 한다.

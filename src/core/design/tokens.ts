@@ -36,7 +36,7 @@ export interface TypeSlot {
  * 스케일이 동시에 도는 것이다 — 카드 제목과 그 아래 라벨이 다른 체계에서 온다.
  *
  * 크기가 아니라 **굵기**가 위계를 진다. 2026-10-29 앱이 제목 · 본문을 한 단씩 키웠고(«너무 작고 빽빽하다»),
- * 웹도 같이 간다(docs/앱-디자인-정렬-계획.md Z2). 라벨은 그대로다 — 칩 · 탭 · 수치 아래 글처럼 조밀한 자리다.
+ * 웹도 같이 간다(docs/engineering-notes.md §8 Z2). 라벨은 그대로다 — 칩 · 탭 · 수치 아래 글처럼 조밀한 자리다.
  */
 export const TYPE: Record<string, TypeSlot> = {
   "display-large": { weight: 400, size: 44, line: 52, tracking: -0.5 },

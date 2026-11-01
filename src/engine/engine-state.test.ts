@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { EngineCommand, FromWorker, ToWorker } from "./engine-types";
 
 /**
- * 기동 순서(docs/최적화-마스터플랜.md P1-1) — 스토어 → 클라이언트 → 워커 메시지만 본다.
+ * 기동 순서(docs/engineering-notes.md §2 P1-1) — 스토어 → 클라이언트 → 워커 메시지만 본다.
  *
  * 예전엔 `thread_num`·`hash_size` 를 기동(=예열) **뒤** `flushConfig` 가 보냈다. 엔진은
  * 스레드 수가 바뀌면 스레드를 모두 다시 세우며 예열이 푼 가중치를 버리고, 첫 사용자 탐색이

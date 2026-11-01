@@ -151,7 +151,7 @@ export function mateOf(raw) {
  * 고르면, 한 깊이 안에서 최선수가 바뀌며 뒤늦게 나온 필승은 다음 깊이에야 잡힌다.
  *
  * 멀티 빌드는 좌표를 찍은 뒤에도 탐색 스레드가 잠깐 stdin 을 읽는다(앱의 입력 경합,
- * docs/W0c-결과.md). 그래서 끝나면 `settleMs` 만큼 쉰 뒤 돌아온다.
+ * docs/engineering-notes.md §1 C4). 그래서 끝나면 `settleMs` 만큼 쉰 뒤 돌아온다.
  */
 export async function search(host, moves, { timeMs, clearHash = true, settleMs = 150 }) {
   if (clearHash) await host.post("YXHASHCLEAR");

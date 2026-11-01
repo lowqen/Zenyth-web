@@ -54,7 +54,7 @@ export const RELAXED_SIMD_PROBE = new Uint8Array([
 
 /**
  * 엔진 변형. `-relaxed` 는 `-mrelaxed-simd` 빌드다 — 같은 소스에서 NPS +23%, BENCH 해시·
- * 노드 수 동일(docs/gomocalc-엔진-비교.md §4.3). relaxed 명령은 명세상 **구현 정의**라
+ * 노드 수 동일(docs/engineering-notes.md §3 G0). relaxed 명령은 명세상 **구현 정의**라
  * 기동 뒤 예열 탐색까지 통과해야 쓴다(워커 `warmup`). 실패하면 일반 SIMD 로 물러선다.
  */
 export type EngineVariant =
@@ -178,7 +178,7 @@ export interface Capabilities {
 }
 
 /**
- * 멀티 변형의 조건 — W0c 에서 잰 그대로다(`docs/W0c-결과.md`):
+ * 멀티 변형의 조건 — W0c 에서 잰 그대로다(`docs/engineering-notes.md` §1 C1 · C2):
  *   - WebAssembly SIMD (두 변형 모두의 하한)
  *   - `crossOriginIsolated` — COOP/COEP 헤더가 붙어야 켜진다. 없으면 멀티 엔진은
  *     세 브라우저 모두 **무응답**이었다(대조군).
