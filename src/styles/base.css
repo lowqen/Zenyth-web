@@ -493,7 +493,7 @@ a:focus-visible {
   /* 판과 평가 바의 크기를 이 칸 기준으로 잰다(아래 `--board-side`). */
   container-type: size;
 }
-.boardscreen > .summary {
+.boardscreen > .boardscreen__summary {
   grid-area: summary;
 }
 .boardscreen > .boardscreen__side {
@@ -1910,6 +1910,11 @@ a:focus-visible {
 /* ── 국면 카드 ──────────────────────────────────────────────────────
    넓은 화면에서는 옆 칸 맨 위 — 주형 · 수 · 평가 · 링크를 스크롤 없이 읽는다. 늘 읽는 셋
    (차례 · 수 · 마지막)은 엔진 수치 타일과 같은 모양의 3열 타일로, 나머지는 이름 · 값 줄로. */
+/* 국면 카드는 화면 낭독기용 목록(차례 · 마지막, sr-only = position: absolute)을 품는다 — 카드가 그 기준이어야
+   목록이 옆 칸 스크롤 밖으로 새어 페이지를 늘리지 않는다(휴대폰 가로 · 태블릿 세로에서 페이지 스크롤이 생겼다). */
+.panel--position {
+  position: relative;
+}
 .poscard__head {
   display: flex;
   gap: var(--space-m);
@@ -1922,6 +1927,52 @@ a:focus-visible {
   overflow: hidden;
   font: var(--type-label-medium);
   color: var(--c-on-surface-variant);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 기보 묶음 — 앱 R1 의 아이콘 키 넷(`GameFileKeys`): 같은 폭, 칸마다 강조색 아이콘 + 짧은 라벨, 연한 면, 64.
+   누르면 모서리가 살짝 각졌다 돌아온다. 저장 · 공유는 그 안의 작은 메뉴를 연다. */
+.filekeys {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-m);
+  margin-top: var(--card-spacing);
+}
+.filekeys > .menu {
+  display: flex;
+  min-width: 0;
+}
+.filekey {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-s);
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 64px;
+  font: var(--type-label-medium);
+  color: var(--c-on-surface);
+  background: var(--c-surface-container-high);
+  border-radius: 16px;
+  transition:
+    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background var(--motion-quick) ease-out;
+}
+.filekey .icon {
+  color: var(--c-primary);
+}
+.filekey:hover,
+.filekey[aria-expanded="true"] {
+  background: var(--c-surface-container-highest);
+}
+.filekey:active {
+  border-radius: 10px;
+  transition-duration: 90ms;
+}
+.filekey__label {
+  max-width: 100%;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2336,24 +2387,49 @@ a:focus-visible {
   }
 }
 
-/* 형세 그래프 — 한 계열(흑 승률). 선 2px, 면은 ~10% 물빛, 축과 기준선은 머리카락 굵기. */
-.evalgraph__readout {
+/* 형세 그래프(앱 R3) — 작은 나무 판 위에 흑 · 백 두 색 면, 판 격자선 색의 곡선. 머리는 앞선 쪽과 비율을 크게. */
+.evalgraph__head {
   display: flex;
   gap: var(--space-m);
   align-items: baseline;
-  margin-top: var(--space-m);
-  font: var(--type-body-small);
-  color: var(--c-on-surface-variant);
+  justify-content: space-between;
 }
-.evalgraph__readout strong {
-  font: var(--type-label-large);
+.evalgraph__value {
+  display: flex;
+  flex: none;
+  gap: var(--space-m);
+  align-items: center;
+}
+.evalgraph__readout {
+  font: 700 22px/28px var(--font-sans);
+  letter-spacing: -0.2px;
   color: var(--c-on-surface);
+}
+.evalgraph__delta {
+  display: inline-flex;
+  gap: var(--space-s);
+  align-items: center;
+  padding: 2px var(--space-m);
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+  background: var(--c-surface-container-high);
+  border-radius: var(--radius-xl);
+}
+.evalgraph__stone {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-board-black-low);
+}
+.evalgraph__delta[data-side="white"] .evalgraph__stone {
+  background: var(--c-board-white-high);
+  box-shadow: inset 0 0 0 1px var(--c-board-white-rim);
 }
 .evalgraph__plot {
   display: block;
   width: 100%;
   height: auto;
-  margin-top: var(--space-s);
+  margin-top: var(--space-m);
   cursor: crosshair;
   touch-action: pan-y;
 }
@@ -2363,52 +2439,71 @@ a:focus-visible {
 .evalgraph__plot:focus-visible {
   outline: 2px solid var(--c-primary);
   outline-offset: 2px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-s);
+}
+.evalgraph__wood {
+  fill: var(--c-board-wood);
 }
 .evalgraph__grid {
-  stroke: var(--c-outline-variant);
+  stroke: var(--c-board-line);
+  stroke-opacity: 0.3;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 .evalgraph__mid {
-  stroke: var(--c-outline);
-  stroke-width: 1;
+  stroke: var(--c-board-line);
+  stroke-width: 1.2;
   vector-effect: non-scaling-stroke;
+}
+.evalgraph__area--black {
+  fill: var(--c-board-black-low);
+  fill-opacity: 0.85;
+}
+.evalgraph__area--white {
+  fill: var(--c-board-white-high);
+  fill-opacity: 0.9;
+}
+.evalgraph__line {
+  fill: none;
+  stroke: var(--c-board-line);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.evalgraph__line--gap {
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+.evalgraph__side {
+  font: 600 10px/1 var(--font-sans);
+  fill: var(--c-board-label);
 }
 .evalgraph__tick {
   font: var(--type-label-small);
   font-size: 9px;
   fill: var(--c-on-surface-variant);
 }
-.evalgraph__area {
-  fill: var(--c-on-surface);
-  fill-opacity: 0.1;
-}
-.evalgraph__line {
-  fill: none;
-  stroke: var(--c-on-surface);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
+.evalgraph__swing {
+  fill: var(--c-board-best);
+  stroke: var(--c-board-line);
+  stroke-width: 1;
 }
 .evalgraph__now {
-  stroke: var(--c-secondary);
-  stroke-width: 1;
+  stroke: var(--c-board-last-move);
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .evalgraph__cross {
-  stroke: var(--c-on-surface-variant);
+  stroke: var(--c-board-line);
+  stroke-opacity: 0.6;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 .evalgraph__dot {
-  fill: var(--c-on-surface);
-  stroke: var(--c-card);
-  stroke-width: 2;
-}
-.evalgraph__dot--hover {
-  fill: var(--c-on-surface-variant);
+  fill: var(--c-board-wood);
+  stroke: var(--c-board-last-move);
+  stroke-width: 2.5;
 }
 
 /* 정보 점 — 늘 펼쳐 둘 필요 없는 안내를 툴팁으로 접는 자리(개시가 셋뿐인 까닭 등). */
@@ -4953,4 +5048,95 @@ li[data-level="error"] .sissues__dot {
 .pilltrack[data-pill="ready"] > [aria-checked="true"],
 .pilltrack[data-pill="ready"] > [aria-current="page"] {
   background: transparent;
+}
+
+/* ── 요약 줄 아래의 한 줄(RunLine) · 물결 진행선(WavyProgress) ───────────────
+   앱의 10dp 줄: 시간이 정해진 실행이면 물결, 아니면 머리카락 구분선. */
+.runline {
+  display: flex;
+  align-items: center;
+  height: 10px;
+  padding: 0 var(--screen-padding);
+}
+.runline__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--c-outline-variant);
+}
+.wavy {
+  display: block;
+  flex: 1;
+  width: 100%;
+  overflow: visible;
+}
+.wavy__head {
+  fill: none;
+  stroke: var(--c-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wavy__rest {
+  stroke: var(--c-outline-variant);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* ── 미니 분석 바(MiniAnalysisBar) — 하단 탭 위, 보드 밖에서 엔진이 돌 때 ─────────── */
+.shell__bottom {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+}
+.minibar {
+  position: relative;
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+  padding: var(--space-m) var(--space-l);
+  background: var(--c-surface-container-high);
+}
+.minibar__wave {
+  position: absolute;
+  top: -5px;
+  right: 0;
+  left: 0;
+}
+.minibar__open {
+  display: flex;
+  flex: 1;
+  gap: var(--space-l);
+  align-items: center;
+  min-width: 0;
+  text-align: left;
+}
+.minibar__board {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+.minibar__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.minibar__text strong {
+  font: 700 17px/22px var(--font-sans);
+}
+.minibar__text span {
+  overflow: hidden;
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.minibar__pause {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-radius: 14px;
 }

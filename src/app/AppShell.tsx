@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useProMode } from "./proMode";
+import { MiniAnalysisBar } from "./MiniAnalysisBar";
 import { NavRail } from "./NavRail";
 import { BottomTabs } from "./BottomTabs";
 import { TopBar } from "./TopBar";
@@ -59,7 +60,12 @@ export function AppShell() {
           </Suspense>
         </main>
       </div>
-      {compact && <BottomTabs />}
+      {compact && (
+        <div className="shell__bottom">
+          <MiniAnalysisBar />
+          <BottomTabs />
+        </div>
+      )}
       {/* W7: 어느 화면에 .rif 를 놓아도 변환하고, 진행 · 결과 카드를 띄운다. */}
       <RifImportLayer />
     </div>

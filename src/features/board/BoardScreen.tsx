@@ -15,6 +15,7 @@ import { PromptPanel } from "./OpeningPanel";
 import { LinkBackupBanner } from "./LinkBackupBanner";
 import { MoveToolbar } from "./MoveToolbar";
 import { SummaryLine } from "./SummaryLine";
+import { RunLine } from "./RunLine";
 import { BoardSheet } from "./BoardSheet";
 import { useSheetLayout } from "./useSheetLayout";
 import { useBoardNotice } from "./boardNotice";
@@ -183,12 +184,23 @@ export function BoardScreen() {
       {/* 판 아래의 요약 줄(최선수 · 차례)과 카드. [분석] | [대국] 은 상단 바 왼쪽(TopBar), 새 판 · 진영 전환은
           툴바. 휴대폰 세로에서는 둘이 판 아래 시트에 얹힌다(`BoardSheet`, 결정 Q4) — 판과 툴바는 움직이지 않는다. */}
       {sheet ? (
-        <BoardSheet anchorRef={toolbarRef} summary={<SummaryLine />}>
+        <BoardSheet
+          anchorRef={toolbarRef}
+          summary={
+            <>
+              <SummaryLine />
+              <RunLine />
+            </>
+          }
+        >
           {side}
         </BoardSheet>
       ) : (
         <>
-          <SummaryLine />
+          <div className="boardscreen__summary">
+            <SummaryLine />
+            <RunLine />
+          </div>
           {side}
         </>
       )}

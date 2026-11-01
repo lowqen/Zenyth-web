@@ -10,6 +10,9 @@ import { useOpeningTables } from "../../data/opening-tables";
 import { chain, gradeAt } from "../../core/opening/opening-name";
 import { GradeBadge } from "../../components/GradeBadge";
 import { Menu } from "../../components/Menu";
+import { Icon } from "../../components/icons";
+import { ICON } from "../../components/icon-paths";
+import { saveBoardImage, copyPositionString } from "./shareActions";
 import { useCurrentReview } from "../../data/current-review";
 import {
   QUALITY_INFO,
@@ -101,36 +104,15 @@ export function PositionCard({ game }: { game: boolean }) {
         <span className="poscard__rule" data-k="ruleset">
           {RULE_LABEL.renju} · {OPENING_LABEL[opening]}
         </span>
-        <Menu
-          label={t("기보")}
-          items={[
-            { label: t("기보 열기"), onSelect: () => fileInput.current?.click() },
-            {
-              label: t(".psq 저장"),
-              title: t("Piskvork 기보(.psq)로 저장"),
-              onSelect: () => void saveGameFile("psq"),
-            },
-            {
-              label: t(".sav 저장"),
-              title: t("Yixin 저장 국면(.sav)으로 저장"),
-              onSelect: () => void saveGameFile("sav"),
-            },
-            {
-              label: t("링크 복사"),
-              title: t("지금 판을 여는 주소(?p=…)를 복사합니다"),
-              disabled: p.count === 0,
-              onSelect: () => void copyPositionLink(),
-            },
-          ]}
-        />
       </div>
       {p.result && (
         <p className="gameover" data-winner={p.result.winner ?? "draw"}>
           {describeResult(p.result)}
         </p>
       )}
-      {/* 늘 읽는 셋 — 차례 · 수 · 마지막 — 은 한 줄 타일로. */}
-      <dl className="poscard__tiles">
+      {/* «둘 차례 · 수 · 마지막» 세 칸은 걷었다(앱 R1 — 판 · 요약 줄 · 시트 머리와 겹친다). 화면 낭독기와
+          시험을 위해 같은 값을 보이지 않는 목록으로 남긴다. */}
+      <dl className="poscard__tiles sr-only">
         <div className="poscard__tile">
           <dt>{t("둘 차례")}</dt>
           <dd className="tnum" data-k="turn" data-side={p.black ? "black" : "white"}>
@@ -217,7 +199,67 @@ export function PositionCard({ game }: { game: boolean }) {
           )}
         </dl>
       )}
-      {/* 기보 파일 · 링크 — 가끔 쓰는 넷이라 «기보» 메뉴 하나 뒤에 둔다. 판에 끌어다 놓아도 열린다. */}
+      {/* 기보 묶음 — 앱 R1 의 아이콘 키 넷(열기 · 저장 · 공유 · 이미지). 저장은 형식(.psq · .sav), 공유는 링크 ·
+          국면 문자열을 그 안의 작은 메뉴로 — 처음 보이는 칸은 넷뿐이고 모든 기능이 한 번 누르면 보인다.
+          판에 기보 파일을 끌어다 놓아도 열린다. */}
+      <div className="filekeys" role="group" aria-label={t("기보")}>
+        <button type="button" className="filekey" onClick={() => fileInput.current?.click()}>
+          <Icon d={ICON.fileOpen} />
+          <span className="filekey__label">{t("열기")}</span>
+        </button>
+        <Menu
+          buttonClassName="filekey"
+          chevron={false}
+          ariaLabel={t("저장")}
+          label={
+            <>
+              <Icon d={ICON.fileSave} />
+              <span className="filekey__label">{t("저장")}</span>
+            </>
+          }
+          items={[
+            {
+              label: t(".psq 저장"),
+              title: t("Piskvork 기보(.psq)로 저장"),
+              onSelect: () => void saveGameFile("psq"),
+            },
+            {
+              label: t(".sav 저장"),
+              title: t("Yixin 저장 국면(.sav)으로 저장"),
+              onSelect: () => void saveGameFile("sav"),
+            },
+          ]}
+        />
+        <Menu
+          buttonClassName="filekey"
+          chevron={false}
+          ariaLabel={t("공유")}
+          label={
+            <>
+              <Icon d={ICON.share} />
+              <span className="filekey__label">{t("공유")}</span>
+            </>
+          }
+          items={[
+            {
+              label: t("링크 복사"),
+              title: t("지금 판을 여는 주소(?p=…)를 복사합니다"),
+              disabled: p.count === 0,
+              onSelect: () => void copyPositionLink(),
+            },
+            {
+              label: t("국면 문자열"),
+              title: t("수순을 좌표로 이은 한 줄(h8i9j10)을 복사합니다"),
+              disabled: p.count === 0,
+              onSelect: () => void copyPositionString(),
+            },
+          ]}
+        />
+        <button type="button" className="filekey" onClick={() => void saveBoardImage()}>
+          <Icon d={ICON.image} />
+          <span className="filekey__label">{t("이미지")}</span>
+        </button>
+      </div>
       <input
         ref={fileInput}
         type="file"
