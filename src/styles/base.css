@@ -1365,7 +1365,6 @@ a:focus-visible {
   margin-top: calc(-1 * var(--screen-padding));
   padding: var(--screen-padding) 0 var(--space-m);
   background: var(--c-background);
-  border-bottom: 1px solid var(--c-outline-variant);
 }
 /* 큰 제목 아래에 올 때는 맨 위가 아니다 — 끌어올리지 않는다(붙는 위치는 그대로). */
 .pagetitle + .settings__head {
@@ -1375,11 +1374,11 @@ a:focus-visible {
   display: flex;
   gap: var(--space-m);
   align-items: center;
-  min-height: 44px;
-  padding: 0 var(--space-l);
-  background: var(--c-card);
+  min-height: 56px;
+  padding: 0 var(--space-xl);
+  background: var(--c-surface-container-high);
   border: 1px solid transparent;
-  border-radius: var(--radius-m);
+  border-radius: 28px;
   transition: border-color var(--motion-quick) ease-out;
 }
 .search:focus-within {
@@ -1417,15 +1416,15 @@ a:focus-visible {
   text-align: center;
 }
 
+/* 연결 그룹(앱 ConnectedGroup, M3 · P4) — 머리는 그룹 **위**에 강조색으로, 줄마다 제 면, 바깥 모서리만 카드 반경,
+   줄 사이는 3px 틈(구분선 대신). 보드 카드 안의 설정 줄(.srow--panel)은 그룹 밖이라 이 면을 받지 않는다. */
 .sgroup {
-  padding: 0;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
 }
-.sgroup__head {
-  padding: var(--row-padding-v) var(--row-padding-h) var(--space-m);
-}
-/* 섹션 머리 — 강조색 15 SemiBold(앱 ConnectedGroup 제목, M2). */
 .sgroup__title {
+  padding: 0 var(--row-padding-h);
   font: var(--type-section-title);
   color: var(--c-primary);
 }
@@ -1433,6 +1432,26 @@ a:focus-visible {
   margin-top: 2px;
   font: var(--type-body-small);
   color: var(--c-on-surface-variant);
+}
+.sgroup__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sgroup__rows > .srow,
+.radiorows > .radiorow {
+  background: var(--c-card);
+  border-radius: 4px;
+}
+.sgroup__rows > .srow:first-child,
+.radiorows > .radiorow:first-child {
+  border-top-left-radius: var(--radius-card);
+  border-top-right-radius: var(--radius-card);
+}
+.sgroup__rows > .srow:last-child,
+.radiorows > .radiorow:last-child {
+  border-bottom-right-radius: var(--radius-card);
+  border-bottom-left-radius: var(--radius-card);
 }
 
 /* 한 줄 = 이름·설명(왼쪽) + 조작부(오른쪽). 칩이 여럿인 줄은 조작부가 아래로. */
@@ -1443,7 +1462,6 @@ a:focus-visible {
   align-items: center;
   min-height: var(--row-min-height);
   padding: var(--row-padding-v) var(--row-padding-h);
-  border-top: 1px solid var(--c-outline-variant);
 }
 .srow[data-wide] {
   grid-template-columns: minmax(0, 1fr);
@@ -1498,25 +1516,13 @@ a:focus-visible {
   align-items: center;
 }
 
-/* 고급 설정 스위치 카드 — 제목·요약(왼쪽) + 스위치(오른쪽). 켜면 아래로 분류 카드가
-   이어진다. 아코디언의 머리와 같은 자리다. */
-.sadvanced {
-  display: flex;
-  gap: var(--space-l);
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-l) var(--space-xl);
+/* 설정 ▸ 정보 — 라이선스 고지(GPLv3) · 구성요소 · 엔진 소스. 카드 하나(머리 + 본문). */
+.about > .sgroup__head {
+  padding: var(--card-padding) var(--card-padding) var(--space-m);
 }
-.sadvanced__text {
-  min-width: 0;
+.about .sgroup__title {
+  padding: 0;
 }
-@media (max-width: 640px) {
-  .sadvanced {
-    padding: var(--space-l);
-  }
-}
-
-/* 설정 ▸ 정보 — 라이선스 고지(GPLv3) · 구성요소 · 엔진 소스. 카드 틀은 .sgroup 과 같다. */
 .about {
   padding: 0;
   overflow: hidden;
@@ -1586,17 +1592,14 @@ a:focus-visible {
     padding-inline: var(--space-l);
   }
 }
-/* 좁으면 조작부도 제 줄로 내려간다 — 스위치 하나 때문에 설명이 두 글자 폭이 되지 않게. */
+/* 좁으면 조작부가 제 줄로 내려간다 — 칩 · 고르기가 이름 옆에서 눌리지 않게. 스위치는 예외: 설명은 툴팁이라
+   이름과 스위치가 한 줄에 들어가고, 앱처럼 스위치는 늘 줄 끝이다. */
 @media (max-width: 640px) {
-  .srow {
+  .srow:not(:has(> .srow__control > .switch)) {
     grid-template-columns: minmax(0, 1fr);
-    padding: var(--space-l);
   }
-  .srow__control {
+  .srow:not(:has(> .srow__control > .switch)) .srow__control {
     justify-content: flex-start;
-  }
-  .sgroup__head {
-    padding: var(--space-l) var(--space-l) var(--space-m);
   }
 }
 
@@ -5139,4 +5142,211 @@ li[data-level="error"] .sissues__dot {
   color: var(--c-on-primary);
   background: var(--c-primary);
   border-radius: 14px;
+}
+
+/* ── 설정(Z5 — 앱 M3) ───────────────────────────────────────────────── */
+.settings__back {
+  align-self: flex-start;
+  margin-top: var(--space-s);
+}
+.settings__back + .pagetitle {
+  margin-top: var(--space-m);
+}
+/* 첫 화면의 줄 — 외곽선 아이콘 · 제목 · 부제 · 꺾쇠, 줄 전체가 한 터치 대상(앱 LinkRow). */
+.slink {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: center;
+  color: var(--c-on-surface);
+  transition: background var(--motion-quick) ease-out;
+}
+a.slink:hover {
+  background: var(--c-card-hover);
+}
+.slink > .icon:last-child {
+  color: var(--c-on-surface-variant);
+}
+.slink__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--c-on-surface-variant);
+}
+.slink__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.slink .srow__note {
+  font: var(--type-row-note);
+  color: var(--c-on-surface-variant);
+}
+/* 이름 없이 조작부만 — 테마 단추는 제 면 안에, 언어 줄은 줄마다 제 면(아래 .radiorow). */
+.sgroup__rows > .srow--bare {
+  display: block;
+  padding: var(--row-padding-v) var(--row-padding-h);
+}
+.sgroup__rows > .srow--bare[data-row="lang"] {
+  padding: 0;
+  background: none;
+}
+/* 테마 — 아이콘 단추 셋. 고른 것은 진한 강조색으로 채워지고 모서리가 둥글게 모핑한다(앱 M3 · M7). */
+.themechoice {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-m);
+}
+.themechoice__opt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  align-items: center;
+  justify-content: center;
+  height: 76px;
+  font: var(--type-label-large);
+  color: var(--c-on-surface);
+  background: var(--c-surface-container-high);
+  border-radius: 20px;
+  transition:
+    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background var(--motion-quick) ease-out,
+    color var(--motion-quick) ease-out;
+}
+.themechoice__opt[aria-checked="true"] {
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-radius: 38px;
+}
+.themechoice__opt:active {
+  border-radius: 12px;
+  transition-duration: 90ms;
+}
+/* 언어 — 항목마다 한 줄, 고른 줄 끝에 채운 체크 원. */
+.radiorows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.radiorow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--row-min-height);
+  padding: var(--row-padding-v) var(--row-padding-h);
+  font: var(--type-row-title);
+  letter-spacing: var(--track-row-title);
+  color: var(--c-on-surface);
+  text-align: left;
+  transition: background var(--motion-quick) ease-out;
+}
+.radiorow:hover {
+  background: var(--c-card-hover);
+}
+.checkcircle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-radius: 6px;
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity var(--motion-quick) ease-out,
+    transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.checkcircle .icon {
+  width: 18px;
+  height: 18px;
+}
+.radiorow[aria-checked="true"] .checkcircle {
+  border-radius: 50%;
+  opacity: 1;
+  transform: none;
+}
+/* 디자인 미리보기 — 흐린 강조색 원 위의 작은 판과 미니 툴바, 오른쪽 아래 «밝은 / 어두운» 배지(앱 M3). */
+.designpreview {
+  position: relative;
+  display: flex;
+  gap: var(--space-xl);
+  align-items: center;
+  justify-content: center;
+  height: 188px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 22%, var(--c-secondary-container), transparent 46%),
+    radial-gradient(circle at 82% 78%, var(--c-primary-container), transparent 50%),
+    radial-gradient(
+      circle at 70% 18%,
+      color-mix(in srgb, var(--c-primary) 18%, transparent),
+      transparent 40%
+    ),
+    var(--c-surface-container);
+  border-radius: var(--radius-card);
+}
+.designpreview__board {
+  width: 128px;
+  height: 128px;
+}
+.designpreview__keys {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.designpreview__key {
+  width: 30px;
+  height: 30px;
+  background: var(--c-surface-container-highest);
+  border-radius: 12px;
+}
+.designpreview__key--play {
+  width: 44px;
+  background: var(--c-primary);
+}
+.designpreview__badge {
+  position: absolute;
+  right: var(--space-l);
+  bottom: var(--space-l);
+  padding: 2px var(--space-m);
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+  background: var(--c-surface-container-high);
+  border-radius: var(--radius-xl);
+}
+.designpreview__dark {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .designpreview__light {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .designpreview__dark {
+    display: inline;
+  }
+}
+:root[data-theme="dark"] .designpreview__light {
+  display: none;
+}
+:root[data-theme="dark"] .designpreview__dark {
+  display: inline;
+}
+/* 스위치 — 켜지면 엄지에 체크(앱 M3 RapfiSwitch). */
+.switch__check {
+  width: 16px;
+  height: 16px;
+  fill: var(--c-primary);
+  opacity: 0;
+  transition: opacity var(--motion-quick) ease-out;
+}
+.switch[aria-checked="true"] .switch__check {
+  opacity: 1;
+}
+.switch__thumb {
+  display: grid;
+  place-items: center;
 }

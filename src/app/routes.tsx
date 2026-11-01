@@ -62,6 +62,8 @@ export const router = createBrowserRouter(
         // 앱 `SettingsScreen.kt` 의 분류(대국·엔진·표시…)를 옮긴 것. 대국 설정·조작은
         // 보드 옆 칸에서 이리로 왔다. settings.txt 67항목 파일 왕복(W5b)은 고급 ▸ 시스템에 있다.
         { path: "settings", element: <SettingsScreen /> },
+        // 설정 하위 화면(Z5 — 앱 M3 의 목록 → 하위 화면). 뒤로 = 설정 첫 화면.
+        { path: "settings/:page", element: <SettingsScreen /> },
 
         { path: "*", element: <Navigate to="/board" replace /> },
       ],

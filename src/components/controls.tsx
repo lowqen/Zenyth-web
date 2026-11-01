@@ -127,7 +127,12 @@ export function Switch({
       disabled={disabled}
       onClick={() => onChange(!on)}
     >
-      <span className="switch__thumb" />
+      {/* 켜지면 엄지에 체크(앱 M3 RapfiSwitch) — 색 말고도 모양이 상태를 말한다. */}
+      <span className="switch__thumb">
+        <svg className="switch__check" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+        </svg>
+      </span>
     </button>
   );
 }

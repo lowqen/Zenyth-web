@@ -30,7 +30,7 @@ const GOLDEN = join(ROOT, "golden");
 const ACTUAL = join(ROOT, "actual");
 const DIFF = join(ROOT, "diff");
 
-/** 화면 아홉 — 라우트 표(`src/app/routes.tsx`)의 실물 화면 전부(관리자 스튜디오는 뺀다). */
+/** 화면 아홉과 설정 하위 화면 둘 — 라우트 표(`src/app/routes.tsx`)의 실물 화면(관리자 스튜디오는 뺀다). */
 const SCENES: ReadonlyArray<{ name: string; path: string }> = [
   { name: "board", path: "/board" },
   { name: "review", path: "/research/review" },
@@ -41,6 +41,9 @@ const SCENES: ReadonlyArray<{ name: string; path: string }> = [
   { name: "database", path: "/database" },
   { name: "engine", path: "/engine" },
   { name: "settings", path: "/settings" },
+  // 설정 하위 화면(Z5) — 미리보기 카드 · 테마 단추 · 체크 원이 있는 둘.
+  { name: "settings-design", path: "/settings/design" },
+  { name: "settings-general", path: "/settings/general" },
 ];
 
 interface Variant {
@@ -132,6 +135,13 @@ async function shootVariant(browser: Browser, v: Variant) {
  */
 const CHANNEL_TOLERANCE = 2;
 
+/**
+ * 그만큼 넘게 움직여도 이만큼 이하의 **외딴 픽셀**은 다름으로 치지 않는다. 둥근 모서리의 계단 픽셀이 드물게 3 까지
+ * 흔들렸다(Z5 PR — 스모크만 바꾼 커밋에서 board-wide-dark 의 세그먼트 알약 모서리 한 픽셀, 3). 진짜 변화는 늘 수백
+ * 픽셀 이상이다(판 색 메이플: 50만, 글자 한 단: 수천).
+ */
+const PIXEL_ALLOWANCE = 8;
+
 function changedAt(a: PNG, b: PNG, i: number): boolean {
   return (
     Math.abs(a.data[i]! - b.data[i]!) > CHANNEL_TOLERANCE ||
@@ -169,7 +179,7 @@ function compare(name: string, actual: Buffer): string | null {
   if (want.width !== got.width || want.height !== got.height)
     return `크기가 다름 ${got.width}×${got.height} ≠ ${want.width}×${want.height}`;
   const n = countChanged(want, got);
-  if (n === 0) return null;
+  if (n <= PIXEL_ALLOWANCE) return null;
   writeFileSync(join(DIFF, name), PNG.sync.write(diffImage(want, got)));
   return `${n}픽셀 다름`;
 }

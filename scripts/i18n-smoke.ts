@@ -88,6 +88,11 @@ const ROUTES: readonly { path: string; prepare?: (p: Page) => Promise<void> }[] 
     },
   },
   { path: "/settings" },
+  { path: "/settings/design" },
+  { path: "/settings/general" },
+  { path: "/settings/engine" },
+  { path: "/settings/desktop" },
+  { path: "/settings/about" },
 ];
 
 /** 고급 사용자 모드를 켜 둔 채로 열어 숨은 줄까지 훑는다. */
@@ -311,14 +316,14 @@ try {
     });
     await ctx.addInitScript(SEED);
     const page = await ctx.newPage();
-    await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE}/settings/general`, { waitUntil: "networkidle" });
     if ((await page.evaluate("document.documentElement.lang")) !== "ko")
       fail("한국어 브라우저인데 lang 이 ko 가 아닙니다");
     await page
       .getByRole("radiogroup", { name: "언어" })
       .getByRole("radio", { name: "English" })
       .click();
-    await page.getByRole("heading", { name: "Frequently used" }).waitFor({ timeout: 3000 });
+    await page.getByRole("heading", { name: "Language" }).waitFor({ timeout: 3000 });
     await page.reload({ waitUntil: "networkidle" });
     if ((await page.evaluate("document.documentElement.lang")) !== "en")
       fail("새로고침 뒤 영어가 남지 않았습니다");
@@ -326,7 +331,7 @@ try {
       .getByRole("radiogroup", { name: "Language" })
       .getByRole("radio", { name: "한국어" })
       .click();
-    await page.getByRole("heading", { name: "자주 쓰는 설정" }).waitFor({ timeout: 3000 });
+    await page.getByRole("heading", { name: "언어" }).waitFor({ timeout: 3000 });
     const stored = await page.evaluate("localStorage.getItem('rapfi.lang')");
     if (stored !== "ko") fail(`설정에서 고른 언어가 저장되지 않았습니다 (${stored})`);
     console.log("언어 전환: 설정 → English, 새로고침 유지, 설정 → 한국어 ✓");
