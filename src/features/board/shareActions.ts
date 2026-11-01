@@ -6,6 +6,7 @@ import { readBoardSkin } from "../../core/board/board-skin";
 import { encodePosition } from "../../core/model/position-link";
 import { downloadBlob } from "../../app/download";
 import { t } from "../../i18n/i18n";
+import { copyOrShow } from "../../components/copySheetStore";
 
 /** 내보내는 그림의 한 변(px) — 메신저 미리보기에서도 좌표가 읽히는 크기. */
 const IMAGE_SIDE = 1024;
@@ -47,10 +48,7 @@ export async function copyPositionString(): Promise<void> {
   const { stones, size } = useBoardStore.getState().render;
   const text = encodePosition(stones, size);
   const notice = useBoardNotice.getState().show;
-  try {
-    await navigator.clipboard.writeText(text);
+  if (await copyOrShow(text, t("국면 문자열입니다. 복사해 쓰세요"))) {
     notice(t("국면 문자열을 복사했습니다"));
-  } catch {
-    window.prompt(t("국면 문자열입니다. 복사해 쓰세요"), text);
   }
 }

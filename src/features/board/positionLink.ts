@@ -3,6 +3,7 @@ import { useBoardNotice } from "./boardNotice";
 import { POSITION_PARAM, encodePosition, parsePosition } from "../../core/model/position-link";
 import type { Move } from "../../core/model/move";
 import { t } from "../../i18n/i18n";
+import { copyOrShow } from "../../components/copySheetStore";
 
 /**
  * 국면 딥링크 `?p=…` 의 화면 쪽 — 계획서 §6. **전 화면 공통 쿼리**라 어느 주소에 붙어
@@ -41,15 +42,12 @@ export function positionUrl(origin: string, base: string): string {
 
 /**
  * 지금 판의 링크를 클립보드에 넣는다. 클립보드를 쓸 수 없는 곳(보안 맥락이 아닌 주소 ·
- * 권한 거부)에서는 직접 복사하도록 링크를 대화상자로 보여 준다.
+ * 권한 거부)에서는 직접 복사하도록 링크를 시트로 보여 준다(`CopySheet`).
  */
 export async function copyPositionLink(): Promise<void> {
   const url = positionUrl(location.origin, import.meta.env.BASE_URL);
   const notice = useBoardNotice.getState().show;
-  try {
-    await navigator.clipboard.writeText(url);
+  if (await copyOrShow(url, t("이 국면의 링크입니다. 복사해 쓰세요"))) {
     notice(t("이 국면의 링크를 복사했습니다"));
-  } catch {
-    window.prompt(t("이 국면의 링크입니다. 복사해 쓰세요"), url);
   }
 }

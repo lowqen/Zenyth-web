@@ -1831,6 +1831,83 @@ a:focus-visible {
   background: var(--c-secondary-container);
   border-color: transparent;
 }
+/* 걸러 보기 칩 한 줄 — 앱 `ChipRow`: 접지 않고 가로로 민다. 스크롤 막대는 숨기고, 칩이 칸 끝에서
+   잘리는 것이 «더 있다»는 표시다. */
+.chips--row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.chips--row::-webkit-scrollbar {
+  display: none;
+}
+.chips--row > .chip {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* ── 시트 (앱 ZenythSheet — 입력형 대화상자 대신) ─────────────────── */
+/* 아래에서 올라오는 모달. 넓은 화면에서도 아래 가운데에 폭을 묶어 둔다(앱 태블릿과 같다). */
+.sheet {
+  inset: auto 0 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85dvh;
+  margin: 0 auto;
+  padding: 0;
+  color: var(--c-on-surface);
+  background: var(--c-card);
+  border: 0;
+  border-radius: 32px 32px 0 0;
+}
+.sheet[open] {
+  animation: sheet-rise 320ms cubic-bezier(0.2, 0.9, 0.25, 1.02);
+}
+.sheet::backdrop {
+  background: color-mix(in srgb, var(--c-scrim) 32%, transparent);
+}
+@keyframes sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+.sheet__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-l);
+  padding: 0 var(--space-xxl) var(--space-xl);
+}
+.sheet__grip {
+  align-self: center;
+  width: 32px;
+  height: 4px;
+  margin: var(--space-l) 0 var(--space-s);
+  background: color-mix(in srgb, var(--c-outline) 50%, transparent);
+  border-radius: 2px;
+}
+.sheet__title {
+  margin: 0;
+  font: var(--type-title-large);
+}
+.sheet__field {
+  width: 100%;
+  padding: var(--space-l) var(--space-xl);
+  font: var(--type-body-large);
+  color: inherit;
+  word-break: break-all;
+  resize: none;
+  background: var(--c-surface-container-high);
+  border: 0;
+  border-radius: 16px;
+}
+.sheet__actions {
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: var(--space-s);
+}
 
 /* ── 협상 타임라인 ──────────────────────────────────────────────── */
 /* 가로로 흐르되 좁아지면 스크롤한다. 줄바꿈시키면 «단계»가 아니라 «목록»으로

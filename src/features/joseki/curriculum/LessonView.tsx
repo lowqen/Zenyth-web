@@ -22,6 +22,7 @@ import { Icon } from "../../../components/icons";
 import { ICON } from "../../../components/icon-paths";
 import { TreeView } from "../TreeView";
 import { useSlidingPill } from "../../../components/useSlidingPill";
+import { copyOrShow } from "../../../components/copySheetStore";
 
 /**
  * 공식 커리큘럼의 레슨 하나 — **살펴보기**(트리 · 판 · 해설을 자유롭게)와 **학습**(수순을 맞히며 따라 두기,
@@ -104,13 +105,10 @@ export function LessonView({
 
   const copyLink = async () => {
     const url = lessonUrl(location.origin, import.meta.env.BASE_URL, lesson.id, mode);
-    try {
-      await navigator.clipboard.writeText(url);
+    // 클립보드를 쓸 수 없는 곳(보안 맥락이 아님 · 권한 거부)에서는 직접 복사하게 시트로 보여 준다.
+    if (await copyOrShow(url, t("이 레슨의 링크입니다. 복사해 쓰세요"))) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // 클립보드를 쓸 수 없는 곳(보안 맥락이 아님 · 권한 거부) — 직접 복사하게 보여 준다.
-      window.prompt(t("이 레슨의 링크입니다. 복사해 쓰세요"), url);
     }
   };
 

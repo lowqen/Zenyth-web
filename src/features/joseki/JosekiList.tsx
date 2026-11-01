@@ -137,7 +137,7 @@ export function JosekiList() {
             onChange={(e) => setQ(e.target.value)}
           />
           {cats.length > 1 && (
-            <ChipGroup label={t("분류")}>
+            <ChipGroup label={t("분류")} row>
               {cats.map((c) => (
                 <Chip key={c} on={cat === c} onClick={() => setCat(cat === c ? null : c)}>
                   <span lang={langOf(t(c))}>{t(c)}</span>
@@ -146,7 +146,7 @@ export function JosekiList() {
             </ChipGroup>
           )}
           {tags.length > 0 && (
-            <ChipGroup label={t("태그")}>
+            <ChipGroup label={t("태그")} row>
               {tags.map((g) => (
                 <Chip key={g} on={tag === g} onClick={() => setTag(tag === g ? null : g)}>
                   #{g}

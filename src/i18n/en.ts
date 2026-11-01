@@ -190,6 +190,7 @@ export const EN: Readonly<Record<string, string>> = {
   ".{fmt} 기보": ".{fmt} game record",
   "이 국면의 링크를 복사했습니다": "Copied the link to this position",
   "이 국면의 링크입니다. 복사해 쓰세요": "Link to this position. Copy it",
+  복사: "Copy",
 
   // ── 국면 카드 · 요약 줄 · 공용 입력 · 시간 해석 ──
   국면: "Position",

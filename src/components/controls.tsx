@@ -17,10 +17,21 @@ import { useSlidingPill } from "./useSlidingPill";
  * legend 는 브라우저마다 배치가 달라 첫 줄이 어긋난다. 묶음의 뜻은 `role`+라벨로.
  *
  * 대국 스모크가 `[role=group][aria-label=오프닝] .chip` 과 `aria-pressed` 로 집는다.
+ *
+ * `row` 면 앱 `ChipRow` 처럼 접지 않고 가로로 민다 — 목록을 걸러 보는 칩(정석의 분류 · 태그). 설정 줄의
+ * 고르기(오프닝 · 시간)는 칩이 몇 개 없어 접는 편이 다 보인다.
  */
-export function ChipGroup({ label, children }: { label: string; children: ReactNode }) {
+export function ChipGroup({
+  label,
+  row = false,
+  children,
+}: {
+  label: string;
+  row?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <div className="chips" role="group" aria-label={label}>
+    <div className={row ? "chips chips--row" : "chips"} role="group" aria-label={label}>
       {children}
     </div>
   );
