@@ -1,3 +1,5 @@
+// 처음 온 사람인지(Z8)는 다른 무엇이 저장소에 쓰기 전에 본다 — 반드시 첫 import.
+import "./app/firstVisit";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { router } from "./app/routes";

@@ -71,9 +71,26 @@ function watchPage(page: Page): void {
 
 const contexts = new WeakSet<BrowserContext>();
 
+/**
+ * 첫 방문 환영 · 새로워진 점(Z8)은 본 것으로 둔다 — 스모크마다 새 컨텍스트라 모두 «처음 온 사람»이 되어
+ * 환영이 화면을 덮는다. 주소에 `firstvisit` 이 있으면 그대로 둔다(첫 방문 자체를 보는 스모크 · 골든).
+ * 골든 하네스(`shots.ts`)도 같은 스크립트를 쓴다.
+ */
+export const SEEN_INTRO = () => {
+  if (location.search.includes("firstvisit")) return;
+  try {
+    localStorage.setItem("rapfi.welcome", "1");
+    localStorage.setItem("rapfi.whatsnew", "99999999");
+  } catch {
+    /* 저장소가 막힌 컨텍스트 — 앱도 «전에 온 사람»으로 본다 */
+  }
+};
+
 async function watchContext(ctx: BrowserContext): Promise<void> {
   if (contexts.has(ctx)) return;
   contexts.add(ctx);
+  await ctx.addInitScript(SEEN_INTRO);
+  if (MODE === "off") return;
   await ctx.addInitScript(() => {
     document.addEventListener("securitypolicyviolation", (e) => {
       console.error(
@@ -88,7 +105,6 @@ async function watchContext(ctx: BrowserContext): Promise<void> {
 
 /** 브라우저를 감싸 그 뒤에 여는 모든 페이지 · 컨텍스트에 감시를 붙인다. */
 export function watchBrowser(browser: Browser): Browser {
-  if (MODE === "off") return browser;
   const newContext = browser.newContext.bind(browser);
   const newPage = browser.newPage.bind(browser);
   browser.newContext = (async (...args: Parameters<Browser["newContext"]>) => {

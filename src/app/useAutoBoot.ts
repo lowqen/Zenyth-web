@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useEngineStore } from "../engine/engine-state";
 import { useSettingsStore } from "../features/settings/settingsStore";
+import { useFirstVisit } from "./firstVisit";
 
 /**
  * 주소의 `?autoboot=0` — 이번 방문은 엔진을 띄우지 않는다(엔진 산출물이 없는 스모크·진단용).
@@ -29,10 +30,14 @@ const DISABLED_BY_QUERY = (() => {
  * 엔진 → 예열)를 말하며, 분석·대국 요청은 기동이 끝나는 대로 이어진다.
  */
 export function useAutoBoot() {
+  // 처음 온 사람의 환영(Z8)이 떠 있는 동안은 띄우지 않는다 — 앱도 첫 설정이 끝나야 셸(과 자동 시작)이
+  // 생긴다. 환영을 읽는 동안 가중치를 받느라 화면이 버벅이지 않게.
+  const welcomed = useFirstVisit((s) => s.welcomed);
   useEffect(() => {
+    if (!welcomed) return;
     if (DISABLED_BY_QUERY || !useSettingsStore.getState().autoBoot) return;
     const e = useEngineStore.getState();
     if (!e.capabilities.variant || e.status !== "idle") return;
     void e.start();
-  }, []);
+  }, [welcomed]);
 }

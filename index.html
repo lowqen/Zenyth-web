@@ -6,6 +6,12 @@
     <title>Zenyth Web — 오목·렌주 분석반</title>
     <meta name="description" content="Rapfi 엔진을 브라우저에서 돌리는 오목·렌주 분석반." />
     <meta name="color-scheme" content="light dark" />
+    <!-- Z8: 앱과 같은 «일식» 아이콘(scripts/gen-icons.ts). 상단 색은 페이지 면(Mist 99 / 10). -->
+    <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <meta name="theme-color" content="#FCFCFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1C1B1E" media="(prefers-color-scheme: dark)" />
     <!-- 페인트 전에 테마 확정(FOUC 방지). CSP 가 인라인 스크립트를 막아 public/ 의 파일로 둔다. -->
     <script src="%BASE_URL%theme-init.js"></script>
   </head>
