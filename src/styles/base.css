@@ -1864,6 +1864,9 @@ a:focus-visible {
 .sheet[open] {
   animation: sheet-rise 320ms cubic-bezier(0.2, 0.9, 0.25, 1.02);
 }
+.sheet:focus {
+  outline: none;
+}
 .sheet::backdrop {
   background: color-mix(in srgb, var(--c-scrim) 32%, transparent);
 }
@@ -3621,53 +3624,218 @@ button.theory__row:hover {
   text-align: right;
 }
 
-/* 가져오기 안내 — 세 걸음을 번호 원으로. 첫 화면에서 «무엇을 · 어디서 · 얼마나»가 한눈에. */
-/* 평범한 카드 — 예전의 초록 그러데이션은 «광고 배너»로 읽혔다. 강조는 채운 단추 하나가 진다. */
-.rifcard--compact {
-  background: transparent;
-  border-style: dashed;
+/* ── 실전 대국 데이터 안내(Z7 — 앱 GameDataPrompt, R2) ────────────────────
+   첫 실행 화면의 문법: 96 원 안의 강조색 아이콘 · 굵은 제목 26 · 회색 한 문장 · 기능 줄 셋 · 채운 알약 하나. */
+.gamedata {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-xxl) var(--card-padding, 20px);
+  text-align: center;
 }
-.rifcard__lead {
-  margin-top: var(--space-s);
-  font: var(--type-body-medium);
-  line-height: 1.6;
-  color: var(--c-on-surface-variant);
-}
-.rifsteps {
+.gamedata__hero {
   display: grid;
-  gap: var(--space-m);
-  margin: var(--space-l) 0 0;
-  padding: 0;
-  list-style: none;
-}
-.rifsteps li {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: var(--space-m);
-  align-items: start;
-  font: var(--type-body-medium);
-  color: var(--c-on-surface);
-}
-.rifsteps__n {
-  display: inline-grid;
-  width: 24px;
-  height: 24px;
   place-items: center;
-  font: var(--type-label-medium);
-  color: var(--c-on-surface-variant);
-  background: var(--c-surface-container-high);
+  width: 96px;
+  height: 96px;
+  color: var(--c-primary);
+  background: var(--c-surface-container-highest);
   border-radius: 50%;
 }
-.rifsteps a {
-  color: var(--c-primary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+.gamedata__hero .icon {
+  width: 44px;
+  height: 44px;
 }
-.rifcard--compact .rifsteps {
+.gamedata__title {
+  margin: 20px 0 0;
+  font: 800 26px/34px var(--font-sans);
+  text-wrap: balance;
+}
+.gamedata__lead {
+  margin: var(--space-l) 0 0;
+  font: var(--type-body-large);
+  color: var(--c-on-surface-variant);
+  text-wrap: balance;
+}
+.gamedata__features {
+  display: grid;
+  gap: var(--space-xl);
+  width: 100%;
+  /* 넓은 화면(랭킹은 한 단)에서도 휴대폰 폭의 한 기둥 — 840px 알약은 단추로 읽히지 않는다. */
+  max-width: 480px;
+  margin: var(--space-xxl) 0 0;
+  padding: 0;
+  text-align: left;
+  list-style: none;
+}
+.gamedata__feature {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.gamedata__ftext {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.gamedata__ftext b {
+  font: var(--type-row-title);
+  font-weight: 600;
+}
+.gamedata__ftext span {
+  font: var(--type-row-note);
+  color: var(--c-on-surface-variant);
+}
+.gamedata__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  margin-top: var(--space-xxl);
+}
+.gamedata__how {
+  margin: 0;
+  font: var(--type-body-medium);
+  color: var(--c-on-surface-variant);
+  text-wrap: balance;
+}
+.gamedata__error {
+  margin: 0 0 var(--space-l);
+  font: var(--type-body-medium);
+  color: var(--c-error);
+}
+.gamedata__pick {
+  width: 100%;
+  min-height: 52px;
+  margin-top: var(--space-xl);
+}
+.gamedata__quiet {
+  display: flex;
   gap: var(--space-s);
+  justify-content: center;
 }
-.rifcard__legal {
-  margin-top: var(--space-m);
+.gamedata__quiet .ghostbtn {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-primary);
+}
+.gamedata__quiet .gamedata__later {
+  color: var(--c-on-surface-variant);
+}
+.gamedata__building,
+.gamedata__done {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+.gamedata__building .lprogress__bar {
+  flex: none;
+  width: 100%;
+}
+.gamedata__phase {
+  margin: 0;
+  font: var(--type-title-small);
+}
+.gamedata__note {
+  margin: 0;
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+/* 끝을 알리는 알약(앱 DoneCard) — 연한 강조 면에 채운 체크 원 · 굵은 글. */
+.donecard {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  padding: 14px 20px;
+  font: var(--type-title-medium);
+  font-weight: 700;
+  color: var(--c-on-secondary-container);
+  text-align: left;
+  background: var(--c-secondary-container);
+  border-radius: 28px;
+}
+.donecard__check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-radius: 50%;
+}
+.donecard__check .icon {
+  width: 16px;
+  height: 16px;
+}
+/* «나중에»로 접은 한 줄. 누르면 카드로 돌아간다. */
+.gamedata-banner {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  padding: 10px var(--space-m) 10px var(--space-xl);
+  color: var(--c-on-surface);
+  text-align: left;
+  background: var(--c-card);
+  border-radius: var(--radius-l);
+}
+.gamedata-banner:hover {
+  background: var(--c-surface-container-high);
+}
+.gamedata-banner__icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--c-primary);
+}
+.gamedata-banner__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.gamedata-banner__text b {
+  font: var(--type-title-small);
+}
+.gamedata-banner__text span {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.gamedata-banner__add {
+  padding: 0 var(--space-l);
+  font: var(--type-label-large);
+  color: var(--c-primary);
+}
+.sheet__text {
+  margin: 0;
+  font: var(--type-body-medium);
+  color: var(--c-on-surface-variant);
+}
+.sheet__link {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  color: var(--c-primary);
+}
+/* 랭킹의 빈 실전 칸 — 판 수 · 결과 막대 자리를 «무엇을 하면 채워지는지»로. */
+.rankrow__pending {
+  grid-column: 4 / -1;
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .rankrow__pending {
+    grid-column: auto;
+  }
 }
 
 /* 지금 보는 자료 — 한 줄. 좁으면 버튼이 다음 줄로. */

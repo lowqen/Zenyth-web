@@ -126,15 +126,42 @@ const pageErrors: string[] = [];
 page.on("pageerror", (e) => pageErrors.push(String(e)));
 
 try {
-  console.log("1. 빈 랭킹 — 가져오기 안내");
+  console.log("1. 빈 랭킹 — 실전 대국 데이터 안내(Z7)");
   await page.goto(`${BASE}/research/ranking?autoboot=0`);
   await page.locator(".ranking").waitFor({ timeout: 15_000 });
-  await page.locator(".rifcard").waitFor({ timeout: 10_000 });
-  const link = await page.locator('.rifcard a[href*="renju.net"]').first().getAttribute("href");
+  // 처음 한 번은 시트로 묻는다 — «나중에»로 닫으면 다시 뜨지 않는다.
+  const sheet = page.locator('[data-k="game-data-sheet"][open]');
+  await sheet.waitFor({ timeout: 10_000 });
+  ok("데이터 없이 처음 열면 시트가 한 번 뜬다");
+  await sheet.getByRole("button", { name: "나중에" }).click();
+  await sheet.waitFor({ state: "detached" });
+  const card = page.locator('[data-k="game-data"]');
+  await card.waitFor({ timeout: 10_000 });
+  const link = await card.locator('a[href*="renju.net"]').first().getAttribute("href");
   check(
     link === "https://www.renju.net/game/",
-    "renju.net 내려받기 링크가 있다",
+    "카드가 탭 맨 위에 · renju.net 내려받기 링크",
     `링크가 다르다: ${link}`,
+  );
+  check(
+    (await page.locator('[data-k="ranking-empty"] .rankrow').count()) === 26 &&
+      (await page.locator(".rankrow__pending").first().innerText()).includes(
+        "대국 데이터를 넣으면",
+      ),
+    "셀 것이 없어도 26주형은 보이고, 빈 칸은 무엇을 하면 채워지는지 말한다",
+    "빈 랭킹 줄이 없다",
+  );
+  await card.getByRole("button", { name: "나중에" }).click();
+  await page.locator('[data-k="game-data-banner"]').click();
+  await card.waitFor();
+  ok("«나중에»는 배너로 접고, 배너를 누르면 카드로");
+  await page.reload();
+  await page.locator(".ranking").waitFor();
+  await page.waitForTimeout(500);
+  check(
+    (await page.locator('[data-k="game-data-sheet"][open]').count()) === 0,
+    "시트는 다시 뜨지 않는다",
+    "시트가 또 떴다",
   );
 
   console.log("2. 보드 화면에 .rif 를 떨어뜨린다 — 어느 화면에서든 변환");
@@ -180,8 +207,8 @@ try {
   const total = await page.locator('[data-k="ranking-total"]').innerText();
   check(total.includes("2,000판"), `26주형 랭킹 — ${total.trim()}`, `총계가 다르다: ${total}`);
   check(
-    (await page.locator(".rifcard").count()) === 0,
-    "팩이 있으면 가져오기 안내가 사라진다",
+    (await page.locator('[data-k="game-data"], [data-k="game-data-banner"]').count()) === 0,
+    "팩이 있으면 안내가 사라진다",
     "안내가 남아 있다",
   );
   await page.getByRole("searchbox", { name: "선수 찾기" }).fill("kor");
@@ -245,7 +272,7 @@ try {
   console.log("6. 지우면 내 기보로 물러선다");
   await page.getByRole("button", { name: "지우기", exact: true }).click();
   await page.locator(".packbar__confirm").getByRole("button", { name: "지우기" }).click();
-  await page.locator(".rifcard").waitFor({ timeout: 10_000 });
+  await page.locator('[data-k="game-data"]').waitFor({ timeout: 10_000 });
   const gone = await packView(page);
   check(gone.pack === null, "RenjuNet 팩을 지웠다", "팩이 남아 있다");
   // 보드에 몇 수 두면 내 기보(지금 판)로 센다.

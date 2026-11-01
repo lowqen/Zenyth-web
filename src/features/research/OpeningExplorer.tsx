@@ -15,7 +15,8 @@ import { GradeBadge } from "../../components/GradeBadge";
 import { useOpeningTables } from "../../data/opening-tables";
 import { useBoardStore } from "../board/boardStore";
 import { useGameStore } from "../board/gameStore";
-import { PackSourceBar, RifImportCard, WdlBar } from "./rif/RifParts";
+import { PackSourceBar, WdlBar } from "./rif/RifParts";
+import { GameDataPromptSlot, GameDataSheetOnce } from "./rif/GameData";
 import { fmtInt } from "./rif/format";
 import { activePack, useRifStore } from "./rif/rifStore";
 import { langOf, localized, msg, pick, t } from "../../i18n/i18n";
@@ -64,8 +65,6 @@ export function OpeningExplorer() {
   const tables = useOpeningTables((s) => s.tables);
   const loaded = useOpeningTables((s) => s.loaded);
   const ensure = useRifStore((s) => s.ensure);
-  const ready = useRifStore((s) => s.ready);
-  const hasRenjuNet = useRifStore((s) => s.pack !== null);
   const pack = useRifStore(activePack);
   const navigate = useNavigate();
   const { stones, size } = render;
@@ -221,6 +220,9 @@ export function OpeningExplorer() {
       </div>
 
       <div className="explorer__side">
+        {/* Z7: 실전 대국 데이터가 없으면 맨 위에 그 안내(앱 R2) — 처음 한 번은 시트로도. */}
+        <GameDataPromptSlot />
+        <GameDataSheetOnce />
         <PackSourceBar />
 
         <section className="panel">
@@ -399,8 +401,6 @@ export function OpeningExplorer() {
         )}
 
         {!loaded && <p className="explorer__note">{t("표를 받는 중입니다…")}</p>}
-        {/* 통계가 없어도 이름 · 유불리는 뜬다 — 가져오기 안내는 읽을 것들 뒤로 물린다. */}
-        {ready && !hasRenjuNet && <RifImportCard compact />}
         <Disclosure id="explorer-about" level={3} title={t("자료 출처")}>
           <p className="explorer__note">
             {t(

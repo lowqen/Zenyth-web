@@ -22,7 +22,8 @@ import {
   type Split,
 } from "../../../core/rif/rankings";
 import { useGameStore } from "../../board/gameStore";
-import { PackSourceBar, RifImportCard, WdlBar } from "../rif/RifParts";
+import { PackSourceBar, WdlBar } from "../rif/RifParts";
+import { GameDataPromptSlot, GameDataSheetOnce } from "../rif/GameData";
 import { fmtInt } from "../rif/format";
 import { activePack, useRifStore } from "../rif/rifStore";
 import { MiniBoard } from "../../../components/MiniBoard";
@@ -59,7 +60,6 @@ const parseLine = (text: string): Move[] =>
 export function RankingScreen() {
   const ensure = useRifStore((s) => s.ensure);
   const ready = useRifStore((s) => s.ready);
-  const hasRenjuNet = useRifStore((s) => s.pack !== null);
   const pack = useRifStore(activePack);
   const navigate = useNavigate();
   useEffect(() => void ensure(), [ensure]);
@@ -142,7 +142,9 @@ export function RankingScreen() {
 
   return (
     <div className="ranking">
-      {ready && !hasRenjuNet && <RifImportCard compact={pack !== null} />}
+      {/* Z7: 실전 대국 데이터가 없으면 맨 위에 그 안내(앱 R2) — 처음 한 번은 시트로도. */}
+      <GameDataPromptSlot />
+      <GameDataSheetOnce />
       <PackSourceBar />
 
       {pack && three && (
@@ -350,12 +352,33 @@ export function RankingScreen() {
         </>
       )}
 
+      {/* 셀 것이 하나도 없을 때(RenjuNet 도 내 기보도 없음): 26주형은 그대로 보이고, 판 수 · 결과 막대
+          자리는 비었다고 말한다(앱 R2 — «없음»이 아니라 무엇을 하면 채워지는지). */}
       {ready && !pack && (
-        <p className="explorer__note">
-          {t(
-            "아직 저장한 기보도 없습니다. 보드에서 둔 판이나 연 기보가 쌓이면 여기서 내 기보로도 셉니다.",
-          )}
-        </p>
+        <section className="panel" aria-label={t("26주형 랭킹")}>
+          <ol className="ranklist" data-k="ranking-empty">
+            {Array.from({ length: NONSTD }, (_, i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  className="rankrow"
+                  onClick={() => open(representative(i), nameOf(i))}
+                >
+                  <span className="rankrow__rank tnum" />
+                  <MiniBoard moves={representative(i)} className="rankrow__thumb" />
+                  <span className="rankrow__name">
+                    <b>{nameOf(i)}</b>
+                    <span className="rankrow__sub">
+                      {ABBR[i]} · {isDirect(i) ? t("직접주형") : t("간접주형")}
+                      {pick(` · ${ROMAJI[i]}`, "")}
+                    </span>
+                  </span>
+                  <span className="rankrow__pending">{t("대국 데이터를 넣으면 표시")}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
     </div>
   );

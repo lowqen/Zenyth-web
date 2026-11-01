@@ -99,6 +99,8 @@ const ROUTES: readonly { path: string; prepare?: (p: Page) => Promise<void> }[] 
 const SEED = `(() => {
   try {
     localStorage.setItem("rapfi.settings", JSON.stringify({ showAdvanced: true, autoBoot: false }));
+    // 데이터 없이 오프닝 · 랭킹을 처음 열 때 한 번 뜨는 시트(Z7)는 본 것으로 — 화면을 덮지 않게.
+    localStorage.setItem("rapfi.dataPrompt.sheet", "1");
   } catch {}
 })()`;
 
