@@ -135,6 +135,13 @@ async function shootVariant(browser: Browser, v: Variant) {
  */
 const CHANNEL_TOLERANCE = 2;
 
+/**
+ * 그만큼 넘게 움직여도 이만큼 이하의 **외딴 픽셀**은 다름으로 치지 않는다. 둥근 모서리의 계단 픽셀이 드물게 3 까지
+ * 흔들렸다(Z5 PR — 스모크만 바꾼 커밋에서 board-wide-dark 의 세그먼트 알약 모서리 한 픽셀, 3). 진짜 변화는 늘 수백
+ * 픽셀 이상이다(판 색 메이플: 50만, 글자 한 단: 수천).
+ */
+const PIXEL_ALLOWANCE = 8;
+
 function changedAt(a: PNG, b: PNG, i: number): boolean {
   return (
     Math.abs(a.data[i]! - b.data[i]!) > CHANNEL_TOLERANCE ||
@@ -172,7 +179,7 @@ function compare(name: string, actual: Buffer): string | null {
   if (want.width !== got.width || want.height !== got.height)
     return `크기가 다름 ${got.width}×${got.height} ≠ ${want.width}×${want.height}`;
   const n = countChanged(want, got);
-  if (n === 0) return null;
+  if (n <= PIXEL_ALLOWANCE) return null;
   writeFileSync(join(DIFF, name), PNG.sync.write(diffImage(want, got)));
   return `${n}픽셀 다름`;
 }
