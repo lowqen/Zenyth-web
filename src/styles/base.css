@@ -24,11 +24,12 @@ body {
   overflow-wrap: break-word;
 }
 
-/* 카드 면 — 밝게는 종이 위의 흰 카드, 어둡게는 배경보다 한 단 밝은 면. 팔레트 값은 그대로 두고
-   (앱과 골든 시험으로 묶여 있다) 역할만 고른다. 테마는 tokens.css 가 root 의 color-scheme 으로 정한다. */
+/* 카드 면 — 앱 UI 개편 2차 M1: 테두리 없는 면. 밝게는 거의 흰 페이지보다 한 톤 **어둡게**, 어둡게는 한 톤
+   밝게(surface-container, 라이트 95 · 다크 18 · 검은 배경 10). 경계는 면과 페이지의 차이 하나다(≥ 1.06:1, 시험).
+   카드 안에 깔리는 것(칸 · 버튼 · 표 머리)은 한 단 위(surface-container-high)를 써야 면에 묻히지 않는다. */
 :root {
-  --c-card: light-dark(var(--c-surface-container-lowest), var(--c-surface-container));
-  --c-card-hover: light-dark(var(--c-surface-container-low), var(--c-surface-container-high));
+  --c-card: var(--c-surface-container);
+  --c-card-hover: var(--c-surface-container-high);
 }
 
 h1,
@@ -227,7 +228,6 @@ a:focus-visible {
     min-width: 160px;
     padding: var(--space-s);
     background: var(--c-surface-container-high);
-    border: 1px solid var(--c-outline-variant);
     border-radius: var(--radius-m);
     box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
   }
@@ -282,7 +282,6 @@ a:focus-visible {
   min-height: 56px;
   padding: var(--space-m) var(--space-xl);
   background: var(--c-background);
-  border-bottom: 1px solid var(--c-outline-variant);
 }
 .topbar__title {
   font: var(--type-title-medium);
@@ -332,7 +331,7 @@ a:focus-visible {
 .rtabs__tab.is-active {
   font-weight: 600;
   color: var(--c-on-surface);
-  border-bottom-color: var(--c-secondary);
+  border-bottom-color: var(--c-primary);
 }
 
 /* ── 보드 ───────────────────────────────────────────────────────────
@@ -659,13 +658,12 @@ a:focus-visible {
 }
 
 /* ── 옆 칸 카드 ─────────────────────────────────────────────────────
-   앱의 다크 카드처럼 테두리 없이 한 단 밝은 면으로 구획한다. 테두리를 두르면
+   테두리 없이 페이지와 한 톤 다른 면으로 구획한다(앱 M1). 테두리를 두르면
    카드가 여덟 장 쌓이는 옆 칸이 격자처럼 시끄러워진다. */
 .panel {
   padding: var(--space-xl);
   background: var(--c-card);
-  border: 1px solid var(--c-outline-variant);
-  border-radius: var(--radius-l);
+  border-radius: var(--radius-card);
 }
 /* 고를 때까지 남는 안내(링크를 열기 전 판 등) — 카드와 구별되는 한 단 진한 면. */
 .panel--notice {
@@ -1026,14 +1024,14 @@ a:focus-visible {
     height var(--motion-quick) ease-out;
 }
 .switch[aria-checked="true"] {
-  background: var(--c-secondary);
-  border-color: var(--c-secondary);
+  background: var(--c-primary);
+  border-color: var(--c-primary);
 }
 .switch[aria-checked="true"] .switch__thumb {
   left: 24px;
   width: 22px;
   height: 22px;
-  background: var(--c-on-secondary);
+  background: var(--c-on-primary);
 }
 .switch:disabled {
   cursor: not-allowed;
@@ -1210,7 +1208,7 @@ a:focus-visible {
   min-height: 44px;
   padding: 0 var(--space-l);
   background: var(--c-card);
-  border: 1px solid var(--c-outline-variant);
+  border: 1px solid transparent;
   border-radius: var(--radius-m);
   transition: border-color var(--motion-quick) ease-out;
 }
@@ -1665,7 +1663,7 @@ a:focus-visible {
   padding: var(--space-xs) var(--space-m);
   font: var(--type-label-small);
   color: var(--c-on-surface-variant);
-  background: var(--c-surface-container);
+  background: var(--c-surface-container-high);
   border-radius: var(--radius-xs);
   white-space: nowrap;
 }
@@ -2145,7 +2143,7 @@ a:focus-visible {
   background:
     linear-gradient(45deg, transparent 50%, currentColor 50%) right 16px center / 5px 5px no-repeat,
     linear-gradient(135deg, currentColor 50%, transparent 50%) right 11px center / 5px 5px no-repeat,
-    var(--c-surface-container);
+    var(--c-surface-container-high);
   border: 1px solid var(--c-outline-variant);
   border-radius: var(--radius-s);
   appearance: none;
@@ -2254,7 +2252,7 @@ a:focus-visible {
 }
 .evalgraph__dot {
   fill: var(--c-on-surface);
-  stroke: var(--c-surface-container);
+  stroke: var(--c-card);
   stroke-width: 2;
 }
 .evalgraph__dot--hover {
@@ -2702,7 +2700,7 @@ button.theory__row:hover {
   top: 0;
   font: var(--type-label-medium);
   color: var(--c-on-surface-variant);
-  background: var(--c-surface-container);
+  background: var(--c-surface-container-high);
 }
 .rtable--moves tbody tr {
   cursor: pointer;
@@ -3348,7 +3346,7 @@ button.theory__row:hover {
   gap: var(--space-m);
   align-items: center;
   padding: var(--space-m) var(--space-l);
-  background: var(--c-surface-container);
+  background: var(--c-surface-container-high);
   border-radius: var(--radius-l);
 }
 .packbar__meta {
@@ -3402,7 +3400,6 @@ button.theory__row:hover {
   width: min(360px, calc(100vw - 32px));
   padding: var(--space-l) var(--space-xl);
   background: var(--c-surface-container-high);
-  border: 1px solid var(--c-outline-variant);
   border-radius: var(--radius-l);
   box-shadow: 0 10px 32px rgb(0 0 0 / 0.24);
   animation: rifjob-in 220ms cubic-bezier(0.2, 0, 0, 1);
@@ -3884,15 +3881,11 @@ button.theory__row:hover {
   overflow: hidden;
   text-align: left;
   background: var(--c-card);
-  border: 1px solid var(--c-outline-variant);
-  border-radius: var(--radius-l);
-  transition:
-    background var(--motion-quick) ease-out,
-    border-color var(--motion-quick) ease-out;
+  border-radius: var(--radius-card);
+  transition: background var(--motion-quick) ease-out;
 }
 .card:hover {
   background: var(--c-card-hover);
-  border-color: var(--c-outline);
 }
 .card__thumb {
   width: 72px;
@@ -3961,7 +3954,7 @@ button.theory__row:hover {
 .card__meter > span {
   display: block;
   height: 100%;
-  background: var(--c-secondary);
+  background: var(--c-primary);
 }
 .course__level {
   padding: 1px var(--space-m);
@@ -3983,8 +3976,7 @@ button.theory__row:hover {
   align-items: start;
   padding: var(--space-xl);
   background: var(--c-card);
-  border: 1px solid var(--c-outline-variant);
-  border-radius: var(--radius-l);
+  border-radius: var(--radius-card);
 }
 .coursehero__art .miniboard {
   width: 100%;
@@ -4039,8 +4031,8 @@ button.theory__row:hover {
   min-height: 48px;
   padding: 0 var(--space-xxl);
   font: var(--type-title-medium);
-  color: var(--c-on-secondary);
-  background: var(--c-secondary);
+  color: var(--c-on-primary);
+  background: var(--c-primary);
   border-radius: var(--radius-m);
   box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
   transition: filter var(--motion-quick) ease-out;
@@ -4079,7 +4071,7 @@ button.theory__row:hover {
 }
 .iconbtn:hover:not(:disabled) {
   color: var(--c-on-surface);
-  background: var(--c-surface-container);
+  background: var(--c-surface-container-high);
 }
 .iconbtn:disabled {
   color: var(--c-outline-variant);
@@ -4146,8 +4138,7 @@ button.theory__row:hover {
   min-height: 0;
   overflow: hidden;
   background: var(--c-card);
-  border: 1px solid var(--c-outline-variant);
-  border-radius: var(--radius-l);
+  border-radius: var(--radius-card);
 }
 .lessonpanel__head {
   display: flex;
@@ -4201,7 +4192,7 @@ button.theory__row:hover {
 .lessontabs__tab[aria-selected="true"] {
   font-weight: 600;
   color: var(--c-on-surface);
-  border-bottom-color: var(--c-secondary);
+  border-bottom-color: var(--c-primary);
 }
 .lessonpanel__body {
   display: flex;
@@ -4369,11 +4360,11 @@ button.theory__row:hover {
   border-radius: 4px;
 }
 .lesson__bar::-webkit-progress-value {
-  background: var(--c-secondary);
+  background: var(--c-primary);
   border-radius: 4px;
 }
 .lesson__bar::-moz-progress-bar {
-  background: var(--c-secondary);
+  background: var(--c-primary);
 }
 .lessonpanel__actions {
   display: grid;
@@ -4388,7 +4379,7 @@ button.theory__row:hover {
   min-height: 48px;
   font: var(--type-label-large);
   color: var(--c-on-surface);
-  background: var(--c-surface-container);
+  background: var(--c-surface-container-high);
   border-radius: var(--radius-m);
   transition: background var(--motion-quick) ease-out;
 }
@@ -4665,7 +4656,7 @@ li[data-level="error"] .sissues__dot {
 }
 .textbtn:hover {
   color: var(--c-on-surface);
-  background: var(--c-surface-container);
+  background: var(--c-surface-container-high);
 }
 
 /* 펼침 — 머리 한 줄 전체가 단추. 제목 · 요약(오른쪽, 물러선 색) · 꺾쇠. */
@@ -4741,7 +4732,7 @@ li[data-level="error"] .sissues__dot {
 .menu__button:hover,
 .menu__button[aria-expanded="true"] {
   color: var(--c-on-surface);
-  background: var(--c-surface-container);
+  background: var(--c-surface-container-high);
 }
 .menu__chev {
   width: 18px;
@@ -4758,7 +4749,6 @@ li[data-level="error"] .sissues__dot {
   min-width: 168px;
   padding: var(--space-s);
   background: var(--c-card);
-  border: 1px solid var(--c-outline-variant);
   border-radius: var(--radius-m);
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
 }
@@ -4771,7 +4761,7 @@ li[data-level="error"] .sissues__dot {
 }
 .menu__item:hover:not(:disabled),
 .menu__item:focus-visible {
-  background: var(--c-surface-container);
+  background: var(--c-surface-container-high);
 }
 .menu__item:disabled {
   color: var(--c-outline);

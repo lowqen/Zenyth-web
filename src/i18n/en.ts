@@ -808,6 +808,8 @@ export const EN: Readonly<Record<string, string>> = {
   "번호 매기기": "Move numbers",
   "금수 표시": "Show forbidden moves",
   "다크 모드": "Dark mode",
+  "검은 배경": "Black background",
+  "어두운 테마에서 바탕을 검정으로": "Pure black page in the dark theme",
   언어: "Language",
   가져오기: "Import",
   "settings.txt · settings_dev.txt 를 내려받았습니다": "Downloaded settings.txt · settings_dev.txt",

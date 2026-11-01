@@ -23,6 +23,8 @@ import { toHex, type Rgb } from "../src/core/design/oklch.ts";
 import {
   LightScheme,
   DarkScheme,
+  AmoledScheme,
+  AMOLED_KEYS,
   type Scheme,
   type TokenValue,
 } from "../src/core/design/scheme.ts";
@@ -49,10 +51,9 @@ function value(v: TokenValue): string {
   return toHex(v as Rgb);
 }
 
-function colorBlock(s: Scheme, indent: string): string {
-  return Object.entries(s)
-    .map(([k, v]) => `${indent}--c-${k}: ${value(v)};`)
-    .join("\n");
+/** 스킴 하나를 CSS 변수로. `keys` 를 주면 그 토큰만(AMOLED 덧씌움 블록). */
+function colorBlock(s: Scheme, indent: string, keys: readonly string[] = Object.keys(s)): string {
+  return keys.map((k) => `${indent}--c-${k}: ${value(s[k]!)};`).join("\n");
 }
 
 function typeBlock(): string {
@@ -104,6 +105,18 @@ ${colorBlock(DarkScheme, "  ")}
   color-scheme: light;
 
 ${colorBlock(LightScheme, "  ")}
+}
+
+/* 검은 배경(AMOLED) — 다크일 때만 덧씌운다(scheme.ts AmoledScheme, 앱 Theme.kt amoled()).
+ * data-amoled 는 theme-init.js 가 첫 프레임 전에 붙인다. 라이트에서는 아무것도 바꾸지 않는다. */
+@media (prefers-color-scheme: dark) {
+  :root[data-amoled]:not([data-theme="light"]) {
+${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
+  }
+}
+
+:root[data-theme="dark"][data-amoled] {
+${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
 }
 `;
 

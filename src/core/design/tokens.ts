@@ -66,8 +66,11 @@ export const MONO = { size: 13, line: 18 } as const;
 /** 4dp 격자에 반 단계 하나. `Spacing.kt`. */
 export const SPACE = { xs: 2, s: 4, m: 8, l: 12, xl: 16, xxl: 24 } as const;
 
-/** 하나의 모서리 스케일, 다섯 단계. `Shape.kt`. */
-export const RADIUS = { xs: 4, s: 8, m: 12, l: 16, xl: 28 } as const;
+/**
+ * 하나의 모서리 스케일, 다섯 단계 + 카드. `Shape.kt` · `Tokens.kt`.
+ * `card` 20 은 앱 UI 개편 2차 M1 의 카드 · 그룹 면(테두리를 뺀 면은 모서리가 조금 더 둥글어야 면으로 읽힌다).
+ */
+export const RADIUS = { xs: 4, s: 8, m: 12, l: 16, card: 20, xl: 28 } as const;
 
 /**
  * 네 규칙, 예외 없음(`Motion.kt`):
