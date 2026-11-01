@@ -21,7 +21,6 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PNG } from "pngjs";
-import pixelmatch from "pixelmatch";
 import { CURRICULUM_FIXTURE, serveDist } from "./serve-dist.ts";
 
 const PORT = Number(process.env.SMOKE_PORT ?? 4183);
@@ -91,6 +90,45 @@ async function shootVariant(browser: Browser, v: (typeof VARIANTS)[number]) {
   return out;
 }
 
+/**
+ * 채널 하나라도 이만큼 움직인 픽셀만 «다르다».
+ *
+ * 같은 러너 · 같은 Chromium 이어도 둥근 모서리와 글자 가장자리의 계단 픽셀이 실행마다 채널당 ±1 흔들린다
+ * (Z0 에서 같은 커밋을 두 번 찍어 확인 — 설정 검색 칸의 오른쪽 모서리, 수순 카드 모서리). 반대로 지켜야
+ * 할 색의 변화는 그보다 훨씬 크다(판 나무 금색 → 메이플은 파랑 채널이 20 움직인다). pixelmatch 의
+ * threshold 는 이 둘을 가르지 못했다 — 0.1 은 메이플 판을 «같다», 0 은 ±1 을 «다르다» 고 했다.
+ */
+const CHANNEL_TOLERANCE = 2;
+
+function changedAt(a: PNG, b: PNG, i: number): boolean {
+  return (
+    Math.abs(a.data[i]! - b.data[i]!) > CHANNEL_TOLERANCE ||
+    Math.abs(a.data[i + 1]! - b.data[i + 1]!) > CHANNEL_TOLERANCE ||
+    Math.abs(a.data[i + 2]! - b.data[i + 2]!) > CHANNEL_TOLERANCE
+  );
+}
+
+function countChanged(a: PNG, b: PNG): number {
+  let n = 0;
+  for (let i = 0; i < a.data.length; i += 4) if (changedAt(a, b, i)) n++;
+  return n;
+}
+
+/** 다른 픽셀은 빨강, 나머지는 골든을 흐리게 — 무엇이 바뀌었는지 한눈에. */
+function diffImage(a: PNG, b: PNG): PNG {
+  const out = new PNG({ width: a.width, height: a.height });
+  for (let i = 0; i < a.data.length; i += 4) {
+    if (changedAt(a, b, i)) {
+      out.data.set([255, 0, 0, 255], i);
+    } else {
+      const y = 0.299 * a.data[i]! + 0.587 * a.data[i + 1]! + 0.114 * a.data[i + 2]!;
+      const v = Math.round(255 - (255 - y) * 0.15);
+      out.data.set([v, v, v, 255], i);
+    }
+  }
+  return out;
+}
+
 function compare(name: string, actual: Buffer): string | null {
   const goldenPath = join(GOLDEN, name);
   if (!existsSync(goldenPath)) return "골든 없음";
@@ -98,17 +136,9 @@ function compare(name: string, actual: Buffer): string | null {
   const got = PNG.sync.read(actual);
   if (want.width !== got.width || want.height !== got.height)
     return `크기가 다름 ${got.width}×${got.height} ≠ ${want.width}×${want.height}`;
-  const diff = new PNG({ width: want.width, height: want.height });
-  // **엄격하게: 한 픽셀 · 한 단계라도 다르면 다르다.** pixelmatch 기본값(threshold 0.1 · 계단 픽셀
-  // 무시)은 판 나무를 금색 #DAB673 → 메이플 #DBB487 로 바꾼 것을 «같다»고 보았다(Z0 첫 대조, 36장
-  // 다름 0). 이 골든이 지키려는 것이 바로 그런 색의 변화다. 같은 러너 · 같은 Chromium 의 그림은
-  // 바이트까지 같으므로 허용 오차가 필요 없다.
-  const n = pixelmatch(want.data, got.data, diff.data, want.width, want.height, {
-    threshold: 0,
-    includeAA: true,
-  });
+  const n = countChanged(want, got);
   if (n === 0) return null;
-  writeFileSync(join(DIFF, name), PNG.sync.write(diff));
+  writeFileSync(join(DIFF, name), PNG.sync.write(diffImage(want, got)));
   return `${n}픽셀 다름`;
 }
 
