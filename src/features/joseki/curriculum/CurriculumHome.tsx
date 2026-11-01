@@ -176,9 +176,9 @@ export function CurriculumHome() {
                       </span>
                     </span>
                     <span className="card__text">{plain(textOf(c.summary, lang))}</span>
+                    <Meter done={done} total={c.lessons.length} />
                   </span>
                   <Icon d={ICON.next} className="icon card__chev" />
-                  <Meter done={done} total={c.lessons.length} />
                 </button>
               </li>
             );
@@ -288,12 +288,19 @@ function CoursePage({
   );
 }
 
-/** 코스 진도 — 카드 밑의 가는 막대. 시작 전에는 그리지 않는다. */
+/**
+ * 코스 진도 — 앱 M4 `LabeledProgress`: 둥근 끝 막대 + 오른쪽에 강조색 양(«3/8»). 시작 전에는 그리지 않는다.
+ */
 function Meter({ done, total }: { done: number; total: number }) {
   if (done === 0 || total === 0) return null;
   return (
-    <span className="card__meter" aria-hidden="true">
-      <span style={{ width: `${(100 * done) / total}%` }} />
+    <span className="lprogress" aria-hidden="true">
+      <span className="lprogress__bar">
+        <span style={{ width: `${(100 * done) / total}%` }} />
+      </span>
+      <span className="lprogress__value tnum">
+        {done}/{total}
+      </span>
     </span>
   );
 }

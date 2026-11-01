@@ -874,13 +874,15 @@ a:focus-visible {
   gap: var(--space-m);
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  padding: 0 var(--space-xl);
+  min-height: 48px;
+  padding: 0 var(--space-xxl);
   font: var(--type-label-large);
   color: var(--c-on-surface);
   border: 1px solid var(--c-outline);
-  border-radius: var(--radius-m);
-  transition: background var(--motion-quick) ease-out;
+  border-radius: 999px;
+  transition:
+    background var(--motion-quick) ease-out,
+    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .panel__actions button:hover:not(:disabled) {
   background: var(--c-surface-container-highest);
@@ -1045,14 +1047,16 @@ a:focus-visible {
   gap: var(--space-m);
   align-items: center;
   justify-content: center;
-  min-height: 36px;
-  padding: 0 var(--space-l);
+  min-height: 40px;
+  padding: 0 var(--space-xl);
   font: var(--type-label-large);
   color: var(--c-on-surface);
   white-space: nowrap;
   border: 1px solid var(--c-outline);
-  border-radius: var(--radius-m);
-  transition: background var(--motion-quick) ease-out;
+  border-radius: 999px;
+  transition:
+    background var(--motion-quick) ease-out,
+    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .btn:hover:not(:disabled) {
   background: var(--c-surface-container-highest);
@@ -1825,7 +1829,84 @@ a:focus-visible {
 .chip.is-on {
   color: var(--c-on-secondary-container);
   background: var(--c-secondary-container);
-  border-color: var(--c-secondary);
+  border-color: transparent;
+}
+/* 걸러 보기 칩 한 줄 — 앱 `ChipRow`: 접지 않고 가로로 민다. 스크롤 막대는 숨기고, 칩이 칸 끝에서
+   잘리는 것이 «더 있다»는 표시다. */
+.chips--row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.chips--row::-webkit-scrollbar {
+  display: none;
+}
+.chips--row > .chip {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* ── 시트 (앱 ZenythSheet — 입력형 대화상자 대신) ─────────────────── */
+/* 아래에서 올라오는 모달. 넓은 화면에서도 아래 가운데에 폭을 묶어 둔다(앱 태블릿과 같다). */
+.sheet {
+  inset: auto 0 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85dvh;
+  margin: 0 auto;
+  padding: 0;
+  color: var(--c-on-surface);
+  background: var(--c-card);
+  border: 0;
+  border-radius: 32px 32px 0 0;
+}
+.sheet[open] {
+  animation: sheet-rise 320ms cubic-bezier(0.2, 0.9, 0.25, 1.02);
+}
+.sheet::backdrop {
+  background: color-mix(in srgb, var(--c-scrim) 32%, transparent);
+}
+@keyframes sheet-rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+.sheet__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-l);
+  padding: 0 var(--space-xxl) var(--space-xl);
+}
+.sheet__grip {
+  align-self: center;
+  width: 32px;
+  height: 4px;
+  margin: var(--space-l) 0 var(--space-s);
+  background: color-mix(in srgb, var(--c-outline) 50%, transparent);
+  border-radius: 2px;
+}
+.sheet__title {
+  margin: 0;
+  font: var(--type-title-large);
+}
+.sheet__field {
+  width: 100%;
+  padding: var(--space-l) var(--space-xl);
+  font: var(--type-body-large);
+  color: inherit;
+  word-break: break-all;
+  resize: none;
+  background: var(--c-surface-container-high);
+  border: 0;
+  border-radius: 16px;
+}
+.sheet__actions {
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: var(--space-s);
 }
 
 /* ── 협상 타임라인 ──────────────────────────────────────────────── */
@@ -4145,8 +4226,8 @@ button.theory__row:hover {
   min-width: 0;
 }
 .card__title {
-  font: var(--type-title-medium);
-  letter-spacing: var(--track-title-medium);
+  font: 500 18px/26px var(--font-sans);
+  letter-spacing: -0.2px;
   color: var(--c-on-surface);
 }
 .card__num {
@@ -4188,23 +4269,9 @@ button.theory__row:hover {
   height: 20px;
   color: var(--c-on-surface-variant);
 }
-/* 코스 진도 — 카드 바닥의 가는 막대. */
-.card__meter {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 3px;
-  background: var(--c-surface-container-high);
-}
-.card__meter > span {
-  display: block;
-  height: 100%;
-  background: var(--c-primary);
-}
 .course__level {
-  padding: 1px var(--space-m);
-  font: var(--type-label-small);
+  padding: 2px var(--space-m);
+  font: var(--type-label-medium);
   color: var(--c-on-secondary-container);
   background: var(--c-secondary-container);
   border-radius: var(--radius-xl);
@@ -4279,23 +4346,24 @@ button.theory__row:hover {
   font: var(--type-title-medium);
   color: var(--c-on-primary);
   background: var(--c-primary);
-  border-radius: var(--radius-m);
-  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
-  transition: filter var(--motion-quick) ease-out;
+  border-radius: 999px;
+  transition:
+    filter var(--motion-quick) ease-out,
+    border-radius 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .cta:hover {
   filter: brightness(1.08);
 }
 .cta:active {
-  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.18);
-  transform: translateY(1px);
+  border-radius: 12px;
+  transition-duration: 90ms;
 }
 .ghostbtn {
   min-height: 40px;
   padding: 0 var(--space-l);
   font: var(--type-label-large);
   color: inherit;
-  border-radius: var(--radius-m);
+  border-radius: 999px;
 }
 .ghostbtn:hover {
   background: rgb(0 0 0 / 0.06);
@@ -4429,26 +4497,18 @@ button.theory__row:hover {
   color: var(--c-positive);
 }
 /* 모드 탭 — 체스닷컴 «연습 | 학습» 처럼 반반, 고른 쪽에 밑줄. */
+/* 레슨의 살펴보기 · 학습 — 미끄러지는 알약 세그먼트(Z6, 앱 RapfiSegmented). 폭을 똑같이 나눈다. */
 .lessontabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--c-outline-variant);
+  display: flex;
+  margin: var(--space-m) var(--space-l);
+  /* 카드(레슨 칸) 위의 트랙 — 카드 면보다 한 단 위라야 묻히지 않는다. */
+  background: var(--c-surface-container-high);
 }
 .lessontabs__tab {
-  min-height: 44px;
-  margin-bottom: -1px;
-  font: var(--type-label-large);
-  color: var(--c-on-surface-variant);
-  border-bottom: 2px solid transparent;
-  transition: color var(--motion-quick) ease-out;
+  flex: 1 1 0;
 }
 .lessontabs__tab:hover {
   color: var(--c-on-surface);
-}
-.lessontabs__tab[aria-selected="true"] {
-  font-weight: 600;
-  color: var(--c-on-surface);
-  border-bottom-color: var(--c-primary);
 }
 .lessonpanel__body {
   display: flex;
@@ -5349,4 +5409,69 @@ a.slink:hover {
 .switch__thumb {
   display: grid;
   place-items: center;
+}
+
+/* ── 부품(Z6 — 앱 M4) ─────────────────────────────────────────────────
+   배지 알약(PillBadge) · 아이콘 타일(IconTile) · 이름 붙은 진행 막대(LabeledProgress), 그리고 누를 때 각지는 버튼. */
+.pillbadge {
+  display: inline-block;
+  padding: 2px var(--space-m);
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+  vertical-align: middle;
+  background: var(--c-surface-container-high);
+  border-radius: var(--radius-xl);
+}
+.icontile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--c-on-secondary-container);
+  background: var(--c-secondary-container);
+  border-radius: 14px;
+}
+.lprogress {
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+  margin-top: var(--space-s);
+}
+.lprogress__bar {
+  flex: 1;
+  height: 6px;
+  overflow: hidden;
+  background: var(--c-surface-container-highest);
+  border-radius: 999px;
+}
+.lprogress__bar > span {
+  display: block;
+  height: 100%;
+  background: var(--c-primary);
+  border-radius: 999px;
+}
+.lprogress__value {
+  font: var(--type-label-medium);
+  color: var(--c-primary);
+}
+/* 진행 막대는 앱 전체가 둥근 끝(M4). */
+.review__bar,
+.review__bar > span,
+.rifjob__bar,
+.rifjob__bar > span,
+.mocands__bar,
+.mocands__bar > span,
+.lesson__bar,
+.wdl__bar {
+  border-radius: 999px;
+}
+/* 누르는 동안 모서리가 각지고 놓으면 스프링으로 돌아온다(앱 M7 Buttons.kt — 50 % → 26 %). */
+.btn:active:not(:disabled),
+.panel__actions button:active:not(:disabled) {
+  border-radius: 12px;
+  transition-duration: 90ms;
+}
+.jlist li:has(> .icontile) {
+  align-items: center;
 }

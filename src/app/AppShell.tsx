@@ -10,6 +10,7 @@ import { titleFor } from "./destinations";
 import { useIsCompact } from "./useIsCompact";
 import { useAutoBoot } from "./useAutoBoot";
 import { RifImportLayer } from "../features/research/rif/RifImportLayer";
+import { CopySheetHost } from "../components/CopySheet";
 import { prefetchScreens } from "./screens";
 
 /** 첫 화면이 그려지고 이만큼 지나 한가할 때 나머지 화면 조각을 받는다(screens.ts). */
@@ -68,6 +69,8 @@ export function AppShell() {
       )}
       {/* W7: 어느 화면에 .rif 를 놓아도 변환하고, 진행 · 결과 카드를 띄운다. */}
       <RifImportLayer />
+      {/* Z6: 클립보드를 못 쓸 때 링크 · 국면 문자열을 보여 주는 시트(앱 ZenythSheet). */}
+      <CopySheetHost />
     </div>
   );
 }

@@ -36,6 +36,7 @@ import { useJosekiStore } from "../josekiStore";
 import { TreeView } from "../TreeView";
 import { DraftField, IssueList, TextPair } from "./StudioParts";
 import { useStudio } from "./studioStore";
+import { copyOrShow } from "../../../components/copySheetStore";
 
 const LEVEL_LABEL: Record<Level, string> = {
   beginner: msg("입문"),
@@ -239,12 +240,10 @@ export function LessonEditor({ lesson, issues }: { lesson: Lesson; issues: Issue
 
   const copyLink = async () => {
     const url = lessonUrl(location.origin, import.meta.env.BASE_URL, lesson.id, "browse");
-    try {
-      await navigator.clipboard.writeText(url);
+    // 클립보드를 쓸 수 없는 곳(보안 맥락이 아님 · 권한 거부)에서는 직접 복사하게 시트로 보여 준다.
+    if (await copyOrShow(url, t("이 레슨의 링크입니다. 복사해 쓰세요"))) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      window.prompt(t("이 레슨의 링크입니다. 복사해 쓰세요"), url);
     }
   };
   const list = found.course.lessons;

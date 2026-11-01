@@ -252,6 +252,11 @@ try {
     "해설이 없다",
   );
   await page.getByRole("tab", { name: "학습", exact: true }).click();
+  // 탭은 주소(?mode=learn)를 바꾸고, 라우터는 그것을 전환으로 그린다 — 학습 화면이 뜨기 전에 판을 누르면
+  // 첫 수가 살펴보기로 들어가 «학습 1수: start»로 흔들렸다(2026-10-11 · 10-18 · 11-01).
+  await page
+    .locator('[data-k="lesson"][data-mode="learn"] [data-k="quiz-feedback"][data-kind="start"]')
+    .waitFor();
   const fb = () => page.locator('[data-k="quiz-feedback"]').getAttribute("data-kind");
   await tap(page, 7, 7); // h8 — 정답, 백 h9 는 저절로
   check((await fb()) === "correct", "학습: 1수 정답 · 상대 수 자동", `학습 1수: ${await fb()}`);
@@ -286,6 +291,28 @@ try {
     "?lesson=…&mode=learn 이 그 레슨의 학습 모드로 연다",
     "레슨 링크가 학습 모드로 열리지 않았다",
   );
+  // 클립보드를 쓸 수 없으면(보안 맥락이 아닌 주소 · 권한 거부) 링크를 시트로 보여 준다(Z6, 예전 window.prompt).
+  await page.evaluate(() => {
+    const real = navigator.clipboard.writeText.bind(navigator.clipboard);
+    navigator.clipboard.writeText = () =>
+      Promise.reject(new DOMException("denied", "NotAllowedError"));
+    (window as unknown as { __realWrite: typeof real }).__realWrite = real;
+  });
+  await page.locator('[data-k="lesson-copy-link"]').click();
+  const sheet = page.locator('[data-k="copy-sheet"][open]');
+  await sheet.waitFor();
+  check(
+    (await sheet.locator("textarea").inputValue()) ===
+      `${BASE}/joseki?lesson=direct-and-indirect&mode=learn`,
+    "클립보드가 막히면 링크를 시트로 보여 준다",
+    "복사 시트에 링크가 없다",
+  );
+  await page.keyboard.press("Escape");
+  await sheet.waitFor({ state: "detached" });
+  await page.evaluate(() => {
+    const w = window as unknown as { __realWrite: (s: string) => Promise<void> };
+    navigator.clipboard.writeText = w.__realWrite;
+  });
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
   await page.locator('[data-k="lesson-copy-link"]').click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
