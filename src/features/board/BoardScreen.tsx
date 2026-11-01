@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { BoardCanvas } from "../../core/board/BoardCanvas";
 import { useBoardStore } from "./boardStore";
 import { useGameStore } from "./gameStore";
@@ -15,6 +15,8 @@ import { PromptPanel } from "./OpeningPanel";
 import { LinkBackupBanner } from "./LinkBackupBanner";
 import { MoveToolbar } from "./MoveToolbar";
 import { SummaryLine } from "./SummaryLine";
+import { BoardSheet } from "./BoardSheet";
+import { useSheetLayout } from "./useSheetLayout";
 import { useBoardNotice } from "./boardNotice";
 import { useCurrentAnalysis } from "./currentAnalysis";
 import { openGameFile } from "./gameFileActions";
@@ -123,8 +125,39 @@ export function BoardScreen() {
     applyAnalysis(overlay);
   }, [overlay, applyAnalysis]);
 
+  const sheet = useSheetLayout();
+  const toolbarRef = useRef<HTMLElement>(null);
+  const side = (
+    <aside
+      id={MODE_PANEL_ID}
+      className="boardscreen__side"
+      role="tabpanel"
+      aria-label={mode === "game" ? t("대국") : t("분석")}
+    >
+      {/* 물음은 맨 위 — 답하기 전까지 판이 잠기므로 가장 먼저 보여야 한다. 두 탭 모두. */}
+      <PromptPanel />
+      <LinkBackupBanner />
+      <PositionStrip game={mode === "game"} />
+      <PositionCard game={mode === "game"} />
+      {mode === "game" ? (
+        <GamePanel />
+      ) : (
+        <>
+          <AnalysisPanel />
+          <EvalGraph />
+          <AnalysisOptions />
+        </>
+      )}
+    </aside>
+  );
+
   return (
-    <div className="boardscreen" data-evalbar={showEvalBar || undefined} data-mode={mode}>
+    <div
+      className="boardscreen"
+      data-evalbar={showEvalBar || undefined}
+      data-mode={mode}
+      data-sheet={sheet || undefined}
+    >
       {/* 판은 왼쪽 칸의 높이를 다 쓴다 — 판 위아래에 조작 줄을 두지 않는다. 탭 · 새 판은 오른쪽
           칸 맨 위(`stagebar`), 기보 이동은 오른쪽 칸 맨 아래(`transport`)다. 휴대폰 세로에서는
           판 → 이동 바 → 탭 · 새 판 → 카드 순으로 쌓인다(base.css 의 grid-template-areas). */}
@@ -147,31 +180,19 @@ export function BoardScreen() {
           </p>
         )}
       </div>
-      {/* 판 아래의 요약 줄(최선수 · 차례). [분석] | [대국] 은 상단 바 왼쪽(TopBar), 새 판 · 진영 전환은 툴바. */}
-      <SummaryLine />
-
-      <aside
-        id={MODE_PANEL_ID}
-        className="boardscreen__side"
-        role="tabpanel"
-        aria-label={mode === "game" ? t("대국") : t("분석")}
-      >
-        {/* 물음은 맨 위 — 답하기 전까지 판이 잠기므로 가장 먼저 보여야 한다. 두 탭 모두. */}
-        <PromptPanel />
-        <LinkBackupBanner />
-        <PositionStrip game={mode === "game"} />
-        <PositionCard game={mode === "game"} />
-        {mode === "game" ? (
-          <GamePanel />
-        ) : (
-          <>
-            <AnalysisPanel />
-            <EvalGraph />
-            <AnalysisOptions />
-          </>
-        )}
-      </aside>
-      <MoveToolbar />
+      {/* 판 아래의 요약 줄(최선수 · 차례)과 카드. [분석] | [대국] 은 상단 바 왼쪽(TopBar), 새 판 · 진영 전환은
+          툴바. 휴대폰 세로에서는 둘이 판 아래 시트에 얹힌다(`BoardSheet`, 결정 Q4) — 판과 툴바는 움직이지 않는다. */}
+      {sheet ? (
+        <BoardSheet anchorRef={toolbarRef} summary={<SummaryLine />}>
+          {side}
+        </BoardSheet>
+      ) : (
+        <>
+          <SummaryLine />
+          {side}
+        </>
+      )}
+      <MoveToolbar navRef={toolbarRef} />
     </div>
   );
 }

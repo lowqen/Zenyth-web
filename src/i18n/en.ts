@@ -1104,6 +1104,8 @@ export const EN: Readonly<Record<string, string>> = {
   "링크를 복사했습니다": "Link copied",
   // ── UI 개편(calm-design) — 한 줄 안내 · 펼침 머리 · 엔진 수치 ──
   "▶ 를 누르면 엔진이 최선수를 찾습니다": "Press ▶ and the engine looks for the best move",
+  "카드 펼치기": "Show cards",
+  "카드 접기": "Hide cards",
   노드: "Nodes",
   속도: "Speed",
   최선수: "Best move",

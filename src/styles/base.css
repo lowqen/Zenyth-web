@@ -614,6 +614,82 @@ a:focus-visible {
   }
 }
 
+/* ── 휴대폰 세로: 판 고정 + 시트(BoardSheet, 결정 Q4) ─────────────────────
+   판과 툴바는 움직이지 않고, 요약 줄과 카드는 시트에 얹힌다. 판은 (너비, 높이 − 툴바 − 시트의 최소 피크)
+   중 작은 쪽 — 최소 피크는 손잡이 24 + 요약 줄 64 = 88(앱 `portraitMetrics`). 그래서 쉬는 시트가 판을 한 칸도
+   가리지 않는다. 시트는 보드 화면 상자를 덮는 절대 위치 면이고 쉬는 동안 툴바 아래로 내려가 있다 — 그 몫이
+   스크롤 영역으로 새지 않게 상자가 자른다(overflow: clip). */
+.boardscreen[data-sheet] {
+  --sheet-peek-min: 88px;
+  position: relative;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "board"
+    "nav"
+    ".";
+  overflow: clip;
+}
+.boardscreen[data-sheet] .boardscreen__board {
+  height: min(100cqw - var(--evalbar-space), 100cqh - var(--transport-h) - var(--sheet-peek-min));
+}
+.boardsheet {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--c-surface);
+  border-radius: 32px 32px 0 0;
+  box-shadow: 0 -1px 6px rgb(0 0 0 / 0.08);
+  /* 쉬는 동안은 시트 어디를 끌어도 시트가 움직인다 — 브라우저 스크롤에 넘기지 않는다. */
+  touch-action: none;
+  /* 놓으면 가까운 멈춤 자리로 스프링처럼(넘침 조금). 끄는 동안은 손가락을 그대로 따라간다. */
+  transition: transform 420ms cubic-bezier(0.2, 0.9, 0.25, 1.04);
+  will-change: transform;
+}
+.boardsheet[data-dragging],
+.boardsheet:not([data-ready]) {
+  transition: none;
+}
+.boardsheet__head {
+  flex: none;
+  touch-action: none;
+}
+.boardsheet__handle {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 24px;
+}
+.boardsheet__grip {
+  width: 32px;
+  height: 4px;
+  background: color-mix(in srgb, var(--c-outline) 50%, transparent);
+  border-radius: 2px;
+}
+.boardsheet .summary {
+  min-height: var(--summary-h);
+}
+.boardsheet__body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+/* 펼친 동안만 카드가 시트 안에서 스크롤한다(손잡이 · 요약 줄로 끌어 내린다). */
+.boardsheet[data-open] {
+  touch-action: auto;
+}
+.boardsheet[data-open] .boardsheet__body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+.boardsheet .boardscreen__side {
+  overflow: visible;
+  padding: 0 var(--screen-padding) var(--screen-padding);
+}
+
 /* ── 수 이동 툴바(MoveToolbar) ─────────────────────────────────────
    앱 M5 · 보정: 알약 배경 없는 버튼 묶음. 가운데 ▶ 84×56(강한 강조), 양옆 ‹ › 56×56(연한 강조), 끝의
    면 없는 아이콘 44. 모서리는 높이의 42 %, 누르는 동안 24 % 로 각졌다가 스프링으로 돌아온다(▶ 는 엔진이
