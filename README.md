@@ -1,27 +1,54 @@
 <div align="center">
 
-# Zenyth Web
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/logo/zenyth-web-lockup-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/readme/logo/zenyth-web-lockup-light.svg">
+  <img alt="Zenyth Web" src="docs/readme/logo/zenyth-web-lockup-light.svg" width="420" height="auto">
+</picture>
 
-**A championship-level Gomoku & Renju engine running entirely in your browser.**<br>
-Play, analyze, review and research. No server, no install, no account.
+<p>
+  <b>A championship-level gomoku and renju engine, running entirely in your browser.</b><br>
+  Play, analyse, review and research. No server, no install, no account.
+</p>
 
-[**▶ Live demo: rapfiweb.pages.dev**](https://rapfiweb.pages.dev)
-
-[![CI](https://img.shields.io/github/actions/workflow/status/lowqen/Zenyth-web/web.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/lowqen/Zenyth-web/actions/workflows/web.yml)
-[![Deploy](https://img.shields.io/github/actions/workflow/status/lowqen/Zenyth-web/deploy.yml?branch=main&label=deploy&logo=cloudflare&logoColor=white)](https://github.com/lowqen/Zenyth-web/actions/workflows/deploy.yml)
-[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
-<br>
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
-[![WebAssembly](https://img.shields.io/badge/WebAssembly-SIMD%20%2B%20threads-654FF0?logo=webassembly&logoColor=white)](https://webassembly.org/)
-[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-F38020?logo=cloudflarepages&logoColor=white)](https://pages.cloudflare.com/)
-
-**English** · [한국어](README.ko.md)
-
-<img src="docs/assets/analysis.png" alt="Zenyth Web analysis screen: the engine finds a forced win in 31 moves and draws the principal variation on the board" width="860">
+<p>
+  <a href="https://github.com/lowqen/Zenyth-web/actions/workflows/web.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/lowqen/Zenyth-web/web.yml?branch=main&style=flat-square&label=CI"></a>
+  <a href="https://github.com/lowqen/Zenyth-web/actions/workflows/deploy.yml"><img alt="Deploy" src="https://img.shields.io/github/actions/workflow/status/lowqen/Zenyth-web/deploy.yml?branch=main&style=flat-square&label=deploy"></a>
+  <a href="LICENSE"><img alt="Licence" src="https://img.shields.io/badge/licence-GPL--3.0--or--later-65528A?style=flat-square"></a>
+  <img alt="WebAssembly SIMD + threads" src="https://img.shields.io/badge/WebAssembly-SIMD%20%2B%20threads-654FF0?style=flat-square&logo=webassembly&logoColor=white">
+</p>
 
 </div>
+
+<p align="center">
+  <a href="https://zenythweb.pages.dev">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/badges/open-dark.svg">
+      <img alt="Open Zenyth Web: zenythweb.pages.dev" src="docs/readme/badges/open-light.svg" height="56">
+    </picture>
+  </a>
+  <a href="https://github.com/lowqen/Zenyth">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/badges/android-dark.svg">
+      <img alt="Zenyth, the Android app" src="docs/readme/badges/android-light.svg" height="56">
+    </picture>
+  </a>
+  <a href="README.ko.md">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/badges/readme-ko-dark.svg">
+      <img alt="한국어 README" src="docs/readme/badges/readme-ko-light.svg" height="56">
+    </picture>
+  </a>
+</p>
+
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/screenshots-dark.svg"><img src="docs/readme/sections/screenshots-light.svg" height="32" align="top" alt=""></picture> Screenshots
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/showcase-dark.png">
+  <img src="docs/readme/showcase-light.png" width="100%" alt="Zenyth Web on a phone: welcome, board, joseki curriculum and settings">
+</picture>
+
+<p align="center"><sub>Shown in Korean on a phone, light theme. The site speaks English and Korean, and follows the system's dark theme.</sub></p>
 
 ---
 
@@ -36,9 +63,9 @@ inside one browser tab.
 - **Works anywhere static files can be hosted.** No backend, no API keys, no telemetry.
 - **Fast.** Multi-threaded SIMD search, ~20 MB of network weights cached after the first visit.
 
-## ✨ Key Features
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/features-dark.svg"><img src="docs/readme/sections/features-light.svg" height="32" align="top" alt=""></picture> Key Features
 
-### 🧠 Multi-threaded C++ engine in WebAssembly
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/engine-dark.svg"><img src="docs/readme/features/engine-light.svg" height="28" align="top" alt=""></picture> Multi-threaded C++ engine in WebAssembly
 - Rapfi compiled with Emscripten into **four variants**: `{single, multi}-thread × {SIMD128, Relaxed SIMD}`.
   The app probes the browser and boots the fastest one, falling back step by step.
 - Pthreads on `SharedArrayBuffer` when the page is cross-origin isolated (COOP/COEP), with a
@@ -48,7 +75,7 @@ inside one browser tab.
   run in CI. The deployed build scores **+100 Elo** over a stock Rapfi WASM build at 1 thread,
   500 ms/move ([report](docs/gomocalc-대국-분석.md)).
 
-### ⚡ In-browser game archive conversion
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/convert-dark.svg"><img src="docs/readme/features/convert-light.svg" height="28" align="top" alt=""></picture> In-browser game archive conversion
 - Drop the RenjuNet archive (`.rif`, 43 MB, ~119,000 games) **onto any screen**. A worker
   streams the bytes, hashes every position with incremental 64-bit Zobrist keys and builds a
   15 MB statistics pack.
@@ -56,7 +83,7 @@ inside one browser tab.
   worker memory. Opening frequencies, rankings by player, color and rule, and game lists follow instantly.
 - Verified position-for-position (116,191 positions) against the desktop toolchain's packs.
 
-### 📊 Automatic game review with an 11-grade move report
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/review-dark.svg"><img src="docs/readme/features/review-light.svg" height="28" align="top" alt=""></picture> Automatic game review with an 11-grade move report
 - Every position is read with the top two candidates (`YXNBEST 2`); each move is graded on an
   **11-step scale** (brilliant, best, … mistake, blunder, missed win) with per-side accuracy.
 - Batch queue with per-position checkpoints. Close the tab and it resumes where it stopped.
@@ -64,7 +91,7 @@ inside one browser tab.
 - Also included: **AND/OR proof search** for forced wins, and a **move-order explorer** that
   counts every sequence reaching the current stones.
 
-### 💾 Fully client-side, persistent storage
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/storage-dark.svg"><img src="docs/readme/features/storage-light.svg" height="28" align="top" alt=""></picture> Fully client-side, persistent storage
 - Games autosave on every move, undo included. Reload and keep going.
 - The engine's own position **database** (yixindb) is round-tripped between Emscripten's
   in-memory FS and IndexedDB. Annotate, label, import and export `.db` and CSV.
@@ -76,7 +103,7 @@ inside one browser tab.
 - Open and save `.psq`, `.sav` and `.pos`; share any position as a `?p=h8i9j10` deep link;
   import and export desktop `settings.txt` byte for byte.
 
-### 🌏 Korean / English, responsive and accessible
+### <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/features/lang-dark.svg"><img src="docs/readme/features/lang-light.svg" height="28" align="top" alt=""></picture> Korean / English, responsive and accessible
 - Full **Korean and English UI** (~900 strings) with auto-detection and a switch in Settings.
   A test scans the source so no string ships untranslated.
 - **Responsive from 360 px phones to desktops**, in portrait and landscape, light and dark themes.
@@ -84,11 +111,8 @@ inside one browser tab.
   announcements, dialogs that take focus and close on Esc, 24 px minimum touch targets, and **WCAG 4.5:1
   contrast** in both themes, all enforced by a Playwright smoke test.
 
-<div align="center">
-<img src="docs/assets/mobile.png" alt="Zenyth Web on a phone in Korean, light theme" width="300">
-</div>
 
-## 🏗 Architecture
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/architecture-dark.svg"><img src="docs/readme/sections/architecture-light.svg" height="32" align="top" alt=""></picture> Architecture
 
 ```
 ┌──────────────────────────── Browser tab (main thread) ─────────────────────────────┐
@@ -126,7 +150,7 @@ inside one browser tab.
 | Quality | TypeScript strict, Vitest (50+ test files), Playwright smoke tests, ESLint, Prettier |
 | Delivery | GitHub Actions → Cloudflare Pages (COOP/COEP headers for threads) |
 
-## 🚀 Quick Start
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/start-dark.svg"><img src="docs/readme/sections/start-light.svg" height="32" align="top" alt=""></picture> Quick Start
 
 **Requirements:** Node.js ≥ 20.11 (CI uses 26) and pnpm.
 
@@ -166,7 +190,7 @@ back to the single-threaded engine automatically.
 
 This web build ships **Renju** weights only (Cloudflare's 25 MB per-file limit).
 
-## 📚 Documentation
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/docs-dark.svg"><img src="docs/readme/sections/docs-light.svg" height="32" align="top" alt=""></picture> Documentation
 
 | Document | Contents |
 |---|---|
@@ -175,7 +199,7 @@ This web build ships **Renju** weights only (Cloudflare's 25 MB per-file limit).
 | [`docs/gomocalc-대국-분석.md`](docs/gomocalc-대국-분석.md) | Match analysis behind the +100 Elo figure |
 | [`public/engine/README.md`](public/engine/README.md) | Engine variants, build provenance, weight caching |
 
-## ⚖️ License & data
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/licence-dark.svg"><img src="docs/readme/sections/licence-light.svg" height="32" align="top" alt=""></picture> License & data
 
 Zenyth Web is released under the **[GNU GPL v3.0 or later](LICENSE)** because the bundle includes the
 Rapfi engine. Code written for this repository may also be used under BSD 2-Clause. Bundled and
@@ -187,7 +211,7 @@ corresponding source.
 app processes *your* local copy inside *your* browser and nothing is uploaded. `.gitignore` and a CI
 gate keep `.rif`-derived files out of the repository and every deployment.
 
-## 🙏 Acknowledgements
+## <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/sections/credits-dark.svg"><img src="docs/readme/sections/credits-light.svg" height="32" align="top" alt=""></picture> Acknowledgements
 
 - [**dhbloo/rapfi**](https://github.com/dhbloo/rapfi) and [**rapfi-networks**](https://github.com/dhbloo/rapfi-networks): the engine and its networks
 - [**Yixin-Board**](https://github.com/accreator/Yixin-Board) by Kai Sun, and [dhbloo's fork](https://github.com/dhbloo/Yixin-Board): the desktop GUI whose protocol and review logic this app follows
