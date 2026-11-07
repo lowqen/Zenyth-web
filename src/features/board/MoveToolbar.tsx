@@ -33,7 +33,7 @@ type Tone = "strong" | "accent" | "bare";
  * 이름(aria-label)은 예전 이동 바 · 퀵 바의 것 그대로 — 스모크가 이름으로 집는다.
  * 좁은 칸에서는 묶음 전체가 비율대로 줄어든다(base.css, 0.7 배까지).
  */
-export function MoveToolbar({ navRef }: { navRef?: RefObject<HTMLElement> } = {}) {
+export function MoveToolbar({ navRef }: { navRef?: RefObject<HTMLElement | null> } = {}) {
   const stones = useBoardStore((s) => s.render.stones.length);
   const ahead = useBoardStore((s) => s.future.length);
 

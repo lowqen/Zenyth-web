@@ -50,7 +50,7 @@ export async function releaseDownload(tag, dir, patterns) {
     if (e.code !== "ENOENT") {
       const err = String(e.stderr ?? e.message);
       if (/release not found/i.test(err)) throw new ReleaseNotFound(`릴리스 ${tag} 가 없습니다`);
-      throw new Error(`gh release download 실패: ${err.trim()}`);
+      throw new Error(`gh release download 실패: ${err.trim()}`, { cause: e });
     }
   }
   const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;

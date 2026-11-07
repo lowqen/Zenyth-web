@@ -33,7 +33,7 @@ export function BoardSheet({
   summary: ReactNode;
   children: ReactNode;
   /** 시트가 쉬는 자리의 기준 — 툴바. 그 아래 끝이 피크의 윗변이다. */
-  anchorRef: RefObject<HTMLElement>;
+  anchorRef: RefObject<HTMLElement | null>;
 }) {
   const sheet = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);

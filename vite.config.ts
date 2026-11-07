@@ -1,8 +1,8 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
-import { CSP_KEYS, ISOLATION_KEYS, omit, siteHeaders } from "./scripts/headers";
-import { studioPlugin } from "./scripts/studio-plugin";
+import { CSP_KEYS, ISOLATION_KEYS, omit, siteHeaders } from "./scripts/headers.ts";
+import { studioPlugin } from "./scripts/studio-plugin.ts";
 
 /**
  * 헤더는 `public/_headers` 의 `/*` 블록을 그대로 쓴다(`scripts/headers.ts` — 원본은 그 파일 하나).
