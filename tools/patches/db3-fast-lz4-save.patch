@@ -1,0 +1,63 @@
+diff --git a/Rapfi/core/compressor.cpp b/Rapfi/core/compressor.cpp
+index 4acfa1c..fb1b4ad 100644
+--- a/Rapfi/core/compressor.cpp
++++ b/Rapfi/core/compressor.cpp
+@@ -136,6 +136,25 @@ std::ostream *Compressor::openOutputStream(std::string entryName)
+     }
+ 
+     switch (data->type) {
++    case Type::LZ4_FAST: {
++        // compressionLevel 0 selects LZ4's fast compressor; 3 and above (LZ4_DEFAULT) select
++        // LZ4-HC, several times slower to write. Both produce the same frame format.
++        assert(entryName == "");
++        static const LZ4F_preferences_t LZ4Fast = {{LZ4F_default,
++                                                    LZ4F_blockLinked,
++                                                    LZ4F_contentChecksumEnabled,
++                                                    LZ4F_frame,
++                                                    0ULL,
++                                                    0U,
++                                                    LZ4F_noBlockChecksum},
++                                                   0,
++                                                   0u,
++                                                   0u,
++                                                   {0u, 0u, 0u}};
++        data->openedOutputStreams.emplace_back(
++            std::make_unique<lz4_stream::ostream>(*data->ostreamSink, LZ4Fast),
++            entryName);
++    } break;
+     case Type::LZ4_DEFAULT: {
+         assert(entryName == "");
+         static const LZ4F_preferences_t LZ4Perf = {{LZ4F_default,
+@@ -186,6 +205,7 @@ std::istream *Compressor::openInputStream(std::string entryName)
+     }
+ 
+     switch (data->type) {
++    case Type::LZ4_FAST:
+     case Type::LZ4_DEFAULT: {
+         assert(entryName == "");
+         data->openedInputStreams.emplace_back(
+diff --git a/Rapfi/core/compressor.h b/Rapfi/core/compressor.h
+index 096d609..3f83d1e 100644
+--- a/Rapfi/core/compressor.h
++++ b/Rapfi/core/compressor.h
+@@ -32,6 +32,7 @@ public:
+     enum class Type {
+         NO_COMPRESS,  ///< Pass-through; the sub-stream is the sink/source unchanged.
+         LZ4_DEFAULT,  ///< Single-entry LZ4 frame.
++        LZ4_FAST,     ///< Same LZ4 frame, written with the fast compressor instead of LZ4-HC.
+         ZIP_DEFAULT,  ///< Multi-entry ZIP archive (requires command modules to be enabled).
+     };
+ 
+diff --git a/Rapfi/database/yxdbstorage.cpp b/Rapfi/database/yxdbstorage.cpp
+index 0d54724..705784c 100644
+--- a/Rapfi/database/yxdbstorage.cpp
++++ b/Rapfi/database/yxdbstorage.cpp
+@@ -217,7 +217,7 @@ bool YXDBStorage::writeFile(const std::filesystem::path &path) noexcept
+ 
+     {
+         Compressor    compressor(static_cast<std::ostream &>(file),
+-                              compressedSave ? Compressor::Type::LZ4_DEFAULT
++                              compressedSave ? Compressor::Type::LZ4_FAST
+                                                 : Compressor::Type::NO_COMPRESS);
+         std::ostream *ostreamPtr = compressor.openOutputStream();
+         if (!ostreamPtr || !*ostreamPtr)
