@@ -311,10 +311,12 @@ TLS 에서 떨어졌다 → 「배포 주소가 설 때까지」 단계. 앱은 
 | db4 | 네이티브 멀티 스레드 빌드는 저장을 백그라운드 스레드로 — 명령 처리가 막히지 않는다. 저장소를 바꾸거나 없애기 전(`usedatabase` · `YXSETDATABASE` · END · EOF)에는 저장이 끝나기를 기다린다. **Emscripten 은 동기 저장 그대로**(pthread 풀에 빈 워커가 있어야 해서) |
 
 **채택(2026-11-07).** db1 · db2 · db4 만 싣는다 — db3 는 파일이 79 → 110MB 로 커져 뺐다.
-- 웹: `engine-release.yml` 의 `RAPFI_PATCHES` 끝에 셋을 붙였다(기본 태그 `engine-3c94c2a9-a5`). **릴리스는 아직 내지 않았다** —
-  web.yml · deploy.yml 은 여전히 `-a4` 를 고정한다. 내면: `public/engine/*.js|wasm` · `src/engine/engine-manifest.json` 을 새 릴리스로
-  바꾸고 두 워크플로의 `ENGINE_TAG` 와 `public/engine/README.md` 의 계보를 올린다. wasm 에서 db4 는 `#ifdef` 로 꺼지고, MEMFS 는
-  하드 링크가 없어 db1 의 백업이 복사로 물러선다(저장 순간 파일 한 벌만큼 메모리가 더 든다).
+- 웹: `engine-release.yml` 의 `RAPFI_PATCHES` 끝에 셋을 붙여 **릴리스 `engine-3c94c2a9-a5`**(실행 42382400497, 게이트 전부 통과)로
+  냈고 `public/engine/` · 매니페스트 · web.yml · deploy.yml 의 `ENGINE_TAG` 를 옮겼다. 가중치 · Emscripten 6.0.13 은 a4 그대로다.
+  첫 실행(42382123594)은 emsdk 캐시가 만료돼 latest = 7.0.0 을 받았고, 그 libc++ 이 `<vector>` 를 간접으로 끌어오지 않아
+  upstream `search/searchoutput.h` 가 컴파일되지 않았다 — 릴리스 워크플로에 `EMSDK_VERSION: "6.0.13"` 을 고정했다(다른 벤치
+  워크플로는 고정 없이 latest 를 받으므로 지금은 7.0.0 으로 같은 오류가 날 수 있다 — emsdk 캐시는 남아 있지 않다). wasm 에서 db4 는 `#ifdef` 로 꺼지고,
+  MEMFS 는 하드 링크가 없어 db1 의 백업이 복사로 물러선다(저장 순간 파일 한 벌만큼 메모리가 더 든다).
 - 웹 클라이언트: `dbStore.save` 가 분석을 끄지 않는다(`claimForSave`). 저장은 워커 요청 줄에 서고, 돌던 분석은 비켰다가(`stopped`)
   engine-state 가 같은 국면을 해시째 이어 읽는다. 자동 저장 · 탭 숨김 저장도 분석 중에 건너뛰지 않는다. 엔진과 무관하게(a4 에서도)
   성립한다 — 저장하는 동안 엔진은 쉬고 있다. 멀티 변형의 탐색 중에 저장 명령을 직접 넣는 것은 하지 않았다(§1 C4 의 입력 경합).
