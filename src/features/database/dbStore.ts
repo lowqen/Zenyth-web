@@ -165,14 +165,31 @@ function ch(): DbChannel {
 
 const info = (key: string, value: number): EngineCommand => ({ kind: "info", key, value });
 
-/** 고치기 · 저장이 지금 엔진을 써도 되나. 분석 중이면 멈춘다. 못 쓰면 까닭. */
-function claimForWrite(): string | null {
-  const e = useEngineStore.getState();
-  if (e.owner) return t("리뷰나 증명이 엔진을 쓰는 중입니다. 끝나거나 멈춘 뒤에 하세요");
+/** 리뷰 · 증명 · 착수 생각이 엔진을 쥐고 있으면 그 까닭. 분석은 막지 않는다. */
+function engineHeld(): string | null {
+  if (useEngineStore.getState().owner)
+    return t("리뷰나 증명이 엔진을 쓰는 중입니다. 끝나거나 멈춘 뒤에 하세요");
   if (useGameStore.getState().thinking) return t("엔진이 착수를 생각하는 중입니다");
+  return null;
+}
+
+/** 고치기가 지금 엔진을 써도 되나. 분석 중이면 멈춘다. 못 쓰면 까닭. */
+function claimForWrite(): string | null {
+  const why = engineHeld();
+  if (why) return why;
+  const e = useEngineStore.getState();
   if (e.analyzing) e.stop();
   return null;
 }
+
+/**
+ * 저장이 지금 엔진을 써도 되나 — **분석은 끄지 않는다.** 저장 요청은 워커의 요청 줄에 서고,
+ * 돌던 분석은 그 앞에서 비켰다가(`stopped`) 저장 뒤 같은 국면을 해시를 이어 다시 읽는다
+ * (engine-state `onSearchDone`). 예전엔 여기서 `stop()` 으로 분석을 아예 껐다 — 자동 저장 ·
+ * 탭 숨김 저장이 분석을 끊지 않으려 분석 중에는 아예 건너뛰었던 까닭이다.
+ * 엔진 쪽 저장은 db1(임시 파일에 쓰고 바꿔 넣기)이라 도중에 끊겨도 본 파일이 깨지지 않는다.
+ */
+const claimForSave = engineHeld;
 
 async function storedRow() {
   const d = db();
@@ -311,7 +328,7 @@ export const useDbStore = create<DbState>((set, get) => {
     save: async (why = t("저장됨")) => {
       if (get().status !== "on") return t("DB 가 붙어 있지 않습니다");
       if (get().settings.readonly) return t("읽기 전용 DB 는 저장하지 않습니다");
-      const claim = claimForWrite();
+      const claim = claimForSave();
       if (claim) return claim;
       set({ busy: true });
       try {
@@ -525,10 +542,8 @@ export function wireDatabase(): void {
     useDbStore.setState({ status: "off", view: null });
     if (useDbStore.getState().settings.enabled) void useDbStore.getState().attach();
   });
-  const idle = () => {
-    const e = useEngineStore.getState();
-    return e.status === "ready" && !e.analyzing && !e.owner && !useGameStore.getState().thinking;
-  };
+  // 분석 중이어도 된다 — 저장은 분석을 끄지 않고 잠깐 비켜 세울 뿐이다(`claimForSave`).
+  const idle = () => useEngineStore.getState().status === "ready" && !engineHeld();
   setInterval(() => {
     const s = useDbStore.getState();
     if (s.status !== "on" || !s.settings.autoSave || s.settings.readonly || s.busy) return;

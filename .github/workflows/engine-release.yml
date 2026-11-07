@@ -22,7 +22,7 @@ on:
     inputs:
       tag:
         description: "릴리스 태그"
-        default: "engine-3c94c2a9-a4"
+        default: "engine-3c94c2a9-a5"
         type: string
       runner:
         description: "러너 — ubuntu-latest(기본, GitHub 호스트) 또는 self-hosted"
@@ -62,7 +62,12 @@ jobs:
       # 요청 칸이 모두 저장돼 있을 때만 복사(스레드마다 ~3.9MB). 관문 0 재사용 29.4% · 관문 2 cachegrind Ir/노드 −2.68%
       # (39096412125) · 관문 3 같은 트리 relaxed +5.01% · +5.46%, A/A −0.12 · +0.04%(wasm-speed 40056642650 ·
       # 40056644994) — docs/engineering-notes.md §2 A4.
-      RAPFI_PATCHES: "tools/patches/p2-2-keep-evaluators-on-rebuild.patch tools/patches/a1-q15mulr.patch tools/patches/p4-1-periodic-node-stats.patch tools/patches/a3-starblock-multi.patch tools/patches/a4-policy-cache.patch tools/patches/w8-export-fs.patch"
+      # DB1 · DB2 · DB4(탐색 불변, docs/engineering-notes.md §9): yixindb 저장을 <path>.tmp 에 다 쓴 뒤 rename 으로
+      # 바꿔 넣고(도중에 죽어도 본 파일 무사 — 네이티브 강제 종료 5회 중 깨짐 4 → 0), 저장이 탐색을 멈추거나 명령을
+      # 막지 않게(저장 중 명령 지연 15.8s → 21ms, 8.17M 국면 표본). DB2 는 USEDATABASE 1 이 붙은 DB 를 다시 읽지
+      # 않게. DB4(백그라운드 저장)는 Emscripten 에서 꺼진다(#ifdef) — 웹 저장은 워커 요청 줄이 분석을 비켜 세운 뒤
+      # 동기로 돈다. DB3(빠른 LZ4)는 파일이 79 → 110MB 로 커져 채택하지 않았다.
+      RAPFI_PATCHES: "tools/patches/p2-2-keep-evaluators-on-rebuild.patch tools/patches/a1-q15mulr.patch tools/patches/p4-1-periodic-node-stats.patch tools/patches/a3-starblock-multi.patch tools/patches/a4-policy-cache.patch tools/patches/w8-export-fs.patch tools/patches/db1-atomic-nonblocking-save.patch tools/patches/db2-usedatabase-guard.patch tools/patches/db4-async-save.patch"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
