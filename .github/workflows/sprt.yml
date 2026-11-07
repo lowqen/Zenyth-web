@@ -91,6 +91,8 @@ jobs:
     timeout-minutes: ${{ inputs.runner == 'self-hosted' && 1440 || 360 }}
     env:
       WORK: ${{ github.workspace }}/../rapfi-wasm-work
+      # 배포 릴리스와 같은 Emscripten(engine-release.yml 의 고정 이유 참고 — 7.0.0 은 searchoutput.h 가 안 된다).
+      EMSDK_VERSION: "6.0.13"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -126,7 +128,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORK }}/emsdk
-          key: emsdk-latest-v1
+          key: emsdk-${{ env.EMSDK_VERSION }}-v1
 
       - name: 러너 · 통계 시험
         run: node --test bench/sprt/

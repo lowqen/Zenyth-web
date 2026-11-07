@@ -34,9 +34,10 @@ set -eu
 RAPFI_COMMIT="${RAPFI_COMMIT:-3c94c2a976f24a0dd1c5517623e9ab6fffe66bd7}"
 # 가중치가 바뀌면 BENCH 해시 대조가 무의미해진다. 폰이 쓴 것과 같아야 한다.
 NETWORKS_COMMIT="${NETWORKS_COMMIT:-e32ad77a5364363b3e3a02b3f9e8610ade19ea98}"
-# 스파이크에서는 latest 를 쓰고 결과를 ENGINE_VERSION.txt 에 기록한다.
-# W0 가 통과하면 그때 나온 버전을 여기 고정한다(안드로이드가 NDK r27c 를 박아둔 것과 같은 이유).
-EMSDK_VERSION="${EMSDK_VERSION:-latest}"
+# 배포 릴리스(a4 · a5)와 같은 판에 고정한다(안드로이드가 NDK r27c 를 박아둔 것과 같은 이유).
+# latest(2026-11-07 부터 7.0.0)는 libc++ 이 <vector> 를 간접으로 끌어오지 않아 upstream
+# search/searchoutput.h 가 컴파일되지 않는다. 올릴 때는 게이트를 다시 돌려 정한다.
+EMSDK_VERSION="${EMSDK_VERSION:-6.0.13}"
 ENABLE_LTO="${ENABLE_LTO:-ON}"
 # 변형·가중치 스위치. **기본값(둘 다 비움)은 SIMD 두 종·렌주 전용**이다.
 #   EXTRA_VARIANTS     공백 구분. multi-simd128-relaxed / single-simd128-relaxed
