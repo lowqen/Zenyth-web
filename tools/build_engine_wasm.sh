@@ -221,8 +221,15 @@ src = re.sub(
 assert src != before, "가중치 항목을 못 찾았습니다 — upstream config 가 바뀌었습니다"
 assert "renju_bs15_black" in src, "렌주 항목이 사라졌습니다"
 assert "freestyle" not in src.split("[search]")[0], "프리스타일 항목이 남아 있습니다"
+# DB 저장은 저널로(db6, Zenyth Web A7) — 바뀐 기록만 rapfi.db.journal 에 덧붙여 웹 저장소로
+# 옮기는 양을 줄인다. 저널을 모르는 엔진(db6 이전)은 이 키를 무시한다.
+if "[database.yixindb]" in src:
+    src = src.replace("[database.yixindb]", "[database.yixindb]\njournal = true", 1)
+else:
+    src += "\n[database.yixindb]\njournal = true\n"
+assert src.count("journal = true") == 1
 pathlib.Path("Networks/config-example/rapfiweb-renju.toml").write_text(src, encoding="utf-8")
-print("  . rapfiweb-renju.toml 생성 — 가중치 항목 1개(렌주 흑/백)만 남음")
+print("  . rapfiweb-renju.toml 생성 — 가중치 항목 1개(렌주 흑/백)만 남음, DB 저널 켬")
 PY
 grep -A3 "model.evaluator.weights" Networks/config-example/rapfiweb-renju.toml | sed "s/^/  . /"
 fi

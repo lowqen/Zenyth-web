@@ -757,6 +757,9 @@ export const EN: Readonly<Record<string, string>> = {
   "엔진이 빈 CSV 를 남겼습니다": "The engine left an empty CSV",
   "내보내기 전 저장": "Saved before export",
   "저장된 DB 파일이 없습니다": "There is no saved DB file",
+  "저널 {kb}KB": "journal {kb}KB",
+  "저널에 접히지 않은 변경이 있습니다. DB 를 붙인 뒤 내보내세요":
+    "The journal holds changes not yet folded into the file. Attach the DB, then export",
   "이 브라우저는 저장소(IndexedDB)를 쓸 수 없습니다": "This browser cannot use storage (IndexedDB)",
   "가져옴: {kb}KB": "Imported: {kb}KB",
   "저장된 DB 를 지움": "Deleted the saved DB",

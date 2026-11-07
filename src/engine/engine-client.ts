@@ -10,6 +10,7 @@ import {
   type FromWorker,
   type Placement,
   type SearchEndReason,
+  type FsOp,
   type ToWorker,
   type WeightsSpec,
 } from "./engine-types";
@@ -318,6 +319,12 @@ export interface FsResult {
   ok: boolean;
   bytes?: Uint8Array;
   error?: string;
+  /** 본 파일의 정체 — 다음 `save` 의 `knownBase` 로 돌려준다(A7). */
+  sig?: string;
+  /** `<path>.journal` 의 바이트(db6 저널). */
+  journal?: Uint8Array;
+  /** 저널 파일이 없다. */
+  journalGone?: boolean;
 }
 
 export interface EngineOptions extends EngineEvents {
@@ -638,6 +645,9 @@ export class EngineClient {
           const r: FsResult = { ok: m.ok };
           if (m.bytes) r.bytes = m.bytes;
           if (m.error) r.error = m.error;
+          if (m.sig) r.sig = m.sig;
+          if (m.journal) r.journal = m.journal;
+          if (m.journalGone) r.journalGone = true;
           p?.(r);
           break;
         }
@@ -807,18 +817,14 @@ export class EngineClient {
    * 엔진 메모리 FS 요청(W8) — 요청 줄에 서므로 앞뒤 명령과 순서가 지켜진다. 엔진이 없거나
    * 내려가면 실패로 끝난다.
    */
-  fs(
-    op: "write" | "read" | "remove" | "save",
-    path: string,
-    bytes?: Uint8Array,
-  ): Promise<FsResult> {
+  fs(op: FsOp, path: string, bytes?: Uint8Array, knownBase?: string | null): Promise<FsResult> {
     if (!this.worker) return Promise.resolve({ ok: false, error: t("엔진이 떠 있지 않습니다") });
     const id = ++this.fsSeq;
     return new Promise((resolve) => {
       this.fsPending.set(id, resolve);
-      const msg: ToWorker = bytes
-        ? { type: "fs", id, op, path, bytes }
-        : { type: "fs", id, op, path };
+      const msg: ToWorker = { type: "fs", id, op, path };
+      if (bytes) msg.bytes = bytes;
+      if (knownBase !== undefined) msg.knownBase = knownBase;
       if (bytes) this.worker!.postMessage(msg, [bytes.buffer]);
       else this.post(msg);
     });

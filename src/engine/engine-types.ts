@@ -327,15 +327,23 @@ export type ToWorker =
   /**
    * 엔진의 메모리 파일 시스템(W8) — yixindb 파일을 웹 저장소와 주고받는다. 요청 줄에 선다
    * (앞뒤 명령과 순서가 지켜진다). `save` 는 `YXSAVEDATABASE` 를 보내고 저장 메시지를
-   * 기다린 뒤 그 파일을 읽어 돌려준다. 글루가 FS 를 내보내지 않는 옛 엔진이면 실패로 답한다.
+   * 기다린 뒤 파일을 읽어 돌려준다. 글루가 FS 를 내보내지 않는 옛 엔진이면 실패로 답한다.
+   *
+   * 저널(db6, A7): `save` · `compact` 는 본 파일이 `knownBase`(앞서 받은 `sig`)에서 바뀌었을
+   * 때만 본 파일을 싣고, `<path>.journal` 은 늘 싣는다(없으면 `journalGone`). `compact` 는
+   * 저널이 있으면 `YXCOMPACTDATABASE` 로 저널을 본 파일에 접어 넣는다(없으면 `save` 와 같다).
    */
   | {
       type: "fs";
       id: number;
-      op: "write" | "read" | "remove" | "save";
+      op: FsOp;
       path: string;
       bytes?: Uint8Array;
+      knownBase?: string | null;
     };
+
+/** 엔진 메모리 FS 요청의 종류(W8 · A7). */
+export type FsOp = "write" | "read" | "remove" | "save" | "compact";
 
 /**
  * 탐색이 끝난 까닭. `finished` 는 엔진이 스스로 끝낸 것(유한 착수), `timeout` 은
@@ -386,7 +394,19 @@ export type FromWorker =
     }
   | { type: "forbid"; cells: readonly Move[] }
   /** `fs` 요청의 답. */
-  | { type: "fs"; id: number; ok: boolean; bytes?: Uint8Array; error?: string }
+  | {
+      type: "fs";
+      id: number;
+      ok: boolean;
+      bytes?: Uint8Array;
+      error?: string;
+      /** 본 파일의 정체(노드 · 크기 · 시각) — `write` · `save` · `compact` 뒤. */
+      sig?: string;
+      /** `<path>.journal` 의 바이트(`save` · `compact`). */
+      journal?: Uint8Array;
+      /** 저널 파일이 없다(`save` · `compact`). */
+      journalGone?: boolean;
+    }
   /** yixindb 가 말한 줄(`DATABASE …` · `Saved database file …`) — DB 화면과 증명이 받는다. */
   | { type: "dbLine"; text: string }
   /**
