@@ -189,7 +189,7 @@ export interface Capabilities {
  * 기동 핸드셰이크가 실패해 단일로 물러선다.
  */
 export function detectCapabilities(): Capabilities {
-  let simd = false;
+  let simd: boolean;
   try {
     simd = WebAssembly.validate(SIMD_PROBE);
   } catch {
@@ -197,7 +197,7 @@ export function detectCapabilities(): Capabilities {
   }
   // relaxed 는 SIMD 위에만 선다. 검증이 던지는 오래된 엔진도 있어 거짓으로 받는다.
   // `?relaxed=0` 으로 끌 수 있다(진단용 — relaxed 가 의심스러울 때 대조).
-  let relaxedSimd = false;
+  let relaxedSimd: boolean;
   try {
     relaxedSimd = simd && WebAssembly.validate(RELAXED_SIMD_PROBE);
   } catch {

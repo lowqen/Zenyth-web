@@ -50,7 +50,7 @@ export async function sha256Hex(buf: ArrayBuffer): Promise<string> {
 }
 
 export function defaultWeightsDeps(): WeightsDeps {
-  let store: CacheStorage | null = null;
+  let store: CacheStorage | null;
   try {
     store = typeof caches === "undefined" ? null : caches;
   } catch {

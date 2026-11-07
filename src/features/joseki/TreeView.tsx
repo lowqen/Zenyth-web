@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { label } from "../../core/model/move";
 import { ROLE_LABEL, type JosekiNode } from "../../core/joseki/tree";
 import { t } from "../../i18n/i18n";
@@ -61,7 +62,7 @@ function Line({
   onGo: (p: number[]) => void;
   first: number;
 }) {
-  const items: JSX.Element[] = [];
+  const items: ReactElement[] = [];
   let n = node;
   let p = prefix;
   let k = ply;

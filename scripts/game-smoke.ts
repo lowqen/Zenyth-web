@@ -86,7 +86,7 @@ async function act<T>(what: string, fn: () => Promise<T>): Promise<T> {
   } catch (e) {
     const first = e instanceof Error ? (e.message.split("\n")[0] ?? "") : String(e);
     const target = waitedFor(e);
-    throw new Error(`${what} — ${first}${target ? ` (기다린 대상: ${target})` : ""}`);
+    throw new Error(`${what} — ${first}${target ? ` (기다린 대상: ${target})` : ""}`, { cause: e });
   }
 }
 
@@ -464,7 +464,7 @@ async function click(name: string) {
         })()`,
       )
       .catch(() => "?")) as string;
-    throw new Error(`${e instanceof Error ? e.message : String(e)} — 버튼 ${state}`);
+    throw new Error(`${e instanceof Error ? e.message : String(e)} — 버튼 ${state}`, { cause: e });
   }
 }
 

@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { Plugin } from "vite";
-import { formatCurriculum } from "../src/core/curriculum/format";
+import { formatCurriculum } from "../src/core/curriculum/format.ts";
 
 /**
  * 커리큘럼 스튜디오의 «저장소에 저장» — **개발 서버에만** 있는 길(`apply: "serve"`). 빌드 · 미리보기 · 배포본에는
