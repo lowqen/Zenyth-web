@@ -51,6 +51,8 @@ jobs:
     timeout-minutes: 360
     env:
       WORK: ${{ github.workspace }}/../rapfi-wasm-work
+      # 배포 릴리스와 같은 Emscripten(engine-release.yml 의 고정 이유 참고 — 7.0.0 은 searchoutput.h 가 안 된다).
+      EMSDK_VERSION: "6.0.13"
       ENABLE_LTO: "ON"
       V: multi-simd128-relaxed
     steps:
@@ -84,7 +86,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORK }}/emsdk
-          key: emsdk-latest-v1
+          key: emsdk-${{ env.EMSDK_VERSION }}-v1
       - name: rapfi 소스 캐시 복원
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:

@@ -45,7 +45,7 @@ if [ ! -x "$WORK/emsdk/emsdk" ]; then
   echo "  . emsdk 가 없어 새로 받습니다"
   rm -rf "$WORK/emsdk"
   git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$WORK/emsdk"
-  ( cd "$WORK/emsdk" && ./emsdk install latest && ./emsdk activate latest )
+  ( cd "$WORK/emsdk" && ./emsdk install "${EMSDK_VERSION:-6.0.13}" && ./emsdk activate "${EMSDK_VERSION:-6.0.13}" )
 fi
 if [ ! -d "$WORK/rapfi/.git" ]; then
   echo "  . rapfi 소스가 없어 새로 받습니다"
