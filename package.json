@@ -34,6 +34,11 @@
     "showcase:build": "tsc --noEmit && vite build --config showcase/vite.config.ts",
     "showcase:preview": "vite preview --config showcase/vite.config.ts"
   },
+  "pnpm": {
+    "overrides": {
+      "minimatch@>=7 <11.0.1": "^11.0.1"
+    }
+  },
   "dependencies": {
     "dexie": "^4",
     "pretendard": "1.3.9",
