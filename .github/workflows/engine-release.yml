@@ -40,6 +40,10 @@ jobs:
     env:
       WORK: ${{ github.workspace }}/../rapfi-wasm-work
       ENABLE_LTO: "ON"
+      # Emscripten 을 배포 릴리스(a4)와 같은 판에 고정한다. latest 는 2026-11-07 에 7.0.0 이 되었고, 그 libc++ 은
+      # <vector> 를 간접으로 끌어오지 않아 upstream search/searchoutput.h(직접 include 없음)가 컴파일되지 않는다
+      # (실행 42382123594). 툴체인을 올리는 일은 엔진 패치와 따로, 게이트를 다시 돌려 정한다.
+      EMSDK_VERSION: "6.0.13"
       # 엔진 소스 패치(공백 구분, 저장소 루트 기준). 빌드가 적용하고, 릴리스 본문이 밝히고,
       # 대응 소스로 자산에 함께 낸다(GPL — 아래 「릴리스 본문」·「릴리스 발행」).
       # P2-2 채택(docs/engineering-notes.md §2): 결과 불변(BENCH 2b7c7da9 · 렌주 비트 동일 5/5 · 50/50,
@@ -90,7 +94,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORK }}/emsdk
-          key: emsdk-latest-v1
+          key: emsdk-${{ env.EMSDK_VERSION }}-v1
 
       - name: rapfi 소스 캐시 복원
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -147,7 +151,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORK }}/emsdk
-          key: emsdk-latest-v1
+          key: emsdk-${{ env.EMSDK_VERSION }}-v1
 
       - name: rapfi 소스 캐시 저장
         if: always()
