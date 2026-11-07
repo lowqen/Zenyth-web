@@ -15,11 +15,14 @@ vi.mock("../../engine/engine-state", async (orig) => ({
       fs.reads.push(fs.file.byteLength);
       return { ok: true, bytes: fs.file.slice() };
     }
+    if (op === "save") return { ok: true, bytes: new Uint8Array([4, 34, 77, 24]) };
     return { ok: true };
   }),
 }));
 
 const { setDbPortForTest, useDbStore } = await import("./dbStore");
+const { useEngineStore } = await import("../../engine/engine-state");
+const { useGameStore } = await import("../board/gameStore");
 
 const CSV = new TextEncoder().encode("index,key,label,value,depth,bound,text\n");
 
@@ -85,5 +88,36 @@ describe("CSV 내보내기", () => {
     expect(await useDbStore.getState().exportCsv()).toEqual({
       error: expect.stringContaining("빈 CSV"),
     });
+  });
+});
+
+describe("저장", () => {
+  afterEach(() => {
+    useEngineStore.setState({ analyzing: false, owner: null });
+    useGameStore.setState({ thinking: false });
+    useDbStore.setState({ status: "off", busy: false });
+  });
+
+  it("분석을 끄지 않는다 — 워커 줄에서 잠깐 비켰다가 이어 읽는다", async () => {
+    const stop = vi.fn();
+    useEngineStore.setState({ analyzing: true, owner: null, stop });
+    useDbStore.setState({
+      status: "on",
+      settings: { ...useDbStore.getState().settings, readonly: false },
+    });
+
+    expect(await useDbStore.getState().save()).toBeNull();
+    expect(stop).not.toHaveBeenCalled();
+    expect(useEngineStore.getState().analyzing).toBe(true);
+  });
+
+  it("리뷰 · 증명이 엔진을 쥐고 있으면 여전히 거절한다", async () => {
+    useEngineStore.setState({ analyzing: false, owner: "review" });
+    useDbStore.setState({
+      status: "on",
+      settings: { ...useDbStore.getState().settings, readonly: false },
+    });
+
+    expect(await useDbStore.getState().save()).toMatch(/리뷰나 증명/);
   });
 });
