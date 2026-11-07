@@ -16,6 +16,7 @@ import {
   type AnalysisSnapshot,
   type BootPhase,
   type EngineCommand,
+  type FsOp,
   type EngineStatus,
   type Placement,
 } from "./engine-types";
@@ -175,14 +176,15 @@ export function onEngineBooted(fn: () => void): () => void {
 
 /** 엔진 메모리 FS(W8). 엔진이 떠 있지 않으면 실패로 답한다 — 띄우지는 않는다. */
 export function engineFs(
-  op: "write" | "read" | "remove" | "save",
+  op: FsOp,
   path: string,
   bytes?: Uint8Array,
+  knownBase?: string | null,
 ): Promise<FsResult> {
   if (!client || client.currentStatus === "idle" || client.currentStatus === "error") {
     return Promise.resolve({ ok: false, error: t("엔진이 떠 있지 않습니다") });
   }
-  return client.fs(op, path, bytes);
+  return client.fs(op, path, bytes, knownBase);
 }
 
 /** 엔진을 독점할 수 있는 작업. */

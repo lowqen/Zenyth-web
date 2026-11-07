@@ -83,6 +83,7 @@ interface EmscriptenModule {
     writeFile(path: string, data: Uint8Array): void;
     readFile(path: string): Uint8Array;
     unlink(path: string): void;
+    stat(path: string): { ino: number; size: number; mtime: Date };
   };
 }
 type ModuleFactory = (opts: Partial<EmscriptenModule>) => Promise<EmscriptenModule>;
@@ -972,9 +973,11 @@ const DB_SAVE_MS = 60_000;
  * 멀쩡하다.
  */
 async function fsOp(msg: Extract<ToWorker, { type: "fs" }>) {
-  const reply = (r: { ok: boolean; bytes?: Uint8Array; error?: string }) => {
+  type Reply = Omit<Extract<FromWorker, { type: "fs" }>, "type" | "id">;
+  const reply = (r: Reply) => {
     const m: FromWorker = { type: "fs", id: msg.id, ...r };
-    if (r.bytes) (self as unknown as Worker).postMessage(m, [r.bytes.buffer]);
+    const moved = [r.bytes?.buffer, r.journal?.buffer].filter((x): x is ArrayBuffer => !!x);
+    if (moved.length) (self as unknown as Worker).postMessage(m, moved);
     else post(m);
   };
   const fs = mod?.FS;
@@ -982,12 +985,31 @@ async function fsOp(msg: Extract<ToWorker, { type: "fs" }>) {
     reply({ ok: false, error: "이 엔진 빌드는 파일 시스템을 내보내지 않습니다(w8 이전 엔진)" });
     return;
   }
+  // 본 파일의 정체. db1 의 저장은 임시 파일에 써서 바꿔 넣으므로 노드 번호가 바뀌고, 저널만
+  // 덧붙인 저장(db6)은 본 파일을 건드리지 않는다 — 그러면 수백 MB 를 다시 옮기지 않아도 된다.
+  const sigOf = (path: string): string | undefined => {
+    try {
+      const st = fs.stat(path);
+      return `${st.ino}:${st.size}:${st.mtime.getTime()}`;
+    } catch {
+      return undefined;
+    }
+  };
+  const readOpt = (path: string): Uint8Array | undefined => {
+    try {
+      return fs.readFile(path).slice();
+    } catch {
+      return undefined;
+    }
+  };
   try {
     switch (msg.op) {
-      case "write":
+      case "write": {
         fs.writeFile(msg.path, msg.bytes ?? new Uint8Array(0));
-        reply({ ok: true });
+        const sig = sigOf(msg.path);
+        reply(sig ? { ok: true, sig } : { ok: true });
         return;
+      }
       case "read":
         reply({ ok: true, bytes: fs.readFile(msg.path).slice() });
         return;
@@ -999,12 +1021,23 @@ async function fsOp(msg: Extract<ToWorker, { type: "fs" }>) {
         }
         reply({ ok: true });
         return;
-      case "save": {
+      case "save":
+      case "compact": {
+        const jpath = `${msg.path}.journal`;
+        // 저널 파일이 있다 = db6 엔진이 저널을 쓰고 있다 — 그때만 새 명령을 보낸다(옛 엔진은 모른다).
+        const cmd = msg.op === "compact" && sigOf(jpath) ? "YXCOMPACTDATABASE" : "YXSAVEDATABASE";
         // 단일 변형은 이 명령 안에서 저장까지 끝나고 줄도 동기로 온다 — 기다림을 먼저 건다.
         const saved = waitLine(/Saved database file/i, DB_SAVE_MS, "DB 저장");
-        sendCommand(["YXSAVEDATABASE"]);
+        sendCommand([cmd]);
         await saved;
-        reply({ ok: true, bytes: fs.readFile(msg.path).slice() });
+        const sig = sigOf(msg.path);
+        const r: Reply = { ok: true };
+        if (sig) r.sig = sig;
+        if (!sig || sig !== msg.knownBase) r.bytes = fs.readFile(msg.path).slice();
+        const journal = readOpt(jpath);
+        if (journal) r.journal = journal;
+        else r.journalGone = true;
+        reply(r);
         return;
       }
     }

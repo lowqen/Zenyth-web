@@ -39,9 +39,16 @@ import {
  * `FS` 를 내보내(w8 패치) 바이트를 직접 옮긴다:
  *
  * ```
- *  붙이기 : Dexie dbfiles["rapfi.db"] → FS.writeFile("rapfi.db") → info usedatabase 1
- *  저장   : YXSAVEDATABASE → "Saved database file …" → FS.readFile("rapfi.db") → Dexie
+ *  붙이기 : Dexie dbfiles["rapfi.db"(+".journal")] → FS.writeFile → info usedatabase 1
+ *  저장   : YXSAVEDATABASE → "Saved database file …" → FS.readFile → Dexie
  * ```
+ *
+ * **저널(db6, A7).** 엔진 설정이 `journal = true` 면 저장은 본 파일을 다시 쓰지 않고 바뀐 기록만
+ * `rapfi.db.journal` 에 덧붙인다. 워커는 본 파일의 정체(`sig`)가 우리가 이미 Dexie 에 둔 것
+ * (`knownBase`)과 같으면 본 파일을 싣지 않으므로, 저장마다 옮기는 것은 저널 몇 KB 뿐이다.
+ * 저널이 본 파일의 일정 비율을 넘으면 엔진이 스스로 접어 넣고(본 파일이 바뀌어 다시 실린다),
+ * 내보내기는 `compact` 로 먼저 접는다. 둘은 한 트랜잭션으로 함께 놓인다 — 저널은 자기 본
+ * 파일(크기 · 끝 4KB 해시)이 아니면 엔진이 버리므로, 어긋나도 깨지지는 않는다.
  *
  * 엔진이 다시 뜨면 메모리 FS 는 비어 있다 — 기동 소식(`onEngineBooted`)을 듣고 다시 붙인다.
  * 그래서 **저장하지 않은 변경은 엔진을 다시 띄우면 사라진다**(데스크톱이 엔진을 죽일 때와 같다).
@@ -52,6 +59,10 @@ import {
  */
 
 export const DB_FILE = "rapfi.db";
+/** db6 저널 — 엔진이 `<db>.journal` 로 쓴다. */
+export const JOURNAL_FILE = `${DB_FILE}.journal`;
+/** 저널 머리(`RYDBJNL1` · 본 파일 크기 · 해시) — 이보다 크면 접히지 않은 변경이 있다. */
+const JOURNAL_HEADER = 32;
 const CSV_FILE = "rapfi.csv";
 const SETTINGS_KEY = "rapfi.db";
 const LOG_LIMIT = 120;
@@ -125,7 +136,8 @@ interface DbState {
 
   attach: () => Promise<string | null>;
   detach: () => Promise<string | null>;
-  save: (why?: string) => Promise<string | null>;
+  /** 엔진 DB 를 Dexie 에 놓는다. `compact` 면 저널을 본 파일에 먼저 접는다(db6 엔진일 때만). */
+  save: (why?: string, compact?: boolean) => Promise<string | null>;
   refresh: (moves: readonly Move[]) => Promise<string | null>;
   setComment: (moves: readonly Move[], text: string) => Promise<string | null>;
   setLabel: (moves: readonly Move[], target: Move, label: string) => Promise<string | null>;
@@ -191,10 +203,21 @@ function claimForWrite(): string | null {
  */
 const claimForSave = engineHeld;
 
-async function storedRow() {
+async function storedRow(name = DB_FILE) {
   const d = db();
-  return d ? ((await d.dbfiles.get(DB_FILE)) ?? null) : null;
+  return d ? ((await d.dbfiles.get(name)) ?? null) : null;
 }
+
+/**
+ * Dexie 에 놓인 본 파일과 같은 엔진 FS 파일의 정체 — 다음 저장이 본 파일을 다시 실을지 가른다.
+ * 엔진이 다시 뜨면 붙이기가 새로 정한다. Dexie 쓰기가 실패하면 바꾸지 않으므로 다음 저장은
+ * 본 파일을 통째로 다시 싣는다.
+ */
+let knownBase: string | null = null;
+/** 표시용 크기 — 본 파일과 저널을 따로 센다(저널만 바뀌면 본 파일을 다시 읽지 않는다). */
+let baseSize = 0;
+let journalSize = 0;
+const storedSize = () => baseSize + journalSize;
 
 export const useDbStore = create<DbState>((set, get) => {
   const note = (t: string) => set((s) => ({ log: [...s.log, t].slice(-LOG_LIMIT) }));
@@ -264,8 +287,14 @@ export const useDbStore = create<DbState>((set, get) => {
     },
 
     loadStored: async () => {
-      const row = await storedRow();
-      set({ stored: row ? { size: row.bytes.byteLength, savedAt: row.savedAt } : null });
+      const [row, j] = await Promise.all([storedRow(), storedRow(JOURNAL_FILE)]);
+      baseSize = row?.bytes.byteLength ?? 0;
+      journalSize = row && j ? j.bytes.byteLength : 0;
+      set({
+        stored: row
+          ? { size: storedSize(), savedAt: Math.max(row.savedAt, j?.savedAt ?? 0) }
+          : null,
+      });
     },
 
     attach: async () => {
@@ -276,12 +305,24 @@ export const useDbStore = create<DbState>((set, get) => {
       set({ status: "attaching", message: null });
       try {
         const row = await storedRow();
+        const jrow = row ? await storedRow(JOURNAL_FILE) : null;
+        knownBase = null;
         if (row) {
           const w = await engineFs("write", DB_FILE, row.bytes.slice());
           if (!w.ok) throw new Error(w.error ?? t("DB 파일을 엔진에 넣지 못했습니다"));
+          knownBase = w.sig ?? null;
         } else {
           await engineFs("remove", DB_FILE);
         }
+        // 저널은 본 파일을 열 때 엔진이 다시 읽는다(db6) — 그 전에 놓아야 한다.
+        if (jrow) {
+          const w = await engineFs("write", JOURNAL_FILE, jrow.bytes.slice());
+          if (!w.ok) throw new Error(w.error ?? t("DB 파일을 엔진에 넣지 못했습니다"));
+        } else {
+          await engineFs("remove", JOURNAL_FILE);
+        }
+        baseSize = row?.bytes.byteLength ?? 0;
+        journalSize = jrow?.bytes.byteLength ?? 0;
         const s = get().settings;
         useEngineStore
           .getState()
@@ -292,11 +333,11 @@ export const useDbStore = create<DbState>((set, get) => {
         set({
           status: "on",
           dirty: false,
-          stored: row ? { size: row.bytes.byteLength, savedAt: row.savedAt } : null,
+          stored: row ? { size: storedSize(), savedAt: row.savedAt } : null,
         });
         note(
           row
-            ? t("붙임: 저장된 DB {kb}KB", { kb: (row.bytes.byteLength / 1024).toFixed(1) })
+            ? t("붙임: 저장된 DB {kb}KB", { kb: (storedSize() / 1024).toFixed(1) })
             : t("붙임: 새 DB(비어 있음)"),
         );
         return null;
@@ -325,22 +366,36 @@ export const useDbStore = create<DbState>((set, get) => {
       return null;
     },
 
-    save: async (why = t("저장됨")) => {
+    save: async (why = t("저장됨"), compact = false) => {
       if (get().status !== "on") return t("DB 가 붙어 있지 않습니다");
       if (get().settings.readonly) return t("읽기 전용 DB 는 저장하지 않습니다");
       const claim = claimForSave();
       if (claim) return claim;
       set({ busy: true });
       try {
-        const r = await engineFs("save", DB_FILE);
-        if (!r.ok || !r.bytes) return r.error ?? t("엔진이 DB 파일을 돌려주지 않았습니다");
+        const r = await engineFs(compact ? "compact" : "save", DB_FILE, undefined, knownBase);
+        // 본 파일을 싣지 않은 답은 「우리가 가진 것과 같다」는 뜻이다 — 정체가 없으면 믿을 수 없다.
+        if (!r.ok || (!r.bytes && !r.sig))
+          return r.error ?? t("엔진이 DB 파일을 돌려주지 않았습니다");
         const d = db();
         const savedAt = Date.now();
-        if (d) await d.dbfiles.put({ name: DB_FILE, bytes: r.bytes, savedAt });
-        set({ stored: { size: r.bytes.byteLength, savedAt }, dirty: false });
-        note(
-          `${why}: ${(r.bytes.byteLength / 1024).toFixed(1)}KB${d ? "" : ` ${t("(이 브라우저는 저장소가 없어 이번 세션만)")}`}`,
-        );
+        const { bytes, journal } = r;
+        if (d) {
+          await d.transaction("rw", d.dbfiles, async () => {
+            if (bytes) await d.dbfiles.put({ name: DB_FILE, bytes, savedAt });
+            if (journal) await d.dbfiles.put({ name: JOURNAL_FILE, bytes: journal, savedAt });
+            else await d.dbfiles.delete(JOURNAL_FILE);
+          });
+        }
+        knownBase = r.sig ?? null;
+        if (bytes) baseSize = bytes.byteLength;
+        journalSize = journal?.byteLength ?? 0;
+        set({ stored: { size: storedSize(), savedAt }, dirty: false });
+        const kb = (n: number) => (n / 1024).toFixed(1);
+        const what = bytes
+          ? `${kb(bytes.byteLength)}KB`
+          : t("저널 {kb}KB", { kb: kb(journal?.byteLength ?? 0) });
+        note(`${why}: ${what}${d ? "" : ` ${t("(이 브라우저는 저장소가 없어 이번 세션만)")}`}`);
         return null;
       } finally {
         set({ busy: false });
@@ -444,9 +499,14 @@ export const useDbStore = create<DbState>((set, get) => {
 
     exportFile: async () => {
       // 붙어 있으면 지금 것을 먼저 저장 — 내려받는 파일이 엔진의 최신이어야 한다.
+      // 저널이 있으면 접어서(`compact`) 본 파일 하나가 전부를 담게 한다.
       if (get().status === "on" && !get().settings.readonly) {
-        const err = await get().save(t("내보내기 전 저장"));
+        const err = await get().save(t("내보내기 전 저장"), true);
         if (err) return { error: err };
+      } else {
+        const j = await storedRow(JOURNAL_FILE);
+        if (j && j.bytes.byteLength > JOURNAL_HEADER)
+          return { error: t("저널에 접히지 않은 변경이 있습니다. DB 를 붙인 뒤 내보내세요") };
       }
       const row = await storedRow();
       return row ? { bytes: row.bytes } : { error: t("저장된 DB 파일이 없습니다") };
@@ -463,7 +523,12 @@ export const useDbStore = create<DbState>((set, get) => {
         useEngineStore.getState().send(info("usedatabase", 0));
         set({ status: "off", view: null });
       }
-      await d.dbfiles.put({ name: DB_FILE, bytes, savedAt: Date.now() });
+      await d.transaction("rw", d.dbfiles, async () => {
+        await d.dbfiles.put({ name: DB_FILE, bytes, savedAt: Date.now() });
+        await d.dbfiles.delete(JOURNAL_FILE);
+      });
+      baseSize = bytes.byteLength;
+      journalSize = 0;
       set({ stored: { size: bytes.byteLength, savedAt: Date.now() } });
       note(t("가져옴: {kb}KB", { kb: (bytes.byteLength / 1024).toFixed(1) }));
       if (wasOn || (get().settings.enabled && useEngineStore.getState().status !== "idle"))
@@ -479,7 +544,8 @@ export const useDbStore = create<DbState>((set, get) => {
         useEngineStore.getState().send(info("usedatabase", 0));
         set({ status: "off", view: null });
       }
-      await db()?.dbfiles.delete(DB_FILE);
+      await db()?.dbfiles.bulkDelete([DB_FILE, JOURNAL_FILE]);
+      baseSize = journalSize = 0;
       set({ stored: null });
       note(t("저장된 DB 를 지움"));
       return wasOn ? get().attach() : null;
