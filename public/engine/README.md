@@ -1,6 +1,12 @@
 # public/engine/
 
-Rapfi WebAssembly 산출물 — **네 변형**이 같은 빌드(릴리스 `engine-3c94c2a9-a4`)에서 나온다.
+Rapfi WebAssembly 산출물 — **네 변형**이 같은 빌드(릴리스 `engine-3c94c2a9-a5`)에서 나온다.
+
+`a5` 는 `a4` 에 DB 저장 패치 셋을 얹었다(탐색 불변, 가중치 · Emscripten 6.0.13 그대로 — docs/engineering-notes.md §9).
+`tools/patches/db1-atomic-nonblocking-save.patch` 는 yixindb 저장을 `<path>.tmp` 에 쓴 뒤 rename 으로 바꿔 넣고
+저장이 탐색을 멈추지 않게, `db2-usedatabase-guard.patch` 는 `INFO USEDATABASE 1` 이 붙은 DB 를 다시 읽지 않게,
+`db4-async-save.patch` 는 네이티브 멀티스레드 빌드에서 저장을 백그라운드로 돌린다(Emscripten 에서는 꺼짐).
+MEMFS 에는 하드 링크가 없어 db1 의 백업은 복사로 물러선다.
 
 `a4` 는 `w8` 에 `tools/patches/a4-policy-cache.patch` 를 얹었다 — 같은 국면의 정책 출력을 스레드별
 2^12 표로 재사용한다(결과 불변, 스레드마다 ~3.9MB). BENCH 는 `w8` 과 같고, 같은 트리 속도는 relaxed 에서
