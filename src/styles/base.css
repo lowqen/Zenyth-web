@@ -511,6 +511,12 @@ a:focus-visible {
   scrollbar-width: thin;
   scrollbar-color: var(--c-outline-variant) transparent;
 }
+/* 칸이 창보다 길면 칸이 스크롤한다 — 자식이 줄어들면(flex-shrink 기본 1) overflow:hidden 인 미리보기 카드 · 행 묶음이
+   찌그러져 잘리고, 줄어든 만큼 스크롤할 것이 없어진다(2026-11-09, 낮은 창의 설정 ▸ 디자인). */
+.settings__nav > *,
+.settings__detail > * {
+  flex-shrink: 0;
+}
 .settings__nav .settings__head {
   top: 0;
 }
@@ -906,6 +912,21 @@ a:focus-visible {
 :root[data-theme="dark"] .shell__content:has(> .boardscreen) {
   --stage-a: 16%;
   --stage-b: 12%;
+}
+/* 데스크톱은 무대도 절반(2026-11-09 — 넓은 창에서 판 밖 배경이 누렇게 읽혔다. 판 색은 그대로, scheme.ts DesktopWood*). */
+:root[data-desktop] .shell__content:has(> .boardscreen) {
+  --stage-a: 12%;
+  --stage-b: 7%;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-desktop]:not([data-theme="light"]) .shell__content:has(> .boardscreen) {
+    --stage-a: 8%;
+    --stage-b: 6%;
+  }
+}
+:root[data-desktop][data-theme="dark"] .shell__content:has(> .boardscreen) {
+  --stage-a: 8%;
+  --stage-b: 6%;
 }
 /* 기보 파일을 끌어 오는 동안 — 놓을 수 있는 곳이라는 표시. */
 .boardscreen__board[data-drop] {

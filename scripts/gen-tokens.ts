@@ -27,8 +27,8 @@ import {
   AMOLED_KEYS,
   WoodLight,
   WoodDark,
-  DesktopBoardLight,
-  DesktopBoardDark,
+  DesktopWoodLight,
+  DesktopWoodDark,
   type Scheme,
   type TokenValue,
 } from "../src/core/design/scheme.ts";
@@ -115,6 +115,31 @@ function desktopBlock(): string {
   return lines.join("\n");
 }
 
+/** 나무 팔레트 한 벌(라이트 · 다크 · 검은 배경) — `root` 는 :root 에 덧붙일 선택자(데스크톱이면 [data-desktop]). */
+function woodBlocks(root: string, light: Scheme, dark: Scheme): string {
+  // 웹의 라이트 블록은 예전 그대로 맨 [data-wood](데스크톱은 :root[data-desktop] 을 앞에 붙여 이긴다).
+  return `${root ? `:root${root} ` : ""}[data-wood] {
+${colorBlock(light, "  ")}
+}
+
+@media (prefers-color-scheme: dark) {
+  :root${root}:not([data-theme="light"]) [data-wood] {
+${colorBlock(dark, "    ")}
+  }
+  :root${root}[data-amoled]:not([data-theme="light"]) [data-wood] {
+${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
+  }
+}
+
+:root${root}[data-theme="dark"] [data-wood] {
+${colorBlock(dark, "  ")}
+}
+
+:root${root}[data-theme="dark"][data-amoled] [data-wood] {
+${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
+}`;
+}
+
 const css = `/* 생성물입니다 — 손으로 고치지 마세요.
  * 원본: src/core/design/{ramps,scheme,tokens}.ts
  * 다시 굽기: pnpm gen:tokens   (CI 는 --check 로 최신 여부를 강제합니다)
@@ -178,46 +203,11 @@ ${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
 
 /* 보드 화면의 나무색 팔레트(scheme.ts woodScheme, 앱 WoodTheme) — data-wood 를 단 칸(셸이 보드에서 붙인다)
  * 안에서만. 판 스킨 · 값 색은 바꾸지 않는다. 검은 배경에서는 면은 검정 그대로, 강조만 나무. */
-[data-wood] {
-${colorBlock(WoodLight, "  ")}
-}
+${woodBlocks("", WoodLight, WoodDark)}
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) [data-wood] {
-${colorBlock(WoodDark, "    ")}
-  }
-  :root[data-amoled]:not([data-theme="light"]) [data-wood] {
-${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
-  }
-}
-
-:root[data-theme="dark"] [data-wood] {
-${colorBlock(WoodDark, "  ")}
-}
-
-:root[data-theme="dark"][data-amoled] [data-wood] {
-${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
-}
-
-/* 데스크톱 판(scheme.ts desktopBoard) — 나무 대신 UI 색상각의 회색조, 톤은 나무 판과 같다. 웹에서는 켜지지 않는다.
- * 위의 스킴 블록들보다 뒤에 두고 선택자를 한 단 더 무겁게 해서 언제나 이긴다(라이트 → 다크 → 명시 순). */
-:root[data-desktop] {
-${colorBlock(DesktopBoardLight, "  ")}
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-desktop]:not([data-theme="light"]) {
-${colorBlock(DesktopBoardDark, "    ")}
-  }
-}
-
-:root[data-desktop][data-theme="dark"] {
-${colorBlock(DesktopBoardDark, "  ")}
-}
-
-:root[data-desktop][data-theme="light"] {
-${colorBlock(DesktopBoardLight, "  ")}
-}
+/* 데스크톱(data-desktop)은 같은 나무에 채도 절반(scheme.ts DesktopWood*) — 판 밖 배경이 덜 누렇다. 위 블록과
+ * 같은 모양에 :root 쪽 선택자만 한 단 무거워 언제나 이기고, 그 안의 라이트 → 다크 → 검은 배경 순서도 그대로다. */
+${woodBlocks("[data-desktop]", DesktopWoodLight, DesktopWoodDark)}
 `;
 
 mkdirSync(dirname(OUT), { recursive: true });

@@ -12,7 +12,7 @@ import { useAutoBoot } from "./useAutoBoot";
 import { RifImportLayer } from "../features/research/rif/RifImportLayer";
 import { CopySheetHost } from "../components/CopySheet";
 import { prefetchScreens } from "./screens";
-import { DESKTOP_LAYOUT, IS_DESKTOP } from "./desktop/platform";
+import { IS_DESKTOP } from "./desktop/platform";
 import { TitleBar } from "./desktop/TitleBar";
 import { CommandPalette } from "./commands/CommandPalette";
 
@@ -57,11 +57,7 @@ export function AppShell() {
       <div className="shell" data-compact={compact || undefined}>
         {!compact && <NavRail />}
         {/* 보드 화면은 판의 나무색으로 물든다(앱 WoodTheme — tokens.css 의 [data-wood] 블록). 레일 · 하단 탭은 그대로. */}
-        <div
-          className="shell__main"
-          // 나무 팔레트는 나무 판에 맞춘 것 — 데스크톱 판은 회색조라(scheme.ts desktopBoard) 크롬과 같은 보라 그대로.
-          data-wood={(!DESKTOP_LAYOUT && pathname.startsWith("/board")) || undefined}
-        >
+        <div className="shell__main" data-wood={pathname.startsWith("/board") || undefined}>
           <TopBar title={title} />
           {inResearch && <ResearchTabs />}
           <main className="shell__content">

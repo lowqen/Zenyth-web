@@ -170,10 +170,10 @@ export const AMOLED_KEYS = Object.keys(AmoledScheme).filter(
  * 램프는 앱처럼 그 자리에서 만든다(앱 `Color.kt` 의 이름 있는 램프가 아니므로 톤 골든 밖이다 — 같은
  * `TonalRamp` 계산이라 값은 앱과 같다).
  */
-function woodScheme(dark: boolean): Scheme {
-  const paper = ramp(Maple.hue, dark ? 0.012 : 0.014);
-  const ink = ramp(Maple.hue, 0.018);
-  const pale = ramp(Maple.hue, 0.035);
+function woodScheme(dark: boolean, chroma = 1): Scheme {
+  const paper = ramp(Maple.hue, (dark ? 0.012 : 0.014) * chroma);
+  const ink = ramp(Maple.hue, 0.018 * chroma);
+  const pale = ramp(Maple.hue, 0.035 * chroma);
   return dark
     ? {
         primary: paper.tone(92),
@@ -220,6 +220,15 @@ function woodScheme(dark: boolean): Scheme {
 export const WoodLight: Scheme = woodScheme(false);
 export const WoodDark: Scheme = woodScheme(true);
 
+/**
+ * 데스크톱의 보드 화면 팔레트 — 같은 나무 색상각에 **채도 절반**(2026-11-09 사용자 요청: 판은 나무 그대로, 판 밖
+ * 배경만 덜 누렇게). 레일 · 인스펙터 · 타이틀바가 중성인 넓은 창에서는 페이지 전체가 물들면 누렇게 읽혔다.
+ * 판 스킨(`--c-board-*`)은 손대지 않는다. 생성기가 `:root[data-desktop] [data-wood]` 아래로 굽는다.
+ */
+export const DESKTOP_WOOD_CHROMA = 0.5;
+export const DesktopWoodLight: Scheme = woodScheme(false, DESKTOP_WOOD_CHROMA);
+export const DesktopWoodDark: Scheme = woodScheme(true, DESKTOP_WOOD_CHROMA);
+
 /** 대비 시험이 보는 쌍 — 앱의 테마 시험이 지키던 성질을 그대로 옮긴다. */
 export const CONTRAST_PAIRS: ReadonlyArray<readonly [string, string]> = [
   ["on-background", "background"],
@@ -240,23 +249,3 @@ export const CONTRAST_PAIRS: ReadonlyArray<readonly [string, string]> = [
   ["on-surface", "surface-container-high"],
   ["on-surface-variant", "surface-container-high"],
 ];
-
-/**
- * 데스크톱 판 — 나무 대신 UI 와 같은 색상각(MistVariant 298°)의 회색조(2026-11-08 사용자 요청: 크롬 · 레일 ·
- * 인스펙터가 모두 중성인 데스크톱 창에서 판만 누런 나무라 겉돌았다). 웹 · 앱의 판은 그대로 나무다.
- *
- * **톤은 나무 판과 같다**(라이트 76 · 70 · 40 · 30, 다크 33 · 26 · 52 · 70) — 바뀌는 것은 색상과 채도뿐이라
- * 값 칩 · 흰 돌 · 좌표 글자의 대비가 나무 판과 같은 자리에 선다(다크의 칩 테두리도 그대로 필요하다).
- * 생성기가 `:root[data-desktop]` 아래로 굽는다.
- */
-function desktopBoard(dark: boolean): Scheme {
-  return {
-    "board-wood": MistVariant.tone(dark ? 33 : 76),
-    "board-wood-edge": MistVariant.tone(dark ? 26 : 70),
-    "board-line": MistVariant.tone(dark ? 52 : 40),
-    "board-label": MistVariant.tone(dark ? 70 : 30),
-  };
-}
-
-export const DesktopBoardLight: Scheme = desktopBoard(false);
-export const DesktopBoardDark: Scheme = desktopBoard(true);
