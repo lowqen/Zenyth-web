@@ -70,10 +70,23 @@ jobs:
           key: desktop-cargo-${{ runner.os }}-${{ hashFiles('desktop/src-tauri/Cargo.toml', 'desktop/src-tauri/Cargo.lock') }}
           restore-keys: desktop-cargo-${{ runner.os }}-
 
+      # NSIS 도구(nsis · nsis_tauri_utils.dll)는 tauri 가 GitHub 릴리스에서 받는다 — 그 내려받기가 504 로
+      # 연달아 떨어진 적이 있어(Z4) 받아 둔 것을 캐시하고, 번들 단계만 몇 번 다시 해 본다(컴파일은 증분이다).
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/AppData/Local/tauri
+          key: desktop-tauri-tools-${{ runner.os }}-v1
+
       - name: 셸 빌드 (exe + NSIS)
         shell: bash
         working-directory: desktop
-        run: pnpm exec tauri build --ci
+        run: |
+          for i in 1 2 3 4; do
+            pnpm exec tauri build --ci && exit 0
+            echo "::warning::셸 빌드 실패($i/4) — 30초 뒤 다시"
+            sleep 30
+          done
+          exit 1
 
       - name: 크기
         shell: bash
