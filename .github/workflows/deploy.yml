@@ -258,8 +258,15 @@ jobs:
           }
           need / content-security-policy cross-origin-opener-policy cross-origin-embedder-policy                  cross-origin-resource-policy x-frame-options strict-transport-security permissions-policy
           curl -fsSI "$BASE_URL/" | grep -i '^content-security-policy:' | grep -q "'wasm-unsafe-eval'"             || { echo "::error::CSP 에 'wasm-unsafe-eval' 이 없습니다 — 엔진이 뜨지 않습니다"; exit 1; }
-          index=$(curl -fsSL "$BASE_URL/" | grep -oE '/assets/index-[^"]+\.js' | head -1)
-          worker=$(curl -fsSL "$BASE_URL$index" | grep -oE 'assets/engine-worker-[A-Za-z0-9_-]+\.js' | head -1)
+          html=$(curl -fsSL "$BASE_URL/")
+          index=$(echo "$html" | grep -oE '/assets/index-[^"]+\.js' | head -1)
+          # 워커 주소는 진입 번들이 아니라 공유 청크에 들 수 있다(Vite 8 · rolldown 은 엔진 클라이언트를
+          # jsx-runtime-*.js 로 묶는다) — index.html 이 부르는 스크립트 · modulepreload 전부에서 찾는다.
+          worker=""
+          for js in $(echo "$html" | grep -oE '/assets/[^"]+\.js' | sort -u); do
+            worker=$(curl -fsSL "$BASE_URL$js" | grep -oE 'assets/engine-worker-[A-Za-z0-9_-]+\.js' | head -1 || true)
+            [ -n "$worker" ] && break
+          done
           [ -n "$worker" ] || { echo "::error::번들에서 엔진 워커 주소를 찾지 못했습니다"; exit 1; }
           need "/$worker" content-security-policy cross-origin-embedder-policy
           need /engine/rapfi-single-simd128.wasm cross-origin-resource-policy
