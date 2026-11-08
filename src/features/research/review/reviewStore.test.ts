@@ -12,7 +12,7 @@ import { move } from "../../../core/model/move";
 
 /**
  * 리뷰 스토어 — 엔진의 독점 탐색만 가짜로 갈아 끼우고(자물쇠는 진짜), 저장소는
- * fake-indexeddb. 큐 · 체크포인트 · 리포트 저장 · 보드 배지 자료까지 한 바퀴.
+ * fake-indexeddb. 체크포인트 · 이어서 하기 · 리포트 저장 · 보드 배지 자료까지 한 바퀴.
  */
 
 let d: RapfiDb;
@@ -63,7 +63,7 @@ afterEach(async () => {
 });
 
 describe("지금 판 리뷰", () => {
-  it("큐 맨 앞에 끼워 돌리고, 리포트를 남기고 고른다", async () => {
+  it("돌리고, 리포트를 남기고 고른다", async () => {
     for (const m of line(4)) board().place(m);
     board().undo(); // 무른 수까지 리뷰한다
     expect(await s().reviewBoard()).toBeNull();
@@ -97,33 +97,12 @@ describe("지금 판 리뷰", () => {
   });
 });
 
-describe("큐", () => {
-  const file = (name: string, text: string) => new File([text], name);
-
-  it("읽은 파일은 대기, 못 읽은 파일은 실패로 남긴다", async () => {
-    await s().addFiles([
-      file("a.psq", "Piskvorky 15x15, 0:0, 0\n8,8,0\n9,7,0\n-1\n"),
-      file("b.txt", "x"),
-      file("c.sav", "15\n"),
-    ]);
-    const jobs = await listJobs(d);
-    expect(jobs.map((j) => [j.name, j.status])).toEqual([
-      ["a", "pending"],
-      ["b", "failed"],
-      ["c", "failed"],
-    ]);
-    expect(jobs[1]!.result).toMatch(/모르는 형식/);
-    expect(jobs[2]!.result).toMatch(/읽을 수 없음/);
-    expect(await s().start()).toBeNull();
-    expect((await listJobs(d))[0]!.status).toBe("done");
-    expect(await listReviews(d)).toHaveLength(1);
-  });
-
-  it("취소하면 중단 — 다음 실행이 체크포인트에서 잇는다", async () => {
+describe("이어서 하기", () => {
+  it("취소하면 중단 — 같은 판을 다시 리뷰하면 체크포인트에서 잇는다", async () => {
     for (const m of line(5)) board().place(m);
     cancelAtPly = 2;
     await s().reviewBoard();
-    let [job] = await listJobs(d);
+    const [job] = await listJobs(d);
     expect(job!.status).toBe("paused");
     expect(job!.index).toBe(2);
     expect(job!.result).toMatch(/2\/6에서 이어서/);
@@ -131,15 +110,34 @@ describe("큐", () => {
 
     searched.length = 0;
     cancelAtPly = Infinity;
-    expect(await s().start()).toBeNull();
+    expect(await s().reviewBoard()).toBeNull();
     expect(searched).toEqual([2, 3, 4, 5]); // 앞의 둘은 다시 읽지 않는다
-    [job] = await listJobs(d);
-    expect(job!.status).toBe("done");
+    const jobs = await listJobs(d);
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]!.status).toBe("done");
   });
 
-  it("새로고침으로 끊긴 작업도 이어서 할 수 있게 되살린다", async () => {
+  it("다른 판을 리뷰하면 지난 체크포인트는 걷어내고 처음부터 — 리포트는 남는다", async () => {
+    for (const m of line(3)) board().place(m);
+    await s().reviewBoard();
+    for (const m of line(5)) board().place(m);
+    cancelAtPly = 2;
+    await s().reviewBoard();
+    board().clear();
+    for (const m of line(2)) board().place(m);
+    searched.length = 0;
+    cancelAtPly = Infinity;
+    await s().reviewBoard();
+    expect(searched).toEqual([0, 1, 2]);
+    const jobs = await listJobs(d);
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]!.moves).toEqual(line(2));
+    expect(await listReviews(d)).toHaveLength(2);
+  });
+
+  it("새로고침으로 끊긴 작업도 같은 판이면 잇는다", async () => {
     await d.queue.add({
-      order: 1,
+      order: 0,
       name: "x",
       size: 15,
       moves: line(3),
@@ -153,16 +151,9 @@ describe("큐", () => {
     await s().init(d);
     s().setSkipOpening(false);
     expect(s().jobs[0]!.status).toBe("paused");
-    await s().start();
-    expect(searched).toEqual([2, 3]);
-  });
-
-  it("끝난 작업을 걷어내도 리포트는 남는다", async () => {
-    board().place(move(7, 7));
+    for (const m of line(3)) board().place(m);
     await s().reviewBoard();
-    await s().clearFinished();
-    expect(await listJobs(d)).toHaveLength(0);
-    expect(await listReviews(d)).toHaveLength(1);
+    expect(searched).toEqual([2, 3]);
   });
 });
 
@@ -203,7 +194,7 @@ describe("엔진 로그", () => {
     let [job] = await listJobs(d);
     expect(job!.log).toHaveLength(2); // 0 · 1 국면
     cancelAtPly = Infinity;
-    await s().start();
+    await s().reviewBoard();
     [job] = await listJobs(d);
     const [row] = await listReviews(d);
     expect(row!.log).toHaveLength(5);

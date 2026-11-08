@@ -99,9 +99,30 @@ export function EngineChoiceControl() {
   );
 }
 
+/** 탐색기 «경로로 복사»가 붙이는 큰따옴표와 앞뒤 공백을 뗀다 — 셸(`engine.rs` `clean_path`)도 같은 일을 한다. */
+const cleanEnginePath = (v: string) =>
+  v
+    .trim()
+    .replace(/^"(.*)"$/, "$1")
+    .trim();
+
+/** 열기 대화 상자로 엔진 실행 파일을 고른다 — 데스크톱 셸에서만(`tauri-plugin-dialog`, 열기만 허용). */
+async function pickEngineFile(current: string): Promise<string | null> {
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const picked = await open({
+    title: t("엔진 실행 파일"),
+    multiple: false,
+    directory: false,
+    filters: [{ name: "Rapfi", extensions: ["exe"] }],
+    ...(current ? { defaultPath: current } : {}),
+  });
+  return typeof picked === "string" ? picked : null;
+}
+
 /**
  * 네이티브 엔진의 자리(데스크톱 Z3) — 로컬 실행 파일 경로 또는 원격 `host:port`. 칸을 떠나거나 Enter 를 누를 때
- * 저장한다 — 글자마다 저장하면 떠 있는 네이티브 엔진이 글자마다 다시 뜬다.
+ * 저장한다 — 글자마다 저장하면 떠 있는 네이티브 엔진이 글자마다 다시 뜬다. 로컬은 «찾아보기…»로 파일을 고르고
+ * (붙여 넣은 경로의 따옴표는 뗀다), «기본값»으로 앱에 든 엔진으로 돌아간다.
  */
 function NativeTargetField({ kind }: { kind: "native" | "remote" }) {
   const id = useId();
@@ -110,8 +131,18 @@ function NativeTargetField({ kind }: { kind: "native" | "remote" }) {
   const update = useSettingsStore((s) => s.update);
   const [draft, setDraft] = useState<string | null>(null);
   const commit = () => {
-    if (draft !== null && draft !== saved) update({ [key]: draft });
+    const v = draft === null ? null : kind === "native" ? cleanEnginePath(draft) : draft.trim();
+    if (v !== null && v !== saved) update({ [key]: v });
     setDraft(null);
+  };
+  const browse = () => {
+    pickEngineFile(saved)
+      .then((path) => {
+        if (path && path !== saved) update({ [key]: path });
+      })
+      .catch(() => {
+        // 대화 상자를 띄우지 못했으면(권한 · 플러그인 없음) 칸에 손으로 적는 길이 그대로 남는다.
+      });
   };
   const label = kind === "native" ? t("엔진 실행 파일") : t("원격 서버 주소");
   return (
@@ -138,6 +169,16 @@ function NativeTargetField({ kind }: { kind: "native" | "remote" }) {
             if (e.key === "Escape") setDraft(null);
           }}
         />
+        {kind === "native" && saved && (
+          <button type="button" className="panel__link" onClick={() => update({ [key]: "" })}>
+            {t("기본값")}
+          </button>
+        )}
+        {kind === "native" && (
+          <button type="button" className="panel__link" onClick={browse}>
+            {t("찾아보기…")}
+          </button>
+        )}
       </span>
     </span>
   );

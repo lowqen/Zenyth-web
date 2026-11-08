@@ -27,6 +27,8 @@ import {
   AMOLED_KEYS,
   WoodLight,
   WoodDark,
+  DesktopBoardLight,
+  DesktopBoardDark,
   type Scheme,
   type TokenValue,
 } from "../src/core/design/scheme.ts";
@@ -195,6 +197,26 @@ ${colorBlock(WoodDark, "  ")}
 
 :root[data-theme="dark"][data-amoled] [data-wood] {
 ${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
+}
+
+/* 데스크톱 판(scheme.ts desktopBoard) — 나무 대신 UI 색상각의 회색조, 톤은 나무 판과 같다. 웹에서는 켜지지 않는다.
+ * 위의 스킴 블록들보다 뒤에 두고 선택자를 한 단 더 무겁게 해서 언제나 이긴다(라이트 → 다크 → 명시 순). */
+:root[data-desktop] {
+${colorBlock(DesktopBoardLight, "  ")}
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-desktop]:not([data-theme="light"]) {
+${colorBlock(DesktopBoardDark, "    ")}
+  }
+}
+
+:root[data-desktop][data-theme="dark"] {
+${colorBlock(DesktopBoardDark, "  ")}
+}
+
+:root[data-desktop][data-theme="light"] {
+${colorBlock(DesktopBoardLight, "  ")}
 }
 `;
 

@@ -3,7 +3,6 @@ import { db as defaultDb, type RapfiDb, type ReviewJob, type ReviewRow } from ".
 import {
   addJob,
   addReview,
-  clearFinishedJobs,
   deleteJob,
   deleteReview,
   listJobs,
@@ -20,7 +19,6 @@ import {
   type ReviewBudget,
 } from "../../../core/review/report";
 import { coord, type GradingPreset } from "../../../core/review/move-quality";
-import { baseName, formatOf, parseGameFile } from "../../../core/model/game-file";
 import type { Move } from "../../../core/model/move";
 import { useEngineStore } from "../../../engine/engine-state";
 import { useBoardStore } from "../../board/boardStore";
@@ -30,10 +28,11 @@ import { t } from "../../../i18n/i18n";
 import { researchBlockedBy } from "../../../core/model/rules";
 
 /**
- * 게임 리뷰의 화면 쪽 — 앱 `ReviewRepositoryImpl` 의 큐 · 실행 · 리포트 상태.
+ * 게임 리뷰의 화면 쪽 — 실행 · 체크포인트 · 리포트 상태.
  *
- * **모든 리뷰는 큐를 지난다.** 「지금 판 리뷰」는 지금 판(무른 수까지)을 작업으로 만들어 맨
- * 앞에 끼우고 큐를 돌린다. 그래서 체크포인트 · 이어서 하기 · 리포트 저장이 한 길이다.
+ * 리뷰는 「지금 판 리뷰」 하나다(분석 큐는 2026-11-08 뺐다). 지금 판(무른 수까지)을 작업 하나로 만들어
+ * 국면마다 체크포인트를 남긴다 — 멈추거나 탭을 닫은 뒤 **같은 판**을 다시 리뷰하면 그 자리부터 잇는다.
+ * 작업은 언제나 많아야 하나다: 다른 판을 리뷰하면 지난 체크포인트는 걷어낸다(리포트는 남는다).
  *
  * 엔진은 리뷰가 도는 동안 **독점**한다(`engine-state` 의 `owner`). 분석은 꺼지고, 대국의
  * 엔진 착수도 받지 않는다 — 앱 · 데스크톱의 `reviewactive` 와 같다.
@@ -81,9 +80,6 @@ export interface ReviewProgress {
   name: string;
   index: number;
   total: number;
-  /** 큐에서 몇 번째인가(1부터)와 이번 실행의 작업 수. */
-  queueIndex: number;
-  queueTotal: number;
 }
 
 const LOG_LIMIT = 60;
@@ -94,25 +90,20 @@ interface ReviewState {
   setSkipOpening: (v: boolean) => void;
   setPreset: (p: GradingPreset) => void;
 
+  /** 이어서 하기용 체크포인트(많아야 하나). 화면에는 보이지 않는다. */
   jobs: ReviewJob[];
   reviews: ReviewRow[];
   selectedId: number | null;
   running: boolean;
   progress: ReviewProgress | null;
   log: readonly string[];
-  /** 스토어가 저장소에서 큐와 리포트를 읽어 왔다. */
+  /** 스토어가 저장소에서 체크포인트와 리포트를 읽어 왔다. */
   loaded: boolean;
 
-  /** 저장소에서 큐와 리포트를 읽는다(한 번). 시험은 저장소를 넘긴다. */
+  /** 저장소에서 체크포인트와 리포트를 읽는다(한 번). 시험은 저장소를 넘긴다. */
   init: (d?: RapfiDb | null) => Promise<void>;
-  /** 지금 판(무른 수까지)을 맨 앞에 끼워 리뷰한다. 못 하면 까닭. */
+  /** 지금 판(무른 수까지)을 리뷰한다 — 같은 판의 중단된 체크포인트가 있으면 그 자리부터. 못 하면 까닭. */
   reviewBoard: () => Promise<string | null>;
-  /** 기보 파일들을 큐 끝에 더한다. 읽지 못한 파일은 실패 작업으로 남긴다. */
-  addFiles: (files: readonly File[]) => Promise<void>;
-  removeJob: (id: number) => Promise<void>;
-  clearFinished: () => Promise<void>;
-  /** 큐를 돈다(대기 · 중단 작업을 순서대로). 못 하면 까닭. */
-  start: () => Promise<string | null>;
   cancel: () => void;
   select: (id: number | null) => void;
   removeReview: (id: number) => Promise<void>;
@@ -136,6 +127,9 @@ export function reportOf(row: ReviewRow, preset: GradingPreset): GameReport {
 }
 
 const percent = (v: number | null) => `${(v ?? 0).toFixed(1)}%`;
+
+const sameMoves = (a: readonly Move[], b: readonly Move[]) =>
+  a.length === b.length && a.every((m, i) => m.x === b[i]!.x && m.y === b[i]!.y);
 
 /** 엔진 스토어를 리뷰 포트로. */
 const enginePort: ReviewPort = {
@@ -168,15 +162,8 @@ export const useReviewStore = create<ReviewState>((set, get) => {
     publishSelection();
   };
 
-  const nextOrder = () => Math.max(0, ...get().jobs.map((j) => j.order)) + 1;
-
-  const newJob = (
-    name: string,
-    size: number,
-    moves: readonly Move[],
-    order: number,
-  ): Omit<ReviewJob, "id"> => ({
-    order,
+  const newJob = (name: string, size: number, moves: readonly Move[]): Omit<ReviewJob, "id"> => ({
+    order: 0,
     name,
     size,
     moves: moves.map(({ x, y }) => ({ x, y })),
@@ -192,6 +179,89 @@ export const useReviewStore = create<ReviewState>((set, get) => {
     if (get().running) return t("이미 리뷰가 진행 중입니다");
     if (useGameStore.getState().thinking) return t("엔진이 대국 수를 계산 중입니다. 먼저 멈추세요");
     return null;
+  };
+
+  /** 작업 하나를 끝까지(또는 멈출 때까지) 돈다. 못 하면 까닭. */
+  const run = async (job: ReviewJob): Promise<string | null> => {
+    const why = researchBlockedBy(useGameStore.getState().rule) ?? refusal();
+    if (why) return why;
+    const lock = useEngineStore.getState().acquire("review");
+    if (lock) {
+      return useEngineStore.getState().owner === "prove"
+        ? t("국면 증명이 진행 중입니다. 먼저 멈추세요")
+        : lock;
+    }
+    const id = job.id!;
+    cancelFlag = false;
+    set({ running: true });
+    try {
+      patchJob(id, { status: "running", result: "" });
+      const { budget, skipOpening } = get().settings;
+      const outcome = await runReview(
+        {
+          moves: job.moves,
+          size: job.size,
+          records: job.records,
+          index: job.index,
+          log: job.log ?? [],
+        },
+        { budget, skipOpening },
+        enginePort,
+        {
+          onCheckpoint: (records, index, log) =>
+            patchJob(id, { records: [...records], index, log: [...log] }),
+          onProgress: (index, total) =>
+            set({ progress: { jobId: id, name: job.name, index, total } }),
+          isCancelled: () => cancelFlag,
+          log: note,
+        },
+      );
+      if (outcome.kind === "done") {
+        const createdAt = Date.now();
+        const draft: Omit<ReviewRow, "id"> = {
+          title: job.name,
+          size: job.size,
+          moves: job.moves,
+          records: outcome.records,
+          budget,
+          skipOpening,
+          log: outcome.log,
+          createdAt,
+        };
+        const row = db ? await addReview(db, draft) : { ...draft, id: -createdAt };
+        const r = reportOf(row, get().settings.preset);
+        patchJob(id, {
+          status: "done",
+          records: outcome.records,
+          index: job.moves.length + 1,
+          reviewId: row.id!,
+          result: t("완료: 정확도 흑 {b} / 백 {w}, {n}수", {
+            b: percent(r.tally.blackAccuracy),
+            w: percent(r.tally.whiteAccuracy),
+            n: r.moves.length,
+          }),
+        });
+        set((s) => ({ reviews: [row, ...s.reviews], selectedId: row.id! }));
+        publishSelection();
+        return null;
+      }
+      const at = `${outcome.index}/${job.moves.length + 1}`;
+      const reason = outcome.kind === "cancelled" ? null : outcome.reason;
+      patchJob(id, {
+        status: "paused",
+        records: outcome.records,
+        index: outcome.index,
+        log: outcome.log,
+        result: reason
+          ? `${reason}: ${t("{at}에서 이어서", { at })}`
+          : t("중단: {at}에서 이어서", { at }),
+      });
+      note(reason ?? t("게임 리뷰 취소 ({at})", { at }));
+      return null;
+    } finally {
+      useEngineStore.getState().release("review");
+      set({ running: false, progress: null });
+    }
   };
 
   return {
@@ -235,7 +305,30 @@ export const useReviewStore = create<ReviewState>((set, get) => {
       const { render, future } = useBoardStore.getState();
       const moves = [...render.stones, ...future];
       if (moves.length === 0) return t("리뷰할 수가 없습니다");
-      const order = Math.min(0, ...get().jobs.map((j) => j.order)) - 1;
+      const resume = get().jobs.find(
+        (j) =>
+          (j.status === "paused" || j.status === "pending") &&
+          j.size === render.size &&
+          sameMoves(j.moves, moves),
+      );
+      // 다른 판의 체크포인트 · 끝난 작업은 걷어낸다 — 리포트는 따로 남아 있다.
+      const stale = get().jobs.filter((j) => j !== resume);
+      if (stale.length > 0) {
+        set({ jobs: resume ? [resume] : [] });
+        if (db) {
+          const d = db;
+          await Promise.all(stale.map((j) => deleteJob(d, j.id!).catch(() => {})));
+        }
+      }
+      if (resume) {
+        note(
+          t("이어서 리뷰: {name}, {at}부터", {
+            name: resume.name,
+            at: `${resume.index}/${resume.moves.length + 1}`,
+          }),
+        );
+        return run(resume);
+      }
       const name =
         useGameStore.getState().gameName ??
         (moves
@@ -243,172 +336,11 @@ export const useReviewStore = create<ReviewState>((set, get) => {
           .map((m) => coord(m, render.size))
           .join("-") ||
           "game");
-      const draft = newJob(name, render.size, moves, order);
+      const draft = newJob(name, render.size, moves);
       const job = db ? await addJob(db, draft) : { ...draft, id: -Date.now() };
-      set((s) => ({ jobs: [job, ...s.jobs].sort((a, b) => a.order - b.order) }));
-      note(t("지금 판을 큐 맨 앞에: {name} ({n}수)", { name, n: moves.length }));
-      return get().start();
-    },
-
-    addFiles: async (files) => {
-      const size = useBoardStore.getState().render.size;
-      let order = nextOrder();
-      for (const file of files) {
-        const format = formatOf(file.name);
-        let moves: Move[] | null = null;
-        if (format) {
-          try {
-            moves = parseGameFile(new Uint8Array(await file.arrayBuffer()), format, size);
-          } catch {
-            moves = null;
-          }
-        }
-        const draft = newJob(baseName(file.name), size, moves ?? [], order++);
-        if (!moves || moves.length === 0) {
-          draft.status = "failed";
-          draft.result = !format
-            ? t("실패: 모르는 형식(.psq · .sav · .pos)")
-            : moves === null
-              ? t("실패: 파일을 읽을 수 없음")
-              : t("실패: 수가 없음");
-          note(t("큐: {name} 을(를) 읽을 수 없어 건너뜁니다", { name: file.name }));
-        }
-        const job = db ? await addJob(db, draft) : { ...draft, id: -Date.now() - order };
-        set((s) => ({ jobs: [...s.jobs, job] }));
-      }
-    },
-
-    removeJob: async (id) => {
-      if (get().progress?.jobId === id) return;
-      set((s) => ({ jobs: s.jobs.filter((j) => j.id !== id) }));
-      if (db) await deleteJob(db, id).catch(() => {});
-    },
-
-    clearFinished: async () => {
-      set((s) => ({ jobs: s.jobs.filter((j) => j.status !== "done" && j.status !== "failed") }));
-      if (db) await clearFinishedJobs(db).catch(() => {});
-    },
-
-    start: async () => {
-      const why = researchBlockedBy(useGameStore.getState().rule) ?? refusal();
-      if (why) return why;
-      const runnable = () =>
-        get().jobs.filter((j) => j.status === "pending" || j.status === "paused");
-      if (runnable().length === 0) return t("리뷰할 작업이 없습니다");
-      const lock = useEngineStore.getState().acquire("review");
-      if (lock) {
-        return useEngineStore.getState().owner === "prove"
-          ? t("국면 증명이 진행 중입니다. 먼저 멈추세요")
-          : lock;
-      }
-      cancelFlag = false;
-      set({ running: true });
-      const queueTotal = runnable().length;
-      let queueIndex = 0;
-      let reviewed = 0;
-      let failed = 0;
-      try {
-        for (;;) {
-          const job = runnable()[0];
-          if (!job || job.id === undefined || cancelFlag) break;
-          const id = job.id;
-          queueIndex++;
-          patchJob(id, { status: "running", result: "" });
-          const { budget, skipOpening } = get().settings;
-          const outcome = await runReview(
-            {
-              moves: job.moves,
-              size: job.size,
-              records: job.records,
-              index: job.index,
-              log: job.log ?? [],
-            },
-            { budget, skipOpening },
-            enginePort,
-            {
-              onCheckpoint: (records, index, log) =>
-                patchJob(id, { records: [...records], index, log: [...log] }),
-              onProgress: (index, total) =>
-                set({
-                  progress: { jobId: id, name: job.name, index, total, queueIndex, queueTotal },
-                }),
-              isCancelled: () => cancelFlag,
-              log: note,
-            },
-          );
-          if (outcome.kind === "done") {
-            const createdAt = Date.now();
-            const draft: Omit<ReviewRow, "id"> = {
-              title: job.name,
-              size: job.size,
-              moves: job.moves,
-              records: outcome.records,
-              budget,
-              skipOpening,
-              log: outcome.log,
-              createdAt,
-            };
-            const row = db ? await addReview(db, draft) : { ...draft, id: -createdAt };
-            const r = reportOf(row, get().settings.preset);
-            patchJob(id, {
-              status: "done",
-              records: outcome.records,
-              index: job.moves.length + 1,
-              reviewId: row.id!,
-              result: t("완료: 정확도 흑 {b} / 백 {w}, {n}수", {
-                b: percent(r.tally.blackAccuracy),
-                w: percent(r.tally.whiteAccuracy),
-                n: r.moves.length,
-              }),
-            });
-            set((s) => ({ reviews: [row, ...s.reviews], selectedId: row.id! }));
-            publishSelection();
-            reviewed++;
-            continue;
-          }
-          const at = `${outcome.index}/${job.moves.length + 1}`;
-          if (outcome.kind === "cancelled") {
-            patchJob(id, {
-              status: "paused",
-              records: outcome.records,
-              index: outcome.index,
-              log: outcome.log,
-              result: t("중단: {at}에서 이어서", { at }),
-            });
-            note(t("게임 리뷰 취소 ({at})", { at }));
-          } else {
-            patchJob(id, {
-              status: "paused",
-              records: outcome.records,
-              index: outcome.index,
-              log: outcome.log,
-              result: `${outcome.reason}: ${t("{at}에서 이어서", { at })}`,
-            });
-            note(outcome.reason);
-            failed++;
-          }
-          break;
-        }
-      } finally {
-        useEngineStore.getState().release("review");
-        set({ running: false, progress: null });
-        if (queueTotal > 1) {
-          note(
-            cancelFlag
-              ? t("분석 큐 취소: 리뷰 {r}, 중단 {f} / 총 {n}", {
-                  r: reviewed,
-                  f: failed,
-                  n: queueTotal,
-                })
-              : t("분석 큐 끝: 리뷰 {r}, 중단 {f} / 총 {n}", {
-                  r: reviewed,
-                  f: failed,
-                  n: queueTotal,
-                }),
-          );
-        }
-      }
-      return null;
+      set({ jobs: [job] });
+      note(t("리뷰 시작: {name} ({n}수)", { name, n: moves.length }));
+      return run(job);
     },
 
     cancel: () => {

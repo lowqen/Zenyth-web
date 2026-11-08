@@ -200,21 +200,6 @@ export function markdown(r: GameReport): string {
   return out;
 }
 
-/** 큐가 끝났을 때의 요약 파일(`queue_finish`, main.c:7518). */
-export function queueSummary(
-  entries: readonly { name: string; result: string }[],
-  reviewed: number,
-  failed: number,
-): string {
-  let out =
-    `# ${t("분석 큐 요약")}\n\n` +
-    `${t("총 {n}개: 리뷰 {r}, 실패 {f}, 미실행 {u}", { n: entries.length, r: reviewed, f: failed, u: entries.length - reviewed - failed })}\n\n`;
-  entries.forEach((e, i) => {
-    out += `- [${String(i + 1).padStart(2, "0")}] ${e.name}: ${e.result || t("미실행")}\n`;
-  });
-  return out;
-}
-
 // ── HTML ─────────────────────────────────────────────────────────────
 
 /** 데스크톱 리포트 페이지의 정적 부분 — 제목 앞 · 제목 뒤(GAME 앞) · GAME 뒤. */

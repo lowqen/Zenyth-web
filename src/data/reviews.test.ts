@@ -4,7 +4,6 @@ import { RapfiDb, type ReviewJob } from "./db";
 import {
   addJob,
   addReview,
-  clearFinishedJobs,
   deleteReview,
   listJobs,
   listReviews,
@@ -55,15 +54,6 @@ describe("리뷰 큐", () => {
     const jobs = await listJobs(d);
     expect(jobs.map((j) => j.status)).toEqual(["paused", "done"]);
     expect(jobs[0]!.index).toBe(4);
-  });
-
-  it("끝난 작업만 걷어낸다", async () => {
-    d = new RapfiDb(`rv-${Math.random()}`);
-    for (const [i, status] of (["pending", "done", "failed", "paused"] as const).entries()) {
-      await addJob(d, job(i, { status }));
-    }
-    await clearFinishedJobs(d);
-    expect((await listJobs(d)).map((j) => j.status)).toEqual(["pending", "paused"]);
   });
 });
 

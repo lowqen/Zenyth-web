@@ -1,20 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SmoothFill } from "../../../components/SmoothFill";
 import { DurationField, Segmented, Switch } from "../../../components/controls";
 import { Disclosure } from "../../../components/Disclosure";
 import { REVIEW_TIME_SPEC } from "../../../core/settings/duration";
 import { PRESET_LABEL, type GradingPreset } from "../../../core/review/move-quality";
 import { budgetLabel, dateStamp, fixed } from "../../../core/review/report";
-import { GAME_FILE_ACCEPT } from "../../../core/model/game-file";
 import { reportOf, useReviewStore } from "./reviewStore";
 import { ReportView } from "./ReportView";
 import { ProveSection } from "../prove/ProveSection";
 import { useDesktopSplit } from "../../../app/useDesktopSplit";
-import { localized, msg, t } from "../../../i18n/i18n";
-import type { JobStatus } from "../../../data/db";
+import { t } from "../../../i18n/i18n";
 
 /**
- * 연구 ▸ 리뷰·증명 — **리뷰**(W6b). 앱 `ReviewScreen` 의 설정 · 실행 · 큐 · 리포트.
+ * 연구 ▸ 리뷰·증명 — **리뷰**(W6b). 설정 · 실행 · 리포트. 분석 큐(여러 기보를 차례로)는 2026-11-08 뺐다 —
+ * 기보는 보드로 열어 「지금 판 리뷰」로 읽는다.
  *
  * 리뷰는 국면마다 엔진에 `YXNBEST 2` 를 걸어 승률 · 최선수 · 최선과 차선의 차를 남기고,
  * 판정기가 그것으로 수마다 등급을 매긴다(데스크톱 4단계 분류기). 도는 동안 엔진은 리뷰의
@@ -32,17 +31,8 @@ const SECONDS = [1, 2, 3, 5, 10, 30] as const;
 const DEPTHS = [10, 12, 14, 16, 18, 22] as const;
 const SECONDS_MS = SECONDS.map((sec) => sec * 1000);
 
-const STATUS_LABEL: Readonly<Record<JobStatus, string>> = localized({
-  pending: msg("대기"),
-  running: msg("진행 중"),
-  paused: msg("중단"),
-  done: msg("완료"),
-  failed: msg("실패"),
-});
-
 export function ReviewScreen() {
   const s = useReviewStore();
-  const fileInput = useRef<HTMLInputElement>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -56,8 +46,6 @@ export function ReviewScreen() {
     () => (selected ? reportOf(selected, s.settings.preset) : null),
     [selected, s.settings.preset],
   );
-  const runnable = s.jobs.filter((j) => j.status === "pending" || j.status === "paused").length;
-  const finished = s.jobs.filter((j) => j.status === "done" || j.status === "failed").length;
   const p = s.progress;
   const say = (why: string | null) => setNotice(why);
 
@@ -93,33 +81,12 @@ export function ReviewScreen() {
           >
             {t("지금 판 리뷰")}
           </button>
-          <button type="button" disabled={s.running} onClick={() => fileInput.current?.click()}>
-            {t("기보 파일 추가")}
-          </button>
-          {/* 큐에 돌릴 것이 있을 때만 — 꺼진 단추가 늘 붙어 있으면 무엇을 먼저 해야 하는지 흐려진다. */}
-          {runnable > 0 && (
-            <button type="button" disabled={s.running} onClick={() => void s.start().then(say)}>
-              {t("큐 시작")} ({runnable})
-            </button>
-          )}
           {/* 리뷰 중에만 — 꺼진 위험 버튼이 늘 붙어 있으면 다크 테마에서 눌러야 할 것처럼 보인다. */}
           {s.running && (
             <button type="button" className="btn--danger" onClick={s.cancel}>
               {t("멈추기")}
             </button>
           )}
-          <input
-            ref={fileInput}
-            type="file"
-            accept={GAME_FILE_ACCEPT}
-            multiple
-            hidden
-            onChange={(e) => {
-              const files = [...(e.currentTarget.files ?? [])];
-              e.currentTarget.value = "";
-              if (files.length) void s.addFiles(files);
-            }}
-          />
         </div>
         {notice && (
           <p className="panel__hint" role="status">
@@ -132,9 +99,6 @@ export function ReviewScreen() {
               <SmoothFill fraction={p.index / (p.total + 1)} />
             </div>
             <p className="tnum" data-k="review-progress">
-              {p.queueTotal > 1
-                ? `${t("큐 {i}/{n}", { i: p.queueIndex, n: p.queueTotal })} · `
-                : ""}
               {p.name} · {t("국면 {i}/{n}", { i: Math.min(p.index, p.total), n: p.total })} ·{" "}
               {t("수당 {b}", { b: budgetLabel(budget) })}
             </p>
@@ -236,47 +200,6 @@ export function ReviewScreen() {
           </Disclosure>
         </div>
       </section>
-
-      {s.jobs.length > 0 && (
-        <section className="panel">
-          <h2 className="panel__title">
-            {t("분석 큐")} <span className="panel__status">{t("{n}개", { n: s.jobs.length })}</span>
-          </h2>
-          <ul className="queue" aria-label={t("분석 큐")}>
-            {s.jobs.map((j) => (
-              <li key={j.id} className="queue__row" data-status={j.status}>
-                <span className="queue__status">{STATUS_LABEL[j.status]}</span>
-                <span className="queue__name">
-                  {j.name}{" "}
-                  <span className="queue__meta tnum">{t("{n}수", { n: j.moves.length })}</span>
-                </span>
-                <span className="queue__result">{j.result}</span>
-                {j.reviewId !== undefined && (
-                  <button type="button" className="btn" onClick={() => s.select(j.reviewId!)}>
-                    {t("리포트")}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="btn"
-                  aria-label={t("{name} 빼기", { name: j.name })}
-                  disabled={s.progress?.jobId === j.id}
-                  onClick={() => void s.removeJob(j.id!)}
-                >
-                  {t("빼기")}
-                </button>
-              </li>
-            ))}
-          </ul>
-          {finished > 0 && (
-            <div className="panel__actions">
-              <button type="button" disabled={s.running} onClick={() => void s.clearFinished()}>
-                {t("끝난 것 걷어내기 ({n})", { n: finished })}
-              </button>
-            </div>
-          )}
-        </section>
-      )}
 
       <section className="panel">
         <h2 className="panel__title">

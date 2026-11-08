@@ -23,7 +23,7 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream, ToSocketAddrs};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -377,27 +377,49 @@ fn resolve_local(path: &str) -> Result<PathBuf, String> {
         .ok()
         .and_then(|p| p.parent().map(|d| d.to_path_buf()))
         .unwrap_or_default();
-    if !path.trim().is_empty() {
-        let p = PathBuf::from(path.trim());
+    let given = clean_path(path);
+    if !given.is_empty() {
+        let p = PathBuf::from(given);
         let p = if p.is_absolute() { p } else { exe_dir.join(p) };
-        return if p.is_file() {
-            Ok(p)
-        } else {
-            Err(format!("파일이 없습니다: {}", p.display()))
-        };
+        if p.is_file() {
+            return Ok(p);
+        }
+        // 폴더를 적었으면 그 안에서 고른다 — 공식 배포 폴더(변형 5개)든 운영 폴더(engine.exe)든.
+        if p.is_dir() {
+            return find_in(&p, &["engine.exe"]).ok_or_else(|| {
+                format!(
+                    "폴더에 엔진 실행 파일이 없습니다: {} (pbrain-rapfi-windows-*.exe · engine.exe · rapfi.exe)",
+                    p.display()
+                )
+            });
+        }
+        return Err(format!("파일이 없습니다: {}", p.display()));
     }
     let engine_dir = exe_dir.join("engine");
-    let tried: Vec<PathBuf> = variant_order(CpuIsa::detect())
+    find_in(&engine_dir, &[])
+        .or_else(|| Some(exe_dir.join("rapfi.exe")).filter(|p| p.is_file()))
+        .ok_or_else(|| {
+            format!(
+                "엔진 실행 파일을 찾지 못했습니다: {} (pbrain-rapfi-windows-*.exe · rapfi.exe)",
+                engine_dir.display()
+            )
+        })
+}
+
+/// 설정 칸에 붙여 넣은 경로 다듬기 — 탐색기 «경로로 복사»가 붙이는 큰따옴표와 앞뒤 공백을 뗀다.
+fn clean_path(path: &str) -> &str {
+    let p = path.trim();
+    p.strip_prefix('"').and_then(|q| q.strip_suffix('"')).unwrap_or(p).trim()
+}
+
+/// 폴더 안에서 이 CPU 가 돌릴 수 있는 가장 빠른 변형 → `extra`(앞에서부터) → `rapfi.exe`.
+fn find_in(dir: &Path, extra: &[&str]) -> Option<PathBuf> {
+    variant_order(CpuIsa::detect())
         .into_iter()
-        .map(|name| engine_dir.join(name))
-        .chain([engine_dir.join("rapfi.exe"), exe_dir.join("rapfi.exe")])
-        .collect();
-    tried.iter().find(|p| p.is_file()).cloned().ok_or_else(|| {
-        format!(
-            "엔진 실행 파일을 찾지 못했습니다: {} (pbrain-rapfi-windows-*.exe · rapfi.exe)",
-            engine_dir.display()
-        )
-    })
+        .chain(extra.iter().copied())
+        .chain(["rapfi.exe"])
+        .map(|name| dir.join(name))
+        .find(|p| p.is_file())
 }
 
 #[cfg(test)]
@@ -405,6 +427,14 @@ mod tests {
     use super::*;
 
     const SSE: &str = "pbrain-rapfi-windows-sse.exe";
+
+    #[test]
+    fn pasted_paths_lose_quotes_and_spaces() {
+        assert_eq!(clean_path(r#"  "C:\Rapfi\engine.exe" "#), r"C:\Rapfi\engine.exe");
+        assert_eq!(clean_path("engine/rapfi.exe"), "engine/rapfi.exe");
+        assert_eq!(clean_path("   "), "");
+        assert_eq!(clean_path("\"half"), "\"half");
+    }
 
     #[test]
     fn sse_only_cpu_gets_the_floor() {

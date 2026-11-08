@@ -10,7 +10,6 @@ import {
   html,
   json,
   markdown,
-  queueSummary,
   sanitizeBudget,
   watchdogSeconds,
   type GameReport,
@@ -68,19 +67,6 @@ describe("Markdown", () => {
   it("깊이 예산은 데스크톱처럼 적는다", () => {
     const byDepth = { ...report, budget: { seconds: 3, byDepth: true, depth: 20 } };
     expect(markdown(byDepth)).toContain("수당 depth 20");
-  });
-
-  it("큐 요약은 미실행까지 센다", () => {
-    const s = queueSummary(
-      [
-        { name: "a.psq", result: "완료" },
-        { name: "b.psq", result: "" },
-      ],
-      1,
-      0,
-    );
-    expect(s).toContain("총 2개: 리뷰 1, 실패 0, 미실행 1");
-    expect(s).toContain("- [02] b.psq: 미실행");
   });
 });
 

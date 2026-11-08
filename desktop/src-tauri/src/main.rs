@@ -145,6 +145,8 @@ fn main() {
                 .with_state_flags(StateFlags::all() & !StateFlags::VISIBLE & !StateFlags::DECORATIONS)
                 .build(),
         )
+        // 설정 ▸ 엔진의 «찾아보기…»(엔진 실행 파일 고르기) — 열기 대화 상자만 허용한다(capabilities).
+        .plugin(tauri_plugin_dialog::init())
         .manage(Pending::default())
         .manage(BootMarks::default())
         .manage(engine::Engines::default())

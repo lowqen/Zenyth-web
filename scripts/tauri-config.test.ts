@@ -116,6 +116,16 @@ describe("배포 구성 (데스크톱 Z7)", () => {
     expect(engineRs).toContain("pub async fn engines_shutdown");
   });
 
+  it("엔진 실행 파일 고르기: 열기 대화 상자만 — 플러그인 · 등록 · 권한 · 웹 패키지가 한 벌", () => {
+    expect(cargoToml).toMatch(/^tauri-plugin-dialog = /m);
+    expect(mainRs).toContain(".plugin(tauri_plugin_dialog::init())");
+    expect(capability.permissions).toContain("dialog:allow-open");
+    expect(capability.permissions.filter((p: string) => p.startsWith("dialog:"))).toEqual([
+      "dialog:allow-open",
+    ]);
+    expect(read("../package.json")).toContain('"@tauri-apps/plugin-dialog"');
+  });
+
   it("동봉 엔진: CI 가 싣는 변형 = 셸이 고르는 변형, 설치 폴더 engine/", () => {
     expect(conf.bundle.resources).toEqual({ "../engine-bundle/*": "engine/" });
     const shell = [...engineRs.matchAll(/"(pbrain-rapfi-windows-[a-z0-9]+\.exe)"/g)].map(

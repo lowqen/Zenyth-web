@@ -2,7 +2,6 @@ import type { KeyboardEvent, ReactNode } from "react";
 import { useRememberedOpen } from "../../components/useRememberedOpen";
 import { useSlidingPill } from "../../components/useSlidingPill";
 import { EngineConsole } from "../engine/EngineConsole";
-import { useEngineStore } from "../../engine/engine-state";
 import { msg, t } from "../../i18n/i18n";
 
 type Pane = "overview" | "log";
@@ -35,7 +34,6 @@ export function Inspector({
 }) {
   const [logOpen, setLogOpen] = useRememberedOpen("inspector-log");
   const pane: Pane = logOpen ? "log" : "overview";
-  const lines = useEngineStore((s) => s.console.length);
   const track = useSlidingPill<HTMLDivElement>(pane);
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -69,9 +67,6 @@ export function Inspector({
             onClick={() => setLogOpen(p.pane === "log")}
           >
             {t(p.label)}
-            {p.pane === "log" && lines > 0 && (
-              <span className="inspector__count tnum">{lines.toLocaleString()}</span>
-            )}
           </button>
         ))}
       </div>

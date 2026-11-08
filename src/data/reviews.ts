@@ -1,7 +1,8 @@
-import type { JobStatus, RapfiDb, ReviewJob, ReviewRow } from "./db";
+import type { RapfiDb, ReviewJob, ReviewRow } from "./db";
 
 /**
- * 리뷰 큐와 리포트 — Dexie v2 의 `queue` · `reviews`. 화면 스토어가 부르는 얇은 층이다.
+ * 리뷰 체크포인트와 리포트 — Dexie v2 의 `queue`(이름은 옛 분석 큐의 것, 지금은 이어서 하기용 작업
+ * 하나) · `reviews`. 화면 스토어가 부르는 얇은 층이다.
  * 수 · 기록은 구조화 복제로 들어가므로 `Move` 객체를 그대로 넣는다.
  */
 
@@ -17,12 +18,6 @@ export const updateJob = (d: RapfiDb, id: number, patch: Partial<ReviewJob>): Pr
   d.queue.update(id, patch);
 
 export const deleteJob = (d: RapfiDb, id: number): Promise<void> => d.queue.delete(id);
-
-/** 끝난(완료 · 실패) 작업을 걷어낸다. 리포트는 남는다. */
-export async function clearFinishedJobs(d: RapfiDb): Promise<void> {
-  const finished: JobStatus[] = ["done", "failed"];
-  await d.queue.where("status").anyOf(finished).delete();
-}
 
 /**
  * 앱이 뜰 때 — 지난 세션에서 `running` 으로 남은 작업은 그 탭이 닫히며 끊긴 것이다.
