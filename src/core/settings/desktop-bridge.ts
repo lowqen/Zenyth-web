@@ -15,6 +15,14 @@ import { msg, t } from "../../i18n/i18n";
  */
 
 /** 웹의 지금 값 — 데스크톱 칸에 대응하는 것만. */
+/** 대국 시계 — `features/board/clockStore` 의 설정과 같은 모양(데스크톱 Z4). */
+export interface ClockWebSettings {
+  enabled: boolean;
+  matchSec: number;
+  incrementSec: number;
+  checkTimeout: boolean;
+}
+
 export interface WebSettings {
   /** 규칙 — 렌주 밖의 둘은 데스크톱 네이티브 엔진에서만 둔다(Z4). */
   rule: PlayRule;
@@ -57,6 +65,11 @@ export interface WebSettings {
     showBoardText: boolean;
     confirmDeleteAll: boolean;
   };
+  /**
+   * 대국 시계 — 데스크톱에만 있다(웹 화면엔 시계가 없으므로 웹은 이 칸들을 `base` 그대로 들고 있다).
+   * 시계를 켬 = 데스크톱 레벨 1(«사용자 지정» — 턴 · 매치 한도가 실제로 걸리는 유일한 레벨).
+   */
+  clock?: ClockWebSettings;
 }
 
 /** 웹 한계 — 스토어의 sanitize 와 같은 값. 여기서 미리 묶어야 «무엇이 바뀌었나»를 바로 말한다. */
@@ -103,6 +116,14 @@ export function overlayWeb(base: DesktopValues, w: WebSettings): DesktopValues {
     web >= cap && n(id) >= cap ? n(id) : web;
   const threads = w.threads > 0 ? w.threads : (w.threadsResolved ?? n("threadNum"));
   const out: Record<string, number | boolean | string> = { ...base };
+  if (w.clock)
+    Object.assign(out, {
+      level: w.clock.enabled ? 1 : n("level") === 1 ? 0 : n("level"),
+      showClock: w.clock.enabled,
+      timeoutMatchSec: w.clock.matchSec,
+      incrementMs: w.clock.incrementSec * 1000,
+      checkTimeout: w.clock.checkTimeout,
+    });
   Object.assign(out, {
     rule: PLAY_RULE_TO_RULE[w.rule] ?? OPENING_TO_RULE[w.opening],
     computerBlack: w.computerSide === "black" || w.computerSide === "both",
@@ -195,6 +216,19 @@ export function webFromDesktop(v: DesktopValues, current: WebSettings): WebPatch
       }),
     );
 
+  let clock = current.clock;
+  if (clock) {
+    const incrementSec = Math.round(n("incrementMs") / 1000);
+    if (incrementSec * 1000 !== n("incrementMs"))
+      notes.push(t("수당 추가 시간 {a}ms → {b}초", { a: n("incrementMs"), b: incrementSec }));
+    clock = {
+      enabled: n("level") === 1,
+      matchSec: n("timeoutMatchSec"),
+      incrementSec: Math.min(200, incrementSec),
+      checkTimeout: b("checkTimeout"),
+    };
+  }
+
   const hashMb = hashChoice(n("hashSizeMb"));
   if (hashMb !== n("hashSizeMb"))
     notes.push(t("해시 {a}MB → {b}MB(웹 선택지)", { a: n("hashSizeMb"), b: hashMb }));
@@ -211,6 +245,7 @@ export function webFromDesktop(v: DesktopValues, current: WebSettings): WebPatch
   return {
     notes,
     web: {
+      ...(clock ? { clock } : {}),
       rule: playRule,
       opening,
       computerSide: sideOf(b("computerBlack"), b("computerWhite")),

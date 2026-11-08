@@ -88,6 +88,31 @@ describe("가져오기(데스크톱 → 웹)", () => {
     expect(overlayWeb(base, { ...WEB, opening: "swapFirst" }).rule).toBe(3);
   });
 
+  it("대국 시계 — 켬 = 레벨 1(사용자 지정), 매치 시간 · 증분 · 시간 초과 확인(데스크톱 Z4)", () => {
+    const clock = { enabled: true, matchSec: 300, incrementSec: 5, checkTimeout: true };
+    const out = overlayWeb({ ...DESKTOP_DEFAULTS, level: 3 }, { ...WEB, clock });
+    expect(out).toMatchObject({
+      level: 1,
+      showClock: true,
+      timeoutMatchSec: 300,
+      incrementMs: 5000,
+      checkTimeout: true,
+    });
+    // 끄면 레벨 1 만 0(무제한)으로 — 다른 레벨은 PC 가 고른 그대로.
+    const off = { ...clock, enabled: false };
+    expect(overlayWeb({ ...DESKTOP_DEFAULTS, level: 1 }, { ...WEB, clock: off }).level).toBe(0);
+    expect(overlayWeb({ ...DESKTOP_DEFAULTS, level: 3 }, { ...WEB, clock: off }).level).toBe(3);
+    // 웹(시계 없음)은 칸을 건드리지 않는다.
+    expect(overlayWeb({ ...DESKTOP_DEFAULTS, level: 1 }, WEB).level).toBe(1);
+
+    const back = webFromDesktop(out, { ...WEB, clock: off });
+    expect(back.web.clock).toEqual(clock);
+    expect(webFromDesktop(out, WEB).web.clock).toBeUndefined();
+    expect(webFromDesktop({ ...out, incrementMs: 1500 }, { ...WEB, clock }).notes).toContain(
+      "수당 추가 시간 1500ms → 2초",
+    );
+  });
+
   it("컴퓨터 진영 비트", () => {
     const side = (b: boolean, w: boolean) =>
       webFromDesktop({ ...deployed, computerBlack: b, computerWhite: w }, WEB).web.computerSide;

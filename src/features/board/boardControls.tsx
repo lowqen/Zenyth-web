@@ -107,7 +107,7 @@ export function ComputerControl() {
 const moveTimeLabel = (ms: number) => (ms === 0 ? t("무제한") : t("{n}초", { n: ms / 1000 }));
 
 /**
- * 시간 제어 — 엔진 한 수의 시간. 대국 시계 없이 `timeout_turn` 하나만 정한다. 칩에 없는
+ * 시간 제어 — 엔진 한 수의 시간(`timeout_turn`). 대국 시계(데스크톱)를 켜면 차례 한도가 된다. 칩에 없는
  * 시간(2.5초 · 1500ms · 2분)은 옆 「직접」 칸에 적는다.
  */
 export function MoveTimeControl() {

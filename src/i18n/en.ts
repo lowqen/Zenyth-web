@@ -1412,4 +1412,15 @@ export const EN: Readonly<Record<string, string>> = {
   "렌주로 바꾸고 새 대국": "Switch to renju and start a new game",
   "판에 돌이 있어 규칙은 그대로 둡니다(새 판에서 바꾸세요)":
     "The board has stones, so the rule stays as it is (change it on a new board)",
+  "쓴 시간 (차례 / 대국)": "Time used (turn / game)",
+  "대국 시계": "Game clock",
+  사람: "Human",
+  "대국 시간": "Game time",
+  "수당 추가 시간": "Increment per move",
+  "+{n}초": "+{n}s",
+  "시간이 다 되면 알리기": "Warn when time runs out",
+  "차례 한도는 엔진 착수 시간입니다(무제한이면 대국 시간)":
+    "The turn limit is the engine move time (the game time if unlimited)",
+  "시간이 다 됐습니다": "Your time is up",
+  "수당 추가 시간 {a}ms → {b}초": "Increment per move {a}ms → {b}s",
 };

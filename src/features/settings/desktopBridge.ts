@@ -12,6 +12,8 @@ import {
 } from "../../core/settings/desktop-settings";
 import { useBoardStore } from "../board/boardStore";
 import { useGameStore } from "../board/gameStore";
+import { useClockStore } from "../board/clockStore";
+import { IS_DESKTOP } from "../../app/desktop/platform";
 import { useDbStore } from "../database/dbStore";
 import { useProveStore } from "../research/prove/proveStore";
 import { useReviewStore } from "../research/review/reviewStore";
@@ -88,6 +90,8 @@ export function readWeb(): WebSettings {
       depthMax: p.depthMax,
     },
     db: { ...d },
+    // 대국 시계는 데스크톱 화면에만 있다 — 웹은 이 칸을 건드리지 않는다(`base` 가 지킨다).
+    ...(IS_DESKTOP ? { clock: { ...useClockStore.getState().settings } } : {}),
   };
 }
 
@@ -126,6 +130,8 @@ export async function applyWeb(w: WebSettings): Promise<string[]> {
     useBoardStore.getState().toggleNumbers();
   // 27행은 테마 오라클이다 — 시스템 따름을 이기고 고정한다(theme.ts).
   useThemeStore.getState().setFromDesktopSettings(w.dark);
+
+  if (w.clock && IS_DESKTOP) useClockStore.getState().setSettings(w.clock);
 
   const r = useReviewStore.getState();
   r.setPreset(w.preset);

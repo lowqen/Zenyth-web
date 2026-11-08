@@ -332,7 +332,7 @@ describe("대국 패널의 동작", () => {
     expect(g().moveTimeMs).toBe(3_000);
   });
 
-  it("대국 시계는 없다 — 상태에도 명령에도", () => {
+  it("시계를 켜지 않으면 대국 예산은 없다 — 상태에도 명령에도", () => {
     fresh({ computerSide: "white" });
     expect("clock" in g()).toBe(false);
     g().setMoveTime(5_000);

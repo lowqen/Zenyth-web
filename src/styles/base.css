@@ -1096,6 +1096,29 @@ a:focus-visible {
 .engine-mode[data-on] .engine-mode__dot {
   background: var(--c-positive);
 }
+/* 대국 시계(데스크톱 Z4) — 엔진 · 사람 두 줄. 지금 재는 쪽만 진하게. */
+.clock {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-m);
+}
+.clock__row {
+  display: grid;
+  grid-template-columns: 4em 1fr auto;
+  gap: var(--space-s);
+  align-items: baseline;
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.clock__row[data-on] {
+  color: var(--c-on-surface);
+}
+.clock__left {
+  font: var(--type-title-medium);
+}
+.clock__row[data-on] .clock__left {
+  color: var(--c-primary);
+}
 .engine-mode__link {
   margin-left: auto;
 }

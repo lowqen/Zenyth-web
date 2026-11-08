@@ -26,6 +26,8 @@ import {
   swapAfterFirstMove,
 } from "../../core/model/referee";
 import { useBoardStore } from "./boardStore";
+import { useClockStore } from "./clockStore";
+import { engineTimeLeftMs } from "../../core/model/clock";
 import { onEngineBooted, setGameHandlers, useEngineStore } from "../../engine/engine-state";
 import { isNativeVariant } from "../../engine/engine-client";
 import {
@@ -53,10 +55,13 @@ import { msg, t } from "../../i18n/i18n";
  * 엔진에게 협상을 시키던 Soosorv-8·스왑2 는 빠졌다 — Rapfi 가 그 명령을 모른다
  * (`docs/engineering-notes.md` §5).
  *
- * **대국 시계는 없다.** 시계·시간 초과·수당 가산을 걷어냈다. 엔진의 한 수에 쓸
- * 시간만 `moveTimeMs` 하나로 정한다 — 0 이면 무제한(「지금 두기」까지 읽는다),
- * 아니면 매 수 그만큼(`INFO timeout_turn`, 대국 예산 없음). 데스크톱의 「사용자 정의
- * 레벨」에서 턴 시간만 남긴 것과 같다.
+ * **웹에는 대국 시계가 없다.** 엔진의 한 수에 쓸 시간만 `moveTimeMs` 하나로 정한다 — 0 이면
+ * 무제한(「지금 두기」까지 읽는다), 아니면 매 수 그만큼(`INFO timeout_turn`, 대국 예산 없음).
+ * 데스크톱의 「사용자 정의 레벨」에서 턴 시간만 남긴 것과 같다.
+ *
+ * **데스크톱(Z4)은 시계를 켤 수 있다**(`clockStore`). 켜면 데스크톱처럼 차례 · 대국 한도와 엔진의 남은
+ * 시간(`timeout_match` · `time_left`)을 함께 주고, 수마다 증분을 번다. 시계 값은 따로 사는 스토어에
+ * 있다 — 250ms 마다 바뀌는 값이 대국 스토어 구독자를 깨우지 않게.
  */
 
 /** 엔진 착수 시간 선택지(ms). 0 = 무제한. */
@@ -312,6 +317,7 @@ export const useGameStore = create<GameState>((set, get) => {
   const log = (line: string) => set((s) => ({ log: [...s.log, line].slice(-LOG_LIMIT) }));
 
   const send = (...cmds: EngineCommand[]) => engine().send(...cmds);
+  const clock = () => useClockStore.getState();
 
   /**
    * 판이 바뀔 때마다의 승패 검사 — 데스크톱은 `make_move` 안에서 한다.
@@ -449,7 +455,9 @@ export const useGameStore = create<GameState>((set, get) => {
     }
     const info = levelInfo(s.level);
     set({ thinking: true });
-    if (isUnlimitedTurn(s)) {
+    clock().start("computer");
+    const timed = clock().settings.enabled;
+    if (isUnlimitedTurn(s) && !timed) {
       // **무제한: 엔진은 「지금 두기」까지 생각한다.** 데스크톱·앱의 기본 레벨
       // (level 0 — 시간·노드 무제한, 사용자가 멈추면 둔다)과 같다. 예전엔 여기서
       // 5초를 줬고 「앱의 기본값」이라고 적었는데, 틀린 말이었다.
@@ -457,10 +465,17 @@ export const useGameStore = create<GameState>((set, get) => {
       void engine().play(board().placements(), moves.length === 0, { turnMs: Infinity }, info);
       return;
     }
-    // 한 수 예산만 준다. 대국 예산(`timeout_match`)은 0 — 대국 시계가 없다.
+    // 시계가 꺼져 있으면 한 수 예산만 준다. 대국 예산(`timeout_match`)은 0.
     // 노드 레벨에 무제한 시간이면 레벨의 노드에서 엔진이 스스로 멈춘다 — 상한만 둔다.
-    const turnMs = Math.max(500, s.moveTimeMs > 0 ? s.moveTimeMs : LEVEL_TURN_CAP_MS);
-    const budget = { turnMs, matchMs: 0 };
+    // 대국 시계를 쓰면(데스크톱 Z4) 데스크톱처럼 차례 · 대국 한도와 엔진의 남은 시간을 함께 준다 —
+    // 남은 시간이 줄면 Rapfi 가 스스로 빨리 둔다.
+    const c = clock().clock;
+    const turnMs = timed
+      ? Math.max(500, c.turnLimitMs)
+      : Math.max(500, s.moveTimeMs > 0 ? s.moveTimeMs : LEVEL_TURN_CAP_MS);
+    const budget = timed
+      ? { turnMs, matchMs: c.matchLimitMs, matchLeftMs: engineTimeLeftMs(c) }
+      : { turnMs, matchMs: 0 };
     // 감시견은 **엔진이 준비된 뒤에** 건다. 첫 수에는 엔진 기동(20MB 가중치
     // 내려받기)이 끼는데, 느린 회선에서 그 시간까지 세면 멀쩡한 대국을 끊는다.
     void engine()
@@ -698,6 +713,7 @@ export const useGameStore = create<GameState>((set, get) => {
     setMoveTime: (ms) => {
       const moveTimeMs = ms > 0 ? Math.round(ms) : 0;
       set({ moveTimeMs });
+      clock().setMoveTime(moveTimeMs);
       log(`엔진 착수 시간: ${moveTimeMs === 0 ? "무제한" : `${moveTimeMs}ms`}`);
     },
 
@@ -713,6 +729,7 @@ export const useGameStore = create<GameState>((set, get) => {
       board().clear();
       board().setForbidden([]);
       set({ result: null, thinking: false, prompt: null, log: [], gameName: null });
+      clock().reset();
       send({ kind: "restart" });
       log("새 대국");
       // **엔진이 흑이어도 자동으로 두지 않는다** — 데스크톱·앱과 같이 사람이
@@ -727,6 +744,7 @@ export const useGameStore = create<GameState>((set, get) => {
       board().setStones(moves, opts.future ?? []);
       board().setForbidden([]);
       set({ result: null, thinking: false, prompt: null, gameName: opts.name ?? null });
+      clock().reset();
       judge();
       log(opts.what ?? `불러오기: ${moves.length}수`);
       // 엔진에 따로 알리지 않는다 — 다음 요청이 `BOARD`/`YXBOARD` 로 판을 통째로 준다.
@@ -779,6 +797,7 @@ export const useGameStore = create<GameState>((set, get) => {
       }
 
       place(cell);
+      clock().credit("human");
       const handled = afterHumanMove(cell);
       const next = get();
       if (
@@ -978,6 +997,8 @@ export const useGameStore = create<GameState>((set, get) => {
       return;
     }
     for (const m of legal) place(m);
+    clock().credit("computer");
+    clock().start("human");
 
     const next = get();
     if (!next.result && enginePlays(next.computerSide, sideToMove(board().render.stones))) {
@@ -1027,4 +1048,17 @@ onEngineBooted(() => {
       rule: RULE_LABEL[was],
     }),
   });
+});
+
+/**
+ * **시계는 대국 탭에서 승부가 나기 전까지만 흐른다.** 시계 스토어는 대국을 모르므로 여기서 알려 준다. 사람의
+ * 시간이 다 됐다는 표시가 서면 데스크톱의 시간 초과 대화상자처럼 물음을 띄운다(앱 `GamePrompt.Timeout`).
+ */
+const syncClockActive = (s: { mode: BoardMode; result: GameResult | null }) =>
+  useClockStore.getState().setActive(s.mode === "game" && !s.result);
+syncClockActive(useGameStore.getState());
+useGameStore.subscribe(syncClockActive);
+useClockStore.subscribe((c, prev) => {
+  if (c.clock.timedOutNotified && !prev.clock.timedOutNotified)
+    useGameStore.setState({ prompt: { kind: "info", text: t("시간이 다 됐습니다") } });
 });

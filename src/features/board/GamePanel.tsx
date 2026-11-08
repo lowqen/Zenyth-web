@@ -10,6 +10,9 @@ import {
   RulesetControl,
 } from "./boardControls";
 import { STATUS_TEXT } from "./analysisActions";
+import { ClockControl, ClockView } from "./ClockPanel";
+import { useClockStore } from "./clockStore";
+import { IS_DESKTOP } from "../../app/desktop/platform";
 import { t } from "../../i18n/i18n";
 
 /**
@@ -30,7 +33,9 @@ export function GamePanel() {
   const error = useEngineStore((s) => s.error);
   const start = useEngineStore((s) => s.start);
   const thinking = useGameStore((s) => s.thinking);
-  const unlimited = useGameStore((s) => isUnlimitedTurn(s));
+  // 대국 시계는 데스크톱만(Z4) — 켜면 엔진도 시계대로 두므로 「무제한」이 아니다.
+  const timed = useClockStore((s) => IS_DESKTOP && s.settings.enabled);
+  const unlimited = useGameStore((s) => isUnlimitedTurn(s)) && !timed;
   const moveNow = useGameStore((s) => s.moveNow);
   const side = useGameStore((s) => s.computerSide);
   const level = useGameStore((s) => s.level);
@@ -49,6 +54,8 @@ export function GamePanel() {
         <span className="engine-mode__dot" aria-hidden="true" />
         {COMPUTER_SIDE_LABEL[side]} · {t("레벨 {level}", { level: levelLabel })}
       </p>
+
+      {timed && <ClockView />}
 
       {(status === "idle" || status === "error") && caps.variant && (
         <div className="panel__actions">
@@ -87,6 +94,16 @@ export function GamePanel() {
         >
           <MoveTimeControl />
         </Row>
+        {IS_DESKTOP && (
+          <Row
+            id="clock"
+            label={t("대국 시계")}
+            note={t("차례 한도는 엔진 착수 시간입니다(무제한이면 대국 시간)")}
+            wide
+          >
+            <ClockControl />
+          </Row>
+        )}
         <Row
           id="level"
           label={t("레벨")}

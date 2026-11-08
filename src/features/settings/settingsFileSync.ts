@@ -9,6 +9,7 @@ import {
 import { parse, renderOver, type DesktopValues } from "../../core/settings/desktop-settings";
 import { useBoardStore } from "../board/boardStore";
 import { useGameStore } from "../board/gameStore";
+import { useClockStore } from "../board/clockStore";
 import { useDbStore } from "../database/dbStore";
 import { useProveStore } from "../research/prove/proveStore";
 import { useReviewStore } from "../research/review/reviewStore";
@@ -226,6 +227,10 @@ export async function startSettingsFileSync(p: SettingsFilePort): Promise<void> 
     useReviewStore.subscribe(schedule),
     useProveStore.subscribe(schedule),
     useDbStore.subscribe(schedule),
+    // 시계는 250ms 마다 흐른다 — 설정이 바뀔 때만 깨운다(아니면 미루기 타이머가 끝없이 밀린다).
+    useClockStore.subscribe((s, p) => {
+      if (s.settings !== p.settings) schedule();
+    }),
   ];
   unsubscribe = () => subs.forEach((u) => u());
   if (useSettingsFile.getState().enabled) await useSettingsFile.getState().reload();
