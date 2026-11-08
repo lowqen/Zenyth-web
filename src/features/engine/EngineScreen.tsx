@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
 import { useEngineStore } from "../../engine/engine-state";
 import { isNativeVariant } from "../../engine/engine-client";
 import { useSettingsStore } from "../settings/settingsStore";
 import { localized, msg, t } from "../../i18n/i18n";
 import { useProMode } from "../../app/proMode";
+import { IS_DESKTOP } from "../../app/desktop/platform";
+import { EngineConsole } from "./EngineConsole";
 
 /**
  * 엔진 화면 — 엔진 상태와 piskvork 콘솔.
@@ -12,9 +13,6 @@ import { useProMode } from "../../app/proMode";
  * 여는 창이라서다. 여기서는 화면 하나를 다 쓴다 — 엔진이 무엇을 받고 무엇을
  * 말했는지 좇으려고 온 사람에게 40줄은 모자라다.
  */
-
-/** 화면에 그리는 줄 수. 전체(최대 5,000줄)는 `__rapfiConsole()` 로 꺼낸다. */
-const VISIBLE_LINES = 400;
 
 /** 가중치를 어디서 얻었나 — 캐시면 이번 기동에 20MB 를 받지 않았다. */
 const WEIGHTS_SOURCE: Readonly<Record<"cache" | "network" | "glue", string>> = localized({
@@ -39,9 +37,7 @@ export function EngineScreen() {
   const start = useEngineStore((s) => s.start);
   const terminate = useEngineStore((s) => s.terminate);
   const send = useEngineStore((s) => s.send);
-  const lines = useEngineStore((s) => s.console);
   const pro = useProMode();
-  const clearConsole = useEngineStore((s) => s.clearConsole);
   const engine = useEngineStore((s) => s.engine);
   const applied = useEngineStore((s) => s.appliedThreads);
   const hashMb = useSettingsStore((s) => s.hashMb);
@@ -114,57 +110,14 @@ export function EngineScreen() {
         </div>
       </section>
 
-      {/* 콘솔은 고급 사용자 모드에서만(앱: 엔진 화면은 연결만 — 도구 · 콘솔 · 명령줄은 고급 모드). */}
-      {pro && (
+      {/* 콘솔은 고급 사용자 모드에서만(앱: 엔진 화면은 연결만 — 도구 · 콘솔 · 명령줄은 고급 모드).
+          데스크톱은 늘 — Yixin 의 명령 창 · 로그 창을 대신한다(Z4). */}
+      {(pro || IS_DESKTOP) && (
         <section className="panel enginescreen__console">
-          <h2 className="panel__title">
-            {t("콘솔")}
-            <span className="panel__status tnum">
-              {t("{n}줄", { n: lines.length.toLocaleString() })}
-            </span>
-            <button
-              type="button"
-              className="panel__link"
-              onClick={clearConsole}
-              disabled={lines.length === 0}
-            >
-              {t("지우기")}
-            </button>
-          </h2>
-          <ConsoleView lines={lines} />
+          <h2 className="panel__title">{t("콘솔")}</h2>
+          <EngineConsole />
         </section>
       )}
     </div>
-  );
-}
-
-/**
- * 원시 줄 그대로. 줄바꿈하지 않고 가로로 스크롤한다 — 접히면 프로토콜을 눈으로
- * 좇을 수 없게 된다. 맨 아래를 보고 있을 때만 새 줄을 따라 내려간다 — 위로 올려
- * 읽는 중에 끌려 내려가면 읽을 수가 없다.
- */
-function ConsoleView({ lines }: { lines: readonly string[] }) {
-  const ref = useRef<HTMLPreElement>(null);
-  const [follow, setFollow] = useState(true);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (el && follow) el.scrollTop = el.scrollHeight;
-  }, [lines, follow]);
-
-  if (lines.length === 0) {
-    return <p className="panel__hint">{t("엔진이 아직 아무 말도 하지 않았습니다.")}</p>;
-  }
-  return (
-    <pre
-      ref={ref}
-      className="console console--full"
-      onScroll={(e) => {
-        const el = e.currentTarget;
-        setFollow(el.scrollHeight - el.scrollTop - el.clientHeight < 24);
-      }}
-    >
-      {lines.slice(-VISIBLE_LINES).join("\n")}
-    </pre>
   );
 }

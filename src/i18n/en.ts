@@ -1423,4 +1423,11 @@ export const EN: Readonly<Record<string, string>> = {
     "The turn limit is the engine move time (the game time if unlimited)",
   "시간이 다 됐습니다": "Your time is up",
   "수당 추가 시간 {a}ms → {b}초": "Increment per move {a}ms → {b}s",
+  "거르기 (> 보낸 줄, < 받은 줄)": "Filter (> sent, < received)",
+  "콘솔 거르기": "Filter console",
+  "{n}/{all}줄": "{n}/{all} {all|line|lines}",
+  "엔진이 꺼져 있습니다": "The engine is off",
+  "엔진에 보낼 명령 (예: YXHASHCLEAR)": "Command for the engine (e.g. YXHASHCLEAR)",
+  "엔진 명령": "Engine command",
+  보내기: "Send",
 };

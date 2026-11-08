@@ -1725,6 +1725,41 @@ a:focus-visible {
   height: 100%;
   min-height: 320px;
 }
+/* 엔진 콘솔(데스크톱 Z4) — 거르기 줄 · 원시 줄 · 명령 입력줄. 엔진 화면에서는 남는 높이를 다 쓴다. */
+.engineconsole {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.engineconsole__bar,
+.engineconsole__input {
+  display: flex;
+  gap: var(--space-s);
+  align-items: center;
+  margin-top: var(--space-s);
+}
+.engineconsole__filter,
+.engineconsole__input input {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 var(--space-s);
+  font: var(--type-mono);
+  color: var(--c-on-surface);
+  background: var(--c-surface-container-lowest);
+  border: 1px solid var(--c-outline-variant);
+  border-radius: var(--radius-xs);
+}
+.engineconsole__filter:focus-visible,
+.engineconsole__input input:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: -1px;
+}
+.engineconsole__prompt {
+  font: var(--type-mono);
+  color: var(--c-on-surface-variant);
+}
 .console--full {
   flex: 1;
   max-height: none;

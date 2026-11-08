@@ -3,6 +3,8 @@ import { BoardCanvas } from "../../core/board/BoardCanvas";
 import { useBoardStore } from "./boardStore";
 import { useGameStore } from "./gameStore";
 import { AnalysisOptions, AnalysisPanel } from "./AnalysisPanel";
+import { EngineLogPanel } from "../engine/EngineConsole";
+import { IS_DESKTOP } from "../../app/desktop/platform";
 import { EvalBar } from "./EvalBar";
 import { EvalGraph } from "./EvalGraph";
 import { GamePanel } from "./GamePanel";
@@ -147,6 +149,7 @@ export function BoardScreen() {
           <AnalysisPanel />
           <EvalGraph />
           <AnalysisOptions />
+          {IS_DESKTOP && <EngineLogPanel />}
         </>
       )}
     </aside>
