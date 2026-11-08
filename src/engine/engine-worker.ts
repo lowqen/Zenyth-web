@@ -1079,6 +1079,8 @@ if (!IS_PTHREAD) {
 
 /** 저장 메시지를 기다리는 한도 — 큰 DB 도 몇 초면 쓴다(데스크톱 로그 기준). */
 const DB_SAVE_MS = 60_000;
+/** 네이티브 저장의 맺음말 — 공식 Rapfi(`DATABASE SAVE DONE`)와 패치 엔진(`Saved database file`). */
+const NATIVE_SAVED = /Saved database file|DATABASE SAVE DONE/i;
 
 /**
  * 엔진 메모리 FS 요청(W8). 실패는 던지지 않고 `ok: false` 로 답한다 — DB 를 못 다뤄도 엔진은
@@ -1092,6 +1094,21 @@ async function fsOp(msg: Extract<ToWorker, { type: "fs" }>) {
     if (moved.length) (self as unknown as Worker).postMessage(m, moved);
     else post(m);
   };
+  // 데스크톱 Z4: 네이티브 · 원격 엔진은 DB 를 제 폴더(원격이면 서버)의 파일로 연다. 저장은 엔진이 그 파일에
+  // 직접 쓰게 하는 것뿐이고, 옮길 바이트가 없다. 공식 Rapfi 는 `DATABASE SAVE START …` → `DATABASE SAVE DONE`,
+  // 우리 패치 엔진은 `Saved database file …` 으로 맺는다 — 둘 다 받는다. 압축(`compact`)도 그냥 저장이다:
+  // 공식 엔진은 저널(db6)을 모르고 `YXCOMPACTDATABASE` 를 받지 않는다.
+  if (nativeLink && (msg.op === "save" || msg.op === "compact")) {
+    try {
+      const saved = waitLine(NATIVE_SAVED, DB_SAVE_MS, "DB 저장");
+      sendCommand(["YXSAVEDATABASE"]);
+      await saved;
+      reply({ ok: true, native: true });
+    } catch (e) {
+      reply({ ok: false, error: describe(e) });
+    }
+    return;
+  }
   const fs = mod?.FS;
   if (!fs) {
     reply({

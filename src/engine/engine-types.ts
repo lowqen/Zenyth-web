@@ -416,6 +416,11 @@ export type FromWorker =
       journal?: Uint8Array;
       /** 저널 파일이 없다(`save` · `compact`). */
       journalGone?: boolean;
+      /**
+       * 네이티브 · 원격 엔진(데스크톱 Z4)의 저장 — 엔진이 제 폴더의 파일에 직접 썼고 바이트는 오지 않는다.
+       * 웹 저장소(Dexie)에 놓을 것이 없다는 뜻이다.
+       */
+      native?: boolean;
     }
   /** yixindb 가 말한 줄(`DATABASE …` · `Saved database file …`) — DB 화면과 증명이 받는다. */
   | { type: "dbLine"; text: string }

@@ -1373,8 +1373,18 @@ export const EN: Readonly<Record<string, string>> = {
   "기본 위치": "default location",
   "원격 엔진 {addr} 에 붙지 못했습니다: {why}":
     "Could not connect to the remote engine {addr}: {why}",
-  "네이티브 · 원격 엔진의 DB 연동은 아직 준비 중입니다. 엔진 폴더의 DB 는 건드리지 않습니다":
-    "Database support for native and remote engines is not ready yet. The database in the engine folder is left untouched",
+  "엔진 폴더의 DB:": "Database in the engine folder:",
+  "마지막 저장": "last saved",
+  "엔진 폴더의 DB 를 쓰는 중이라 웹 저장소 파일 동작(올리기 · 내려받기 · 지우기)은 잠겼습니다. 백업은 엔진 폴더의 파일을 복사하세요.":
+    "The engine-folder database is in use, so browser-storage file actions (upload · download · delete) are locked. To back up, copy the file in the engine folder.",
+  "엔진 폴더에 {name} 로 썼습니다": "Wrote {name} to the engine folder",
+  "엔진 폴더의 DB 를 쓰는 중입니다. 이 동작은 웹 저장소의 파일만 다루므로 지금은 쓸 수 없습니다":
+    "The engine-folder database is in use. This action only handles the browser-storage file, so it is unavailable now",
+  "붙임: 엔진 폴더의 DB {path}": "Attached: engine-folder database {path}",
+  "CSV: 엔진 폴더의 {name}": "CSV: {name} in the engine folder",
+  "엔진 폴더": "engine folder",
+  "엔진이 DB 저장을 마쳤다고 답하지 않았습니다":
+    "The engine did not confirm that the database was saved",
   "엔진 실행 파일": "Engine executable",
   "원격 서버 주소": "Remote server address",
   "비우면 앱 옆의 engine/rapfi.exe": "Leave empty for engine/rapfi.exe next to the app",

@@ -159,3 +159,58 @@ describe("골든 녹취 재생 — 네이티브 경로 = WASM 멀티 경로", ()
     30_000,
   );
 });
+
+describe("네이티브 DB 저장(데스크톱 Z4)", () => {
+  it("메모리 FS 없이 `YXSAVEDATABASE` 를 보내고 엔진의 맺음말을 받아 `native` 로 답한다", async () => {
+    vi.resetModules();
+    const posted: FromWorker[] = [];
+    const wrote: string[] = [];
+    const feed = (batch: readonly string[]) =>
+      (g.onmessage as Handler)({ data: { type: "wireIn", lines: batch } });
+    const out = (...l: string[]) => setTimeout(() => feed(l), 1);
+    g.self = g;
+    g.importScripts = () => undefined;
+    g.postMessage = (m: FromWorker) => {
+      if (m.type !== "wire") return void posted.push(m);
+      for (const head of m.text.split("\n")) {
+        wrote.push(head);
+        if (head.startsWith("START")) out("OK");
+        if (head === "ABOUT") out('name="Rapfi", version="golden"');
+        // 공식 Rapfi 0.43.01 의 말투(골든 `db-edit.jsonl`).
+        if (head === "YXSAVEDATABASE")
+          out("MESSAGE DATABASE SAVE START rapfi.db", "MESSAGE DATABASE SAVE DONE");
+      }
+    };
+    await import("./engine-worker");
+    const send = (m: ToWorker) => (g.onmessage as Handler)({ data: m });
+    send({
+      type: "boot",
+      engineBaseUrl: "/engine/",
+      variant: "native",
+      sliceMs: 500,
+      size: 15,
+      handshakeMs: 2_000,
+      native: true,
+    } as ToWorker);
+    await until(() => posted.some((m) => m.type === "booted" || m.type === "fatal"));
+    expect(posted.find((m) => m.type === "fatal")).toBeUndefined();
+
+    send({ type: "fs", id: 7, op: "compact", path: "rapfi.db" } as ToWorker);
+    await until(() => posted.some((m) => m.type === "fs"));
+
+    expect(posted.find((m) => m.type === "fs")).toEqual({
+      type: "fs",
+      id: 7,
+      ok: true,
+      native: true,
+    });
+    // 공식 엔진은 저널을 모른다 — 압축 요청도 그냥 저장이다.
+    expect(wrote).toContain("YXSAVEDATABASE");
+    expect(wrote).not.toContain("YXCOMPACTDATABASE");
+
+    // 메모리 FS 가 필요한 동작은 여전히 정중히 거절한다.
+    send({ type: "fs", id: 8, op: "read", path: "rapfi.csv" } as ToWorker);
+    await until(() => posted.filter((m) => m.type === "fs").length === 2);
+    expect(posted.filter((m) => m.type === "fs")[1]).toMatchObject({ id: 8, ok: false });
+  });
+});

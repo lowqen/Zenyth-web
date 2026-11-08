@@ -69,6 +69,19 @@ const SETTINGS_KEY = "rapfi.db";
 const LOG_LIMIT = 120;
 /** 붙이기 확인(`DATABASE ONE`)의 끈 — 큰 DB 를 여는 데 걸리는 시간까지. */
 const ATTACH_TIMEOUT_MS = 30_000;
+/**
+ * 네이티브 · 원격 엔진이 제 DB 파일을 여는 끈 — 서버 DB 는 압축 해제 수 GB 라 여는 데 분 단위가 걸릴 수 있다
+ * (핸드북 §12). 그동안 엔진은 다른 줄을 받지 않으므로 답이 늦을 뿐 짝은 틀어지지 않는다.
+ */
+const NATIVE_ATTACH_TIMEOUT_MS = 300_000;
+
+/**
+ * DB 파일이 사는 곳.
+ *  - `browser` 웹 저장소(Dexie) — 붙일 때 엔진 메모리 FS 로 넣고, 저장할 때 꺼낸다(웹 · WASM 엔진).
+ *  - `engine`  엔진 폴더(원격이면 서버)의 진짜 `rapfi.db` — 데스크톱 Z4. 엔진이 직접 열고 직접 쓴다.
+ *              웹 저장소의 파일과는 무관하다(올리기 · 내려받기 · 지우기는 이 파일을 건드리지 않는다).
+ */
+export type DbLocation = "browser" | "engine";
 
 export interface DbSettings {
   /** `info usedatabase` — settings.txt 32행. */
@@ -134,6 +147,12 @@ interface DbState {
   /** 마지막으로 읽은 국면과 그 모습. */
   view: { moves: readonly Move[]; snapshot: DbSnapshot } | null;
   log: readonly string[];
+  /** 지금(또는 다음에) 붙는 DB 가 사는 곳 — 떠 있는 엔진이 정한다. */
+  location: DbLocation;
+  /** 엔진이 연 파일의 경로(`Opening yixin database at …`) — `engine` 일 때만. 엔진 기준 상대 경로일 수 있다. */
+  enginePath: string | null;
+  /** `engine` 쪽 마지막 저장 시각(이 세션). 웹 저장소의 `stored` 와 따로 센다. */
+  engineSavedAt: number | null;
 
   attach: () => Promise<string | null>;
   detach: () => Promise<string | null>;
@@ -149,7 +168,8 @@ interface DbState {
   ) => Promise<string | null>;
   deleteHere: (moves: readonly Move[]) => Promise<string | null>;
   deleteAll: (moves: readonly Move[], scope: DbDeleteScope) => Promise<string | null>;
-  exportCsv: () => Promise<{ bytes: Uint8Array } | { error: string }>;
+  /** 웹 저장소 DB 면 바이트, 엔진 폴더 DB 면 엔진이 쓴 파일 이름(`savedTo`). */
+  exportCsv: () => Promise<{ bytes: Uint8Array } | { savedTo: string } | { error: string }>;
   exportFile: () => Promise<{ bytes: Uint8Array } | { error: string }>;
   importFile: (bytes: Uint8Array) => Promise<string | null>;
   clearFile: () => Promise<string | null>;
@@ -177,6 +197,24 @@ function ch(): DbChannel {
 }
 
 const info = (key: string, value: number): EngineCommand => ({ kind: "info", key, value });
+
+/** 떠 있는 엔진이 DB 파일을 제 폴더에서 여는가(네이티브 · 원격) — 데스크톱 Z4. */
+function engineOwnsFile(): boolean {
+  const v = useEngineStore.getState().engine.variant;
+  return !!v && isNativeVariant(v);
+}
+
+/** 웹 저장소의 파일을 다루는 동작이 지금 엔진 폴더의 DB 와 섞이면 안 되는 까닭. */
+const engineFileNote = () =>
+  t("엔진 폴더의 DB 를 쓰는 중입니다. 이 동작은 웹 저장소의 파일만 다루므로 지금은 쓸 수 없습니다");
+
+/** `Opening yixin database at rapfi.db ...` · `DATABASE SAVE START rapfi.db` 에서 파일 경로. */
+export function engineDbPath(text: string): string | null {
+  const m =
+    /^Opening yixin database at (.+?)\s*(?:\.\.\.)?$/i.exec(text) ??
+    /^DATABASE SAVE START (.+)$/i.exec(text);
+  return m ? m[1]!.trim() : null;
+}
 
 /** 리뷰 · 증명 · 착수 생각이 엔진을 쥐고 있으면 그 까닭. 분석은 막지 않는다. */
 function engineHeld(): string | null {
@@ -223,6 +261,11 @@ const storedSize = () => baseSize + journalSize;
 export const useDbStore = create<DbState>((set, get) => {
   const note = (t: string) => set((s) => ({ log: [...s.log, t].slice(-LOG_LIMIT) }));
   lineHook = (l) => {
+    if (l.kind === "other") {
+      const path = engineDbPath(l.text);
+      if (path && path !== get().enginePath) set({ enginePath: path });
+      return;
+    }
     if (l.kind === "saved") note(t("저장: {ms}ms", { ms: l.ms }));
     else if (l.kind === "deleted") note(t("지움: 기록 {n}개", { n: l.count }));
     else if (l.kind === "error") note(t("엔진 오류: {text}", { text: l.text }));
@@ -253,6 +296,52 @@ export const useDbStore = create<DbState>((set, get) => {
     await readPosition(moves);
   };
 
+  /** 엔진 폴더의 DB 붙이기(데스크톱 Z4) — `attach` 의 네이티브 갈래. */
+  const attachEngineFile = async (): Promise<string | null> => {
+    set({ status: "attaching", message: null, location: "engine", engineSavedAt: null });
+    try {
+      // 앞 엔진(또는 DB 없던 때)의 답 없는 조회가 새 인사의 답을 가로채지 않게.
+      ch().resetPairing();
+      const s = get().settings;
+      useEngineStore
+        .getState()
+        .send(info("database_readonly", s.readonly ? 1 : 0), info("usedatabase", 1));
+      const hello = await ch().request(queryOne([]), untilOne, NATIVE_ATTACH_TIMEOUT_MS);
+      const err = replyError(hello);
+      if (err) throw new Error(err);
+      // 자동 저장 간격은 붙인 때부터 센다 — 붙이자마자 저장하지 않게.
+      set({ status: "on", dirty: false, engineSavedAt: Date.now() });
+      note(t("붙임: 엔진 폴더의 DB {path}", { path: get().enginePath ?? DB_FILE }));
+      return null;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ status: "error", message: msg });
+      note(t("붙이기 실패: {msg}", { msg }));
+      return msg;
+    }
+  };
+
+  /** 엔진 폴더에 CSV 를 쓰게 한다 — 엔진이 쓴 파일 이름을 돌려준다. */
+  const exportCsvInEngineFolder = async (): Promise<{ savedTo: string } | { error: string }> => {
+    const claim = claimForWrite();
+    if (claim) return { error: claim };
+    set({ busy: true });
+    try {
+      const name = `rapfi-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "")}.csv`;
+      const r = await ch().request(
+        { kind: "raw", line: `yxdbtotxtall\n${name}` },
+        untilWrote,
+        600_000,
+      );
+      const err = replyError(r);
+      if (err) return { error: err };
+      note(t("CSV: 엔진 폴더의 {name}", { name }));
+      return { savedTo: name };
+    } finally {
+      set({ busy: false });
+    }
+  };
+
   const persist = (s: DbSettings) => {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
@@ -270,6 +359,9 @@ export const useDbStore = create<DbState>((set, get) => {
     busy: false,
     view: null,
     log: [],
+    location: "browser",
+    enginePath: null,
+    engineSavedAt: null,
 
     setSettings: async (patch) => {
       const prev = get().settings;
@@ -303,13 +395,10 @@ export const useDbStore = create<DbState>((set, get) => {
       const e = useEngineStore.getState();
       if (e.status === "idle" || e.status === "error")
         return t("엔진이 떠 있지 않습니다. 엔진을 먼저 시작하세요");
-      // 데스크톱 Z3: 네이티브 · 원격 엔진은 DB 파일을 제 폴더에서 연다 — 웹 저장소의 DB 를 넣고 빼는 이 길이
-      // 맞지 않는다. 연동은 다음 단계(Z4)다. 그때까지 엔진 쪽 DB 를 열지도 않는다(`usedatabase` 를 안 보낸다).
-      if (e.engine.variant && isNativeVariant(e.engine.variant))
-        return t(
-          "네이티브 · 원격 엔진의 DB 연동은 아직 준비 중입니다. 엔진 폴더의 DB 는 건드리지 않습니다",
-        );
-      set({ status: "attaching", message: null });
+      // 데스크톱 Z4: 네이티브 · 원격 엔진은 DB 파일을 제 폴더(원격이면 서버)에서 연다. 넣고 뺄 바이트가 없다 —
+      // `usedatabase 1` 이 엔진 설정(`config.toml` `[database] url`)의 파일을 열고, 저장은 엔진이 그 파일에 쓴다.
+      if (engineOwnsFile()) return attachEngineFile();
+      set({ status: "attaching", message: null, location: "browser" });
       try {
         const row = await storedRow();
         const jrow = row ? await storedRow(JOURNAL_FILE) : null;
@@ -383,6 +472,13 @@ export const useDbStore = create<DbState>((set, get) => {
       set({ busy: true });
       try {
         const r = await engineFs(compact ? "compact" : "save", DB_FILE, undefined, knownBase);
+        if (r.ok && r.native) {
+          set({ engineSavedAt: Date.now(), dirty: false });
+          note(`${why}: ${get().enginePath ?? DB_FILE} (${t("엔진 폴더")})`);
+          return null;
+        }
+        if (get().location === "engine")
+          return r.error ?? t("엔진이 DB 저장을 마쳤다고 답하지 않았습니다");
         // 본 파일을 싣지 않은 답은 「우리가 가진 것과 같다」는 뜻이다 — 정체가 없으면 믿을 수 없다.
         if (!r.ok || (!r.bytes && !r.sig))
           return r.error ?? t("엔진이 DB 파일을 돌려주지 않았습니다");
@@ -476,6 +572,8 @@ export const useDbStore = create<DbState>((set, get) => {
 
     exportCsv: async () => {
       if (get().status !== "on") return { error: t("DB 가 붙어 있지 않습니다") };
+      // 엔진 폴더의 DB: 엔진이 CSV 를 제 폴더에 쓴다 — 메모리 FS 가 없어 꺼낼 수 없다. 자리를 알려 준다.
+      if (get().location === "engine") return exportCsvInEngineFolder();
       const claim = claimForWrite();
       if (claim) return { error: claim };
       set({ busy: true });
@@ -507,6 +605,7 @@ export const useDbStore = create<DbState>((set, get) => {
     },
 
     exportFile: async () => {
+      if (get().location === "engine" && get().status !== "off") return { error: engineFileNote() };
       // 붙어 있으면 지금 것을 먼저 저장 — 내려받는 파일이 엔진의 최신이어야 한다.
       // 저널이 있으면 접어서(`compact`) 본 파일 하나가 전부를 담게 한다.
       if (get().status === "on" && !get().settings.readonly) {
@@ -522,6 +621,7 @@ export const useDbStore = create<DbState>((set, get) => {
     },
 
     importFile: async (bytes) => {
+      if (get().location === "engine" && get().status !== "off") return engineFileNote();
       const d = db();
       if (!d) return t("이 브라우저는 저장소(IndexedDB)를 쓸 수 없습니다");
       const wasOn = get().status === "on";
@@ -546,6 +646,7 @@ export const useDbStore = create<DbState>((set, get) => {
     },
 
     clearFile: async () => {
+      if (get().location === "engine" && get().status !== "off") return engineFileNote();
       const wasOn = get().status === "on";
       if (wasOn) {
         const claim = claimForWrite();
@@ -614,7 +715,14 @@ export function wireDatabase(): void {
   void useDbStore.getState().loadStored();
   onEngineBooted(() => {
     // 새 엔진의 메모리 FS 는 비어 있다 — 앞 엔진에 붙어 있던 DB 는 이미 없다.
-    useDbStore.setState({ status: "off", view: null });
+    // 네이티브 · 원격이면 DB 는 엔진 폴더의 파일이다(데스크톱 Z4).
+    useDbStore.setState({
+      status: "off",
+      view: null,
+      location: engineOwnsFile() ? "engine" : "browser",
+      enginePath: null,
+      engineSavedAt: null,
+    });
     channel?.resetPairing();
     if (useDbStore.getState().settings.enabled) void useDbStore.getState().attach();
   });
@@ -623,7 +731,7 @@ export function wireDatabase(): void {
   setInterval(() => {
     const s = useDbStore.getState();
     if (s.status !== "on" || !s.settings.autoSave || s.settings.readonly || s.busy) return;
-    const last = s.stored?.savedAt ?? 0;
+    const last = (s.location === "engine" ? s.engineSavedAt : s.stored?.savedAt) ?? 0;
     if (Date.now() - last < s.settings.autoSaveMinutes * 60_000) return;
     if (!idle()) return;
     void s.save(t("자동 저장"));
@@ -639,7 +747,14 @@ export function wireDatabase(): void {
 /** 시험 전용 — 길을 갈아 끼운다. */
 export function setDbPortForTest(p: DbPort | null): void {
   channel?.close();
-  channel = p ? new DbChannel(p, DEFAULT_SIZE, (r, c) => coord.fromWire(r, c)) : null;
+  channel = p
+    ? new DbChannel(
+        p,
+        DEFAULT_SIZE,
+        (r, c) => coord.fromWire(r, c),
+        (l) => lineHook?.(l),
+      )
+    : null;
   useDbStore.setState({
     settings: DEFAULT_DB_SETTINGS,
     status: "off",
@@ -649,6 +764,9 @@ export function setDbPortForTest(p: DbPort | null): void {
     busy: false,
     view: null,
     log: [],
+    location: "browser",
+    enginePath: null,
+    engineSavedAt: null,
   });
 }
 
@@ -676,6 +794,8 @@ if (typeof window !== "undefined") {
       comment: snap?.comment ?? null,
       entry: snap?.entry ?? null,
       log: s.log,
+      location: s.location,
+      enginePath: s.enginePath,
     };
   };
 }

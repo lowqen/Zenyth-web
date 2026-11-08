@@ -66,6 +66,9 @@ export function DatabaseScreen() {
   const stones = board.stones;
   const on = s.status === "on";
   const ro = s.settings.readonly;
+  /** 데스크톱 Z4: 네이티브 · 원격 엔진의 DB 는 엔진 폴더의 진짜 파일이다 — 웹 저장소 파일 동작은 잠근다. */
+  const inEngine = s.location === "engine";
+  const fileLocked = inEngine && s.status !== "off";
   const tell = (msg: string | null, ok?: string) => setNotice(msg ?? ok ?? null);
 
   useEffect(() => {
@@ -229,10 +232,21 @@ export function DatabaseScreen() {
           </Disclosure>
         </div>
         <p className="panel__hint tnum" data-k="db-stored">
-          {t("저장된 파일:")}{" "}
-          {s.stored
-            ? `${DB_FILE} ${fmtSize(s.stored.size)} · ${new Date(s.stored.savedAt).toLocaleString()}`
-            : t("없음(붙이면 빈 DB 로 시작)")}
+          {inEngine ? (
+            <>
+              {t("엔진 폴더의 DB:")} {s.enginePath ?? DB_FILE}
+              {s.engineSavedAt
+                ? ` · ${t("마지막 저장")} ${new Date(s.engineSavedAt).toLocaleTimeString()}`
+                : ""}
+            </>
+          ) : (
+            <>
+              {t("저장된 파일:")}{" "}
+              {s.stored
+                ? `${DB_FILE} ${fmtSize(s.stored.size)} · ${new Date(s.stored.savedAt).toLocaleString()}`
+                : t("없음(붙이면 빈 DB 로 시작)")}
+            </>
+          )}
           {on && s.dirty && !ro ? ` · ${t("저장 안 된 변경 있음")}` : ""}
         </p>
         <div className="panel__actions">
@@ -546,13 +560,24 @@ export function DatabaseScreen() {
         >
           {t("파일")}
         </h2>
+        {fileLocked && (
+          <p className="panel__hint">
+            {t(
+              "엔진 폴더의 DB 를 쓰는 중이라 웹 저장소 파일 동작(올리기 · 내려받기 · 지우기)은 잠겼습니다. 백업은 엔진 폴더의 파일을 복사하세요.",
+            )}
+          </p>
+        )}
         <div className="panel__actions">
-          <button type="button" disabled={s.busy} onClick={() => fileInput.current?.click()}>
+          <button
+            type="button"
+            disabled={s.busy || fileLocked}
+            onClick={() => fileInput.current?.click()}
+          >
             {t(".db 올리기")}
           </button>
           <button
             type="button"
-            disabled={s.busy || (!s.stored && !on)}
+            disabled={s.busy || fileLocked || (!s.stored && !on)}
             onClick={() =>
               void s.exportFile().then((r) => {
                 if ("error" in r) tell(r.error);
@@ -568,6 +593,8 @@ export function DatabaseScreen() {
             onClick={() =>
               void s.exportCsv().then((r) => {
                 if ("error" in r) tell(r.error);
+                else if ("savedTo" in r)
+                  tell(null, t("엔진 폴더에 {name} 로 썼습니다", { name: r.savedTo }));
                 else downloadBlob(`rapfi-${stamp()}.csv`, r.bytes, "text/csv");
               })
             }
@@ -577,7 +604,7 @@ export function DatabaseScreen() {
           <button
             type="button"
             className="btn--danger"
-            disabled={s.busy || (!s.stored && !on)}
+            disabled={s.busy || fileLocked || (!s.stored && !on)}
             onClick={() =>
               setConfirm({
                 text: t(

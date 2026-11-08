@@ -372,6 +372,8 @@ export interface FsResult {
   journal?: Uint8Array;
   /** 저널 파일이 없다. */
   journalGone?: boolean;
+  /** 네이티브 · 원격 엔진이 제 폴더의 파일에 저장했다 — 바이트 없음(데스크톱 Z4). */
+  native?: boolean;
 }
 
 export interface EngineOptions extends EngineEvents {
@@ -746,6 +748,7 @@ export class EngineClient {
           if (m.sig) r.sig = m.sig;
           if (m.journal) r.journal = m.journal;
           if (m.journalGone) r.journalGone = true;
+          if (m.native) r.native = true;
           p?.(r);
           break;
         }
