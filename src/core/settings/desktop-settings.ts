@@ -172,6 +172,45 @@ export const render = (values: DesktopValues, file: SettingsFile): string =>
     .map((s) => renderLine(s, values))
     .join("\n") + "\n";
 
+/** `writeValue` 가 원본 줄을 읽지 못했음을 알아보는 표지 — 읽지 못하면 «지금 값»을 그대로 돌려준다. */
+const UNREAD = "\u0000unread" as DesktopValue;
+
+/**
+ * 디스크의 파일 위에 다시 쓸 전문(데스크톱 Z4 — 파일을 직접 읽고 쓴다).
+ *
+ * `render` 와 같은 줄을 내되 **원본을 최대한 그대로 둔다**:
+ *   - 읽히는 값이 지금 값과 같은 줄은 원본 글자 그대로(주석 · 공백 · 사람이 고친 흔적까지) — 바뀐 칸만
+ *     다시 쓴다. 그래서 아무것도 바꾸지 않으면 바이트까지 같은 파일이 나온다.
+ *   - 표보다 긴 원본의 뒷줄은 그대로 잇는다 — 더 새로운 Yixin.exe 가 **끝에** 더한 줄이다(핸드북 규칙 4).
+ *   - 줄 끝(CRLF · LF) · BOM 은 원본을 따른다. 원본이 없으면 메모장을 위해 CRLF.
+ *   - 원본이 표보다 짧으면 모자란 줄을 값으로 채운다(데스크톱이 다음에 쓸 때와 같은 모양).
+ */
+export function renderOver(
+  original: string | null,
+  values: DesktopValues,
+  file: SettingsFile,
+): string {
+  if (original === null) return render(values, file).replace(/\n/g, "\r\n");
+  const bom = original.startsWith("﻿") ? "﻿" : "";
+  const body = bom ? original.slice(1) : original;
+  const eol = /\r\n/.test(body) || !/\n/.test(body) ? "\r\n" : "\n";
+  const lines = body.split(/\r?\n/);
+  const endsWithEol = lines.length > 1 && lines[lines.length - 1] === "";
+  if (endsWithEol) lines.pop();
+  const specs = specsOf(file);
+  const out = specs.map((spec, i) => {
+    const raw = lines[i];
+    if (raw !== undefined && raw.trim() !== "") {
+      const read = writeValue(spec, UNREAD, valueOf(raw));
+      if (read !== UNREAD && read === (values[spec.id] ?? spec.def)) return raw;
+    }
+    return renderLine(spec, values);
+  });
+  out.push(...lines.slice(specs.length));
+  const grew = specs.length > lines.length;
+  return bom + out.join(eol) + (endsWithEol || grew ? eol : "");
+}
+
 const toInt = (raw: string): number | null =>
   /^[+-]?\d+$/.test(raw.trim()) ? Number(raw.trim()) : null;
 
@@ -213,7 +252,7 @@ export function parse(
   file: SettingsFile,
   base: DesktopValues = DESKTOP_DEFAULTS,
 ): DesktopValues {
-  const lines = text.replace(/^FEFF/, "").split(/\r?\n/);
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
   const out: Record<string, DesktopValue> = { ...base };
   specsOf(file).forEach((spec, i) => {
     const raw = lines[i];
@@ -231,7 +270,7 @@ export function detectFile(name: string, text: string): SettingsFile | null {
   const n = name.toLowerCase();
   if (n.includes("settings_dev")) return "dev";
   if (n.includes("settings")) return "main";
-  const first = text.replace(/^FEFF/, "").split(/\r?\n/, 1)[0] ?? "";
+  const first = text.replace(/^\uFEFF/, "").split(/\r?\n/, 1)[0] ?? "";
   if (first.includes(MAIN_SPECS[0]!.comment)) return "main";
   if (first.includes(DEV_SPECS[0]!.comment)) return "dev";
   return null;

@@ -20,6 +20,7 @@ import {
 import { NumberField, Segmented, Switch } from "../../components/controls";
 import { EngineChoiceControl, ThreadControl } from "./engineControls";
 import { exportDesktopFiles, importDesktopFiles } from "./desktopBridge";
+import { useSettingsFile } from "./settingsFileSync";
 import { AboutPanel } from "./AboutPanel";
 import { useAdminTools } from "../joseki/admin";
 import { MAPPED_IDS } from "../../core/settings/desktop-bridge";
@@ -322,6 +323,7 @@ function DesktopFileControl() {
   const [result, setResult] = useState<string | null>(null);
   return (
     <div className="desktopfile">
+      <SettingsFileSync />
       <div className="actions">
         <button type="button" className="btn" onClick={() => input.current?.click()}>
           {t("가져오기")}
@@ -358,6 +360,71 @@ function DesktopFileControl() {
         <p className="desktopfile__result" role="status" data-k="desktop-settings-result">
           {result}
         </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 데스크톱 Z4 — 폴더의 settings.txt · settings_dev.txt 를 직접 읽고 쓴다(`settingsFileSync.ts`).
+ * 데스크톱 셸 안에서만 보인다. 가져오기 · 내보내기는 그대로 남는다(다른 폴더의 파일을 한 번 옮길 때).
+ */
+function SettingsFileSync() {
+  const f = useSettingsFile();
+  const [draft, setDraft] = useState<string | null>(null);
+  if (!f.available) return null;
+  const commit = () => {
+    if (draft !== null) void f.setDir(draft);
+    setDraft(null);
+  };
+  return (
+    <div className="desktopfile__sync" data-k="settings-file-sync">
+      <div className="review__row">
+        <span className="review__label">{t("폴더의 파일과 직접 맞추기")}</span>
+        <Switch
+          label={t("폴더의 파일과 직접 맞추기")}
+          on={f.enabled}
+          onChange={(on) => void f.setEnabled(on)}
+        />
+      </div>
+      {f.enabled && (
+        <>
+          <span className="field field--wide">
+            <label htmlFor="settings-file-dir" className="field__label">
+              {t("설정 파일 폴더")}
+            </label>
+            <span className="field__box">
+              <input
+                id="settings-file-dir"
+                className="field__input field__input--text"
+                value={draft ?? f.dir}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder={t("비우면 앱 폴더")}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={commit}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commit();
+                  if (e.key === "Escape") setDraft(null);
+                }}
+              />
+            </span>
+          </span>
+          <p className="panel__hint tnum">
+            {f.resolvedDir ?? "…"}
+            {f.status ? ` · ${f.status}` : ""}
+          </p>
+          {f.error && (
+            <p className="desktopfile__result" role="alert">
+              {f.error}
+            </p>
+          )}
+          <div className="actions">
+            <button type="button" className="btn" onClick={() => void f.reload()}>
+              {t("파일에서 다시 읽기")}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

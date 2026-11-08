@@ -10,6 +10,10 @@ import { useBoardNotice } from "../../features/board/boardNotice";
 import { useSettingsStore } from "../../features/settings/settingsStore";
 import { GAME_FILE_ACCEPT } from "../../core/model/game-file";
 import { t } from "../../i18n/i18n";
+import {
+  startSettingsFileSync,
+  type SettingsFiles,
+} from "../../features/settings/settingsFileSync";
 
 /**
  * 웹 ↔ Tauri 셸 연결(데스크톱 Z2). `main.tsx` 가 `IS_DESKTOP` 일 때만 동적 import 로 부른다 —
@@ -44,6 +48,12 @@ export async function startDesktop(): Promise<void> {
   requestAnimationFrame(() => requestAnimationFrame(() => void win.show()));
 
   // 파일 연결: 첫 실행의 파일은 가져오고, 이미 떠 있을 때 더블클릭한 파일은 이벤트로 받는다.
+  // settings.txt · settings_dev.txt 직접 읽기 · 쓰기(데스크톱 Z4) — 셸 짝은 settings.rs.
+  void startSettingsFileSync({
+    read: (dir) => invoke<SettingsFiles>("settings_read", { dir }),
+    write: (dir, main, dev) => invoke<void>("settings_write", { dir, main, dev }),
+  });
+
   await openAll(await invoke<OpenFileMsg[]>("take_open_files"));
   await listen<OpenFileMsg[]>(OPEN_FILES_EVENT, (e) => void openAll(e.payload));
 }

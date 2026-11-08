@@ -6,12 +6,14 @@
 //! - 파일 연결(.psq · .sav · .pos): 명령줄로 받은 파일을 읽어 웹에 넘긴다. 해석은 웹의 `openGameFile` 한 곳이다.
 //!
 //! - 네이티브 엔진(데스크톱 Z3): 로컬 Rapfi 프로세스 · 원격 TCP 세션 — `engine.rs`.
+//! - settings.txt · settings_dev.txt 직접 읽기 · 쓰기(데스크톱 Z4) — `settings.rs`.
 //!
 //! 타이틀바 · 단축키는 웹 쪽(`src/app/desktop/`)에 있다.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod engine;
+mod settings;
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -96,7 +98,9 @@ fn main() {
             take_open_files,
             engine::engine_open,
             engine::engine_write,
-            engine::engine_close
+            engine::engine_close,
+            settings::settings_read,
+            settings::settings_write
         ])
         .setup(|app| {
             let cwd = std::env::current_dir().unwrap_or_default();

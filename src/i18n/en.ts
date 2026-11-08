@@ -1393,4 +1393,14 @@ export const EN: Readonly<Record<string, string>> = {
   "네이티브 Rapfi (이 컴퓨터)": "Native Rapfi (this computer)",
   "원격 서버 (TCP)": "Remote server (TCP)",
   "엔진이 직접 읽음": "Read by the engine itself",
+  "파일이 없습니다. 설정을 바꾸면 새로 만듭니다":
+    "No files yet. They will be created when you change a setting",
+  "읽음 {time}": "Read {time}",
+  "설정 파일을 읽지 못했습니다: {why}": "Could not read the settings files: {why}",
+  "저장함 {time}": "Saved {time}",
+  "설정 파일에 쓰지 못했습니다: {why}": "Could not write the settings files: {why}",
+  "폴더의 파일과 직접 맞추기": "Sync directly with the files in a folder",
+  "설정 파일 폴더": "Settings folder",
+  "비우면 앱 폴더": "Leave empty for the app folder",
+  "파일에서 다시 읽기": "Reload from files",
 };

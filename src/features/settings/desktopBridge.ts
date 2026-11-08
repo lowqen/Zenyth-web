@@ -28,7 +28,7 @@ import { t } from "../../i18n/i18n";
 
 const BASE_KEY = "rapfi.desktop";
 
-function loadBase(): DesktopValues {
+export function loadDesktopBase(): DesktopValues {
   try {
     const raw = localStorage.getItem(BASE_KEY);
     return raw ? { ...DESKTOP_DEFAULTS, ...(JSON.parse(raw) as DesktopValues) } : DESKTOP_DEFAULTS;
@@ -37,7 +37,7 @@ function loadBase(): DesktopValues {
   }
 }
 
-function saveBase(v: DesktopValues) {
+export function saveDesktopBase(v: DesktopValues) {
   try {
     localStorage.setItem(BASE_KEY, JSON.stringify(v));
   } catch {
@@ -136,7 +136,7 @@ export interface ImportResult {
 
 /** 파일 하나 이상(보통 settings.txt + settings_dev.txt)을 가져온다. */
 export async function importDesktopFiles(files: readonly File[]): Promise<ImportResult> {
-  let values = loadBase();
+  let values = loadDesktopBase();
   const seen: ImportResult["files"] = [];
   for (const f of files) {
     const text = await f.text();
@@ -145,7 +145,7 @@ export async function importDesktopFiles(files: readonly File[]): Promise<Import
     if (which) values = parse(text, which, values);
   }
   if (!seen.some((s) => s.file)) return { files: seen, notes: [t("settings.txt 형식이 아닙니다")] };
-  saveBase(values);
+  saveDesktopBase(values);
   const { web, notes } = webFromDesktop(values, readWeb());
   notes.push(...(await applyWeb(web)));
   return { files: seen, notes };
@@ -153,8 +153,8 @@ export async function importDesktopFiles(files: readonly File[]): Promise<Import
 
 /** 지금 값을 두 파일로 — 웹이 모르는 칸은 마지막으로 가져온 값(없으면 데스크톱 기본값). */
 export function exportDesktopFiles(): void {
-  const values = overlayWeb(loadBase(), readWeb());
-  saveBase(values);
+  const values = overlayWeb(loadDesktopBase(), readWeb());
+  saveDesktopBase(values);
   // 데스크톱은 CRLF 도 LF 도 읽는다. 메모장에서 열 사람을 위해 CRLF 로 낸다.
   for (const f of ["main", "dev"] as const)
     downloadBlob(FILE_NAME[f], render(values, f).replace(/\n/g, "\r\n"), "text/plain");

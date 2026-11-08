@@ -7,6 +7,7 @@ import {
   detectFile,
   parse,
   render,
+  renderOver,
   specOf,
   writeValue,
   type DesktopValues,
@@ -186,7 +187,7 @@ describe("배포 파일 왕복", () => {
   });
 
   it("CRLF · BOM 도 읽는다", () => {
-    expect(parse("FEFF12\t;board size\r\n1\t;language\r\n", "main").boardSize).toBe(12);
+    expect(parse("\uFEFF12\t;board size\r\n1\t;language\r\n", "main").boardSize).toBe(12);
   });
 
   it("범위 밖은 묶고, 없는 선택지와 쓰레기는 지금 값을 둔다", () => {
@@ -216,5 +217,48 @@ describe("파일 알아보기", () => {
     expect(detectFile("내 설정.txt", MAIN_TEXT)).toBe("main");
     expect(detectFile("x.txt", DEV_TEXT)).toBe("dev");
     expect(detectFile("x.txt", "hello")).toBeNull();
+  });
+});
+
+describe("디스크 위에 다시 쓰기(데스크톱 Z4)", () => {
+  const crlf = (t: string) => t.replace(/\n/g, "\r\n");
+  const both = (main: string, dev: string) => parse(dev, "dev", parse(main, "main"));
+
+  it("값을 바꾸지 않으면 배포 파일이 바이트까지 같다(CRLF 그대로)", () => {
+    const main = crlf(MAIN_TEXT);
+    const dev = crlf(DEV_TEXT);
+    const v = both(main, dev);
+    expect(renderOver(main, v, "main")).toBe(main);
+    expect(renderOver(dev, v, "dev")).toBe(dev);
+  });
+
+  it("바뀐 칸의 줄만 다시 쓴다 — 사람이 손본 다른 줄은 그대로", () => {
+    const hand = MAIN_TEXT.replace("15\t;board size (10 ~ 22)", "15   ;board size, edited by hand");
+    const v = { ...parse(hand, "main"), hashSizeMb: 2048 };
+    const out = renderOver(hand, v, "main").split("\n");
+    const before = hand.split("\n");
+    expect(out[0]).toBe("15   ;board size, edited by hand");
+    expect(out.flatMap((l, i) => (l !== before[i] ? [i + 1] : []))).toEqual([19]);
+    expect(out[18]).toBe("2048\t;hash size (MB)");
+  });
+
+  it("표보다 긴 원본의 뒷줄(더 새로운 Yixin 이 끝에 더한 줄)을 지킨다", () => {
+    const longer = MAIN_TEXT + "7\t;a future option\n";
+    const out = renderOver(longer, { ...parse(longer, "main"), boardSize: 20 }, "main");
+    expect(out.split("\n")).toHaveLength(MAIN_LINES.length + 2);
+    expect(out.endsWith("7\t;a future option\n")).toBe(true);
+    expect(out.startsWith("20\t;board size")).toBe(true);
+  });
+
+  it("BOM 을 지키고, 짧은 원본은 모자란 줄을 채운다", () => {
+    const short = "﻿" + MAIN_LINES.slice(0, 3).join("\r\n");
+    const out = renderOver(short, parse(short, "main"), "main");
+    expect(out.startsWith("﻿15\t;board size")).toBe(true);
+    expect(out.split("\r\n")).toHaveLength(MAIN_LINES.length + 1);
+    expect(parse(out, "main")).toEqual(parse(short, "main"));
+  });
+
+  it("원본이 없으면 메모장용 CRLF 전문", () => {
+    expect(renderOver(null, DESKTOP_DEFAULTS, "dev")).toBe(crlf(DEV_TEXT));
   });
 });

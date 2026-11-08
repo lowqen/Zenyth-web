@@ -139,6 +139,26 @@ export function overlayWeb(base: DesktopValues, w: WebSettings): DesktopValues {
   return out;
 }
 
+/**
+ * 웹에서 **바뀐 칸만** `base` 위에 얹는다(데스크톱 Z4 — 파일 직접 쓰기).
+ *
+ * `overlayWeb` 는 웹이 뜻을 가진 칸을 모두 웹 값으로 덮는다. 파일에서 읽은 값이 웹으로 오며 깎이거나
+ * 묶인 칸이 있으면, 사용자가 다른 칸 하나를 고쳤을 뿐인데 그 칸까지 파일에서 바뀐다. 그래서
+ * `before`(마지막으로 파일과 맞춘 웹 값)와 `after`(지금 웹 값)를 각각 얹어 보고, 결과가 달라진
+ * 데스크톱 칸만 옮긴다.
+ */
+export function overlayChanged(
+  base: DesktopValues,
+  before: WebSettings,
+  after: WebSettings,
+): DesktopValues {
+  const was = overlayWeb(base, before);
+  const now = overlayWeb(base, after);
+  const out: Record<string, number | boolean | string> = { ...base };
+  for (const id of Object.keys(now)) if (now[id] !== was[id]) out[id] = now[id]!;
+  return out;
+}
+
 /** 가져오기가 웹에 할 일 — 바꿀 값과 사람이 읽을 메모. */
 export interface WebPatch {
   web: WebSettings;
