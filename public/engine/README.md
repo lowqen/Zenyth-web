@@ -1,6 +1,11 @@
 # public/engine/
 
-Rapfi WebAssembly 산출물 — **네 변형**이 같은 빌드(릴리스 `engine-3c94c2a9-a5`)에서 나온다.
+Rapfi WebAssembly 산출물 — **네 변형**이 같은 빌드(릴리스 `engine-3c94c2a9-a6`)에서 나온다.
+
+`a6` 은 `a5` 에 DB 패치 둘을 얹었다(탐색 불변, 가중치 · Emscripten 6.0.13 그대로 — docs/engineering-notes.md §10).
+`tools/patches/db5-compact-record-table.patch` 는 yixindb 기록을 메모리에서 압축 기록 표로 들고(적재 · 메모리 약 1/3),
+`db6-differential-save-journal.patch` 는 렌주 설정의 `journal = true` 로 바뀐 기록만 `rapfi.db.journal` 에 덧붙인다 —
+워커는 본 파일이 그대로면 저널만 IndexedDB 로 옮긴다(A7, `src/features/database/dbStore.ts`). `.data` 가 a5 와 다른 건 이 설정 한 줄 때문.
 
 `a5` 는 `a4` 에 DB 저장 패치 셋을 얹었다(탐색 불변, 가중치 · Emscripten 6.0.13 그대로 — docs/engineering-notes.md §9).
 `tools/patches/db1-atomic-nonblocking-save.patch` 는 yixindb 저장을 `<path>.tmp` 에 쓴 뒤 rename 으로 바꿔 넣고
