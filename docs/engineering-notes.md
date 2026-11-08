@@ -352,7 +352,7 @@ gomoku-dev `test-yixin/docs/DB_IO_개선_계획.md`.
 - **엔진 CI.** engine-patch 로 웹 사슬 + db5 · db6 을 빌드했다(Emscripten 6.0.13 고정이 필요해 PR #40 을 합친 임시 브랜치에서).
   렌주 비트 대조(STRICT)에서 국면 하나(vct +M21 ↔ +M19, 같은 쪽 필승)가 다르다 — **db5 · db6 을 뺀 a5 사슬로 돌려도 똑같이 다르므로**
   이 둘과 무관하다. 릴리스 워크플로의 렌주 게이트는 STRICT 가 아니어서(같은 쪽 필승이면 경고) 이 차이는 경고로만 남는다. `.data` 가 다른 것은 렌주 설정에 `journal = true` 를 넣었기 때문.
-- **배포는 아직.** `engine-release.yml` 에 db5 · db6 을 붙인 릴리스(a6)가 필요하다. 그 전에는 저널이 생기지 않아 클라이언트 동작이 같다.
+- **배포 — 릴리스 `engine-3c94c2a9-a6`**(실행 42428362846, 게이트 전부 통과 · relaxed 렌주 비트 동일 5/5 · BENCH e240ab16). `engine-release.yml` 의 `RAPFI_PATCHES` 끝에 db5 · db6 을 붙이고 `public/engine/` · 매니페스트 · web.yml · deploy.yml 의 `ENGINE_TAG` 를 옮겼다. 가중치 · Emscripten 6.0.13 은 a5 그대로, `.data` 만 `journal = true` 한 줄로 15B 커졌다.
 
 **3단계 — RYDB PoC** (`bench/dbio/rydb-poc.mjs`). 국면 트리를 DFS 로 적고 64KB zstd 블록으로 묶는다. 자식은 「부모 + 수」, 수는
 부모의 **전파된 좌표계**로 적어 읽을 때 정규화가 없다. 색인 키는 8변환 Zobrist 의 최솟값.

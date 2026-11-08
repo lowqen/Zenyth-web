@@ -22,7 +22,7 @@ on:
     inputs:
       tag:
         description: "릴리스 태그"
-        default: "engine-3c94c2a9-a5"
+        default: "engine-3c94c2a9-a6"
         type: string
       runner:
         description: "러너 — ubuntu-latest(기본, GitHub 호스트) 또는 self-hosted"
@@ -71,7 +71,10 @@ jobs:
       # 막지 않게(저장 중 명령 지연 15.8s → 21ms, 8.17M 국면 표본). DB2 는 USEDATABASE 1 이 붙은 DB 를 다시 읽지
       # 않게. DB4(백그라운드 저장)는 Emscripten 에서 꺼진다(#ifdef) — 웹 저장은 워커 요청 줄이 분석을 비켜 세운 뒤
       # 동기로 돈다. DB3(빠른 LZ4)는 파일이 79 → 110MB 로 커져 채택하지 않았다.
-      RAPFI_PATCHES: "tools/patches/p2-2-keep-evaluators-on-rebuild.patch tools/patches/a1-q15mulr.patch tools/patches/p4-1-periodic-node-stats.patch tools/patches/a3-starblock-multi.patch tools/patches/a4-policy-cache.patch tools/patches/w8-export-fs.patch tools/patches/db1-atomic-nonblocking-save.patch tools/patches/db2-usedatabase-guard.patch tools/patches/db4-async-save.patch"
+      # DB5 · DB6(탐색 불변, docs/engineering-notes.md §10): DB5 는 메모리 표현을 압축 기록 표로(8.17M 표본 적재 10.2 → 3.6s,
+      # 최대 메모리 1.39GB → 486MB, 저장 파일 바이트 · 질의 답 동일). DB6 은 config 의 journal = true 일 때 바뀐 기록만
+      # <db>.journal 에 덧붙인다(저장 14.6s → 31ms) — 저널이 본 파일의 25% 를 넘거나 YXCOMPACTDATABASE 로 합친다.
+      RAPFI_PATCHES: "tools/patches/p2-2-keep-evaluators-on-rebuild.patch tools/patches/a1-q15mulr.patch tools/patches/p4-1-periodic-node-stats.patch tools/patches/a3-starblock-multi.patch tools/patches/a4-policy-cache.patch tools/patches/w8-export-fs.patch tools/patches/db1-atomic-nonblocking-save.patch tools/patches/db2-usedatabase-guard.patch tools/patches/db4-async-save.patch tools/patches/db5-compact-record-table.patch tools/patches/db6-differential-save-journal.patch"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
