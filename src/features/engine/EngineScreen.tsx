@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useEngineStore } from "../../engine/engine-state";
+import { isNativeVariant } from "../../engine/engine-client";
 import { useSettingsStore } from "../settings/settingsStore";
 import { localized, msg, t } from "../../i18n/i18n";
 import { useProMode } from "../../app/proMode";
@@ -66,9 +67,11 @@ export function EngineScreen() {
           </dd>
           <dt>{t("가중치")}</dt>
           <dd className="tnum" data-k="weights">
-            {engine.weightsSource === null
-              ? t("없음")
-              : `${WEIGHTS_SOURCE[engine.weightsSource]} · ${engine.weightsMs ?? 0}ms`}
+            {engine.variant && isNativeVariant(engine.variant)
+              ? t("엔진이 직접 읽음")
+              : engine.weightsSource === null
+                ? t("없음")
+                : `${WEIGHTS_SOURCE[engine.weightsSource]} · ${engine.weightsMs ?? 0}ms`}
           </dd>
           <dt>{t("예열")}</dt>
           <dd className="tnum" data-k="warmup">

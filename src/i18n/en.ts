@@ -1382,4 +1382,5 @@ export const EN: Readonly<Record<string, string>> = {
   "원격 서버 Rapfi": "Remote server Rapfi",
   "네이티브 Rapfi (이 컴퓨터)": "Native Rapfi (this computer)",
   "원격 서버 (TCP)": "Remote server (TCP)",
+  "엔진이 직접 읽음": "Read by the engine itself",
 };

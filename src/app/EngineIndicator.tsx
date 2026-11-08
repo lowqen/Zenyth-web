@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { msg, t } from "../i18n/i18n";
 import { useEngineStore } from "../engine/engine-state";
 import type { BootPhase, EngineStatus } from "../engine/engine-types";
-import { isMultiVariant, isRelaxedVariant } from "../engine/engine-client";
+import { isMultiVariant, isNativeVariant, isRelaxedVariant } from "../engine/engine-client";
+import { VARIANT_LABEL } from "../features/settings/engineLabels";
 
 /**
  * 상단 바의 엔진 표시 — 지금 엔진이 어떤지 낱말 하나. 엔진 선택은 설정 ▸ 자주 쓰는 설정에 있다.
@@ -91,9 +92,11 @@ export function EngineIndicator() {
   const start = useEngineStore((s) => s.start);
   const bar = useBootBar(status === "starting");
 
-  const variant = engine.variant
-    ? `${isMultiVariant(engine.variant) ? t("멀티") : t("단일")}${isRelaxedVariant(engine.variant) ? " · relaxed" : ""}`
-    : null;
+  const variant = !engine.variant
+    ? null
+    : isNativeVariant(engine.variant)
+      ? VARIANT_LABEL[engine.variant]
+      : `${isMultiVariant(engine.variant) ? t("멀티") : t("단일")}${isRelaxedVariant(engine.variant) ? " · relaxed" : ""}`;
   // 화면 글은 상태 낱말과(기동 중이면) 단계까지만. 변형(멀티 · relaxed · 이름)은 툴팁 — 처음 온
   // 사람에게 «multi-simd128-relaxed» 는 읽을 거리가 아니라 소음이다.
   const detail = status === "starting" && phase ? t(PHASE_TEXT[phase]) : null;
