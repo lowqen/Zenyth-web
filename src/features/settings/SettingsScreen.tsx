@@ -22,6 +22,8 @@ import { EngineChoiceControl, ThreadControl } from "./engineControls";
 import { exportDesktopFiles, importDesktopFiles } from "./desktopBridge";
 import { useSettingsFile } from "./settingsFileSync";
 import { AboutPanel } from "./AboutPanel";
+import { IS_DESKTOP } from "../../app/desktop/platform";
+import { UserCommandsEditor } from "../../app/commands/UserCommandsEditor";
 import { useAdminTools } from "../joseki/admin";
 import { MAPPED_IDS } from "../../core/settings/desktop-bridge";
 import { ALL_SPECS } from "../../core/settings/desktop-settings";
@@ -646,6 +648,24 @@ const ROWS: readonly RowSpec[] = [
     wide: true,
     Control: DesktopFileControl,
   },
+  // 데스크톱 앱에서만 — 명령 팔레트 · 단축키가 데스크톱에만 있다(Z4).
+  ...(IS_DESKTOP
+    ? [
+        {
+          id: "userCommands",
+          page: "desktop",
+          group: msg("사용자 명령"),
+          label: msg("사용자 명령"),
+          note: msg(
+            "Yixin 사용자 툴바 · 단축키 자리. 명령 팔레트(Ctrl+K)와 묶은 단축키로 부릅니다. Yixin function 폴더의 txt 를 가져올 수 있습니다",
+          ),
+          keywords:
+            "user command 사용자 명령 툴바 toolbar hotkey 단축키 팔레트 palette yixin function 매크로 macro",
+          wide: true,
+          Control: UserCommandsEditor,
+        } satisfies RowSpec,
+      ]
+    : []),
   {
     id: "adminTools",
     page: "desktop",

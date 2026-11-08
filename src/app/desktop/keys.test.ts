@@ -11,13 +11,15 @@ const key = (k: string, mods: Partial<Omit<KeyLike, "key">> = {}): KeyLike => ({
 });
 
 describe("데스크톱 단축키 (데스크톱 Z2)", () => {
-  it("앱 동작 — 열기 · 저장 · 레일 · 전체 화면", () => {
+  it("앱 동작 — 열기 · 저장 · 레일 · 전체 화면 · 명령 팔레트", () => {
     expect(desktopAction(key("o", { ctrlKey: true }))).toEqual({ kind: "open" });
     expect(desktopAction(key("O", { ctrlKey: true }))).toEqual({ kind: "open" });
     expect(desktopAction(key("s", { ctrlKey: true }))).toEqual({ kind: "save" });
     expect(desktopAction(key("1", { ctrlKey: true }))).toEqual({ kind: "rail", index: 0 });
     expect(desktopAction(key("6", { ctrlKey: true }))).toEqual({ kind: "rail", index: 5 });
     expect(desktopAction(key("F11"))).toEqual({ kind: "fullscreen" });
+    expect(desktopAction(key("k", { ctrlKey: true }))).toEqual({ kind: "palette" });
+    expect(desktopAction(key("P", { ctrlKey: true, shiftKey: true }))).toEqual({ kind: "palette" });
   });
 
   it("브라우저 단축키는 막는다 — 새로 읽기 · 인쇄 · 소스 · 내려받기 · 개발자 도구", () => {

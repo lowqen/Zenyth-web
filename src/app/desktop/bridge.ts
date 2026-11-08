@@ -6,9 +6,12 @@ import { RAIL } from "../destinations";
 import { useThemeStore, type ThemeMode } from "../theme";
 import { desktopAction, isWindows11 } from "./keys";
 import { openGameFile, saveGameFile } from "../../features/board/gameFileActions";
+import { pickAndOpenGame } from "../commands/registry";
+import { usePalette } from "../commands/palette";
+import { runUserCommand, useUserCommands } from "../commands/userCommands";
+import { hotkeyName } from "../commands/commandText";
 import { useBoardNotice } from "../../features/board/boardNotice";
 import { useSettingsStore } from "../../features/settings/settingsStore";
-import { GAME_FILE_ACCEPT } from "../../core/model/game-file";
 import { t } from "../../i18n/i18n";
 import {
   startSettingsFileSync,
@@ -69,20 +72,14 @@ async function openOne(file: File): Promise<void> {
   useBoardNotice.getState().show(r.text);
 }
 
-function pickAndOpen(): void {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = GAME_FILE_ACCEPT;
-  input.addEventListener("change", () => {
-    const file = input.files?.[0];
-    if (file) void openOne(file);
-  });
-  input.click();
-}
-
 async function onKey(e: KeyboardEvent): Promise<void> {
+  // 사용자 명령의 단축키를 받아 적는 중이면 그 칸이 키를 받는다 — 브라우저 기본 동작(새로 읽기 등)만 막는다.
+  if (e.target instanceof Element && e.target.closest("[data-hotkey-capture]")) {
+    if (desktopAction(e) || hotkeyName(e)) e.preventDefault();
+    return;
+  }
   const action = desktopAction(e);
-  if (!action) return;
+  if (!action) return onUserHotkey(e);
   e.preventDefault();
   e.stopPropagation();
   if (e.repeat) return;
@@ -90,7 +87,9 @@ async function onKey(e: KeyboardEvent): Promise<void> {
     case "block":
       return;
     case "open":
-      return pickAndOpen();
+      return pickAndOpenGame();
+    case "palette":
+      return usePalette.getState().setOpen(!usePalette.getState().open);
     case "save": {
       const name = await saveGameFile("psq");
       if (name) useBoardNotice.getState().show(`${t("저장했습니다")}: ${name}`);
@@ -109,6 +108,19 @@ async function onKey(e: KeyboardEvent): Promise<void> {
       return;
     }
   }
+}
+
+/** 사용자 명령에 묶은 단축키(Z4) — 앱 단축키(`desktopAction`)가 먼저다. */
+async function onUserHotkey(e: KeyboardEvent): Promise<void> {
+  const name = hotkeyName(e);
+  if (!name) return;
+  const cmd = useUserCommands.getState().list.find((c) => c.hotkey === name);
+  if (!cmd) return;
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.repeat) return;
+  const why = await runUserCommand(cmd);
+  if (why) useBoardNotice.getState().show(why);
 }
 
 /** 브라우저의 오른쪽 클릭 메뉴(뒤로 · 새로 고침 · 인쇄)는 앱에 맞지 않는다 — 글을 고르거나 쓰는 곳만 남긴다. */

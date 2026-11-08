@@ -14,6 +14,7 @@ import { CopySheetHost } from "../components/CopySheet";
 import { prefetchScreens } from "./screens";
 import { IS_DESKTOP } from "./desktop/platform";
 import { TitleBar } from "./desktop/TitleBar";
+import { CommandPalette } from "./commands/CommandPalette";
 
 /** 첫 화면이 그려지고 이만큼 지나 한가할 때 나머지 화면 조각을 받는다(screens.ts). */
 const PREFETCH_DELAY_MS = 1500;
@@ -76,6 +77,8 @@ export function AppShell() {
         <RifImportLayer />
         {/* Z6: 클립보드를 못 쓸 때 링크 · 국면 문자열을 보여 주는 시트(앱 ZenythSheet). */}
         <CopySheetHost />
+        {/* Z4: 명령 팔레트(Ctrl+K) — 데스크톱만. */}
+        {IS_DESKTOP && <CommandPalette />}
       </div>
     </>
   );

@@ -19,11 +19,13 @@ export type DesktopAction =
   | { kind: "save" }
   | { kind: "rail"; index: number }
   | { kind: "fullscreen" }
+  | { kind: "palette" }
   | { kind: "block" };
 
 /**
  * 키 하나를 데스크톱 동작으로. `null` 이면 웹이 하던 대로 둔다(판 화면의 ← → 같은 키).
  *  - Ctrl+O 기보 열기 · Ctrl+S 기보 저장(.psq) · Ctrl+1…9 레일 n번째 · F11 전체 화면
+ *  - Ctrl+K · Ctrl+Shift+P 명령 팔레트(Z4)
  *  - 막는 것: F5 · Ctrl+R · Ctrl+Shift+R(새로 읽기), Ctrl+P(인쇄), Ctrl+U(소스), Ctrl+J(내려받기 목록),
  *    Ctrl+Shift+I · Ctrl+Shift+J · F12(개발자 도구 — 배포판에는 원래 없지만 키가 먹는 것처럼 보이지 않게)
  */
@@ -36,7 +38,11 @@ export function desktopAction(e: KeyLike): DesktopAction | null {
     return null;
   }
   if (!e.ctrlKey || e.altKey) return null;
-  if (e.shiftKey) return k === "r" || k === "i" || k === "j" ? { kind: "block" } : null;
+  if (e.shiftKey) {
+    if (k === "p") return { kind: "palette" };
+    return k === "r" || k === "i" || k === "j" ? { kind: "block" } : null;
+  }
+  if (k === "k") return { kind: "palette" };
   if (k === "o") return { kind: "open" };
   if (k === "s") return { kind: "save" };
   if (/^[1-9]$/.test(k)) return { kind: "rail", index: Number(k) - 1 };

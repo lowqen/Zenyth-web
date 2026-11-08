@@ -3425,6 +3425,137 @@ button.theory__row:hover {
   white-space: pre-line;
 }
 
+/* ── 설정 ▸ 사용자 명령 (데스크톱 Z4) ─────────────────────────────── */
+.usercmds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+.usercmd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-m);
+  border: 1px solid var(--c-outline-variant);
+  border-radius: var(--radius-m);
+}
+.usercmd__legend {
+  padding: 0 var(--space-xs);
+  font: var(--type-label-large);
+}
+.usercmd__field {
+  display: grid;
+  grid-template-columns: 6ch minmax(0, 1fr);
+  gap: var(--space-s);
+  align-items: start;
+  font: var(--type-body-medium);
+}
+.usercmd__field input,
+.usercmd__field textarea {
+  min-width: 0;
+  padding: var(--space-xs) var(--space-s);
+  color: var(--c-on-surface);
+  background: var(--c-surface-container-lowest);
+  border: 1px solid var(--c-outline-variant);
+  border-radius: var(--radius-xs);
+}
+.usercmd__field textarea {
+  font: var(--type-mono);
+  resize: vertical;
+}
+.usercmd__bar,
+.usercmd__hotkey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  align-items: center;
+}
+.usercmd__bar {
+  gap: var(--space-m);
+}
+.usercmd__hotkey .btn[aria-pressed="true"] {
+  outline: 2px solid var(--c-primary);
+}
+.usercmd__warn {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--c-error);
+}
+
+/* ── 명령 팔레트 (데스크톱 Z4) ───────────────────────────────────── */
+.palette {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh var(--space-l) var(--space-l);
+  background: color-mix(in srgb, var(--c-scrim) 32%, transparent);
+}
+.palette__box {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: 64vh;
+  overflow: hidden;
+  background: var(--c-surface-container-high);
+  border-radius: var(--radius-l);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.3);
+}
+.palette__input {
+  min-height: 48px;
+  padding: 0 var(--space-l);
+  font: var(--type-body-large);
+  color: var(--c-on-surface);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--c-outline-variant);
+}
+.palette__input:focus-visible {
+  outline: none;
+}
+.palette__list {
+  margin: 0;
+  padding: var(--space-xs) 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.palette__item {
+  display: flex;
+  gap: var(--space-m);
+  align-items: baseline;
+  padding: var(--space-s) var(--space-l);
+  cursor: pointer;
+}
+.palette__item[aria-selected="true"] {
+  background: color-mix(in srgb, var(--c-primary) 14%, transparent);
+}
+.palette__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font: var(--type-body-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.palette__group {
+  font: var(--type-label-small);
+  color: var(--c-on-surface-variant);
+}
+.palette__keys {
+  font: var(--type-mono);
+  font-size: 0.8em;
+  color: var(--c-on-surface-variant);
+}
+.palette__empty {
+  padding: var(--space-l);
+  font: var(--type-body-medium);
+  color: var(--c-on-surface-variant);
+}
+
 /* ── 정석 (W9) ───────────────────────────────────────────────────── */
 .jsearch {
   width: 100%;
