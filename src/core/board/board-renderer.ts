@@ -148,8 +148,26 @@ function drawStone(
   alpha: number,
   skin: BoardSkin,
 ): void {
-  const r = g.radius;
   ctx.save();
+  drawStoneBody(ctx, g, cx, cy, black, alpha, skin);
+  if (number) {
+    ctx.globalAlpha = alpha;
+    drawStoneNumber(ctx, g, cx, cy, black, number, skin);
+  }
+  ctx.restore();
+}
+
+/** 돌의 몸 — 그림자 · 얼굴 · 테두리. 번호는 `drawStoneNumber`. */
+function drawStoneBody(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  g: BoardGeometry,
+  cx: number,
+  cy: number,
+  black: boolean,
+  alpha: number,
+  skin: BoardSkin,
+): void {
+  const r = g.radius;
   ctx.globalAlpha = alpha * 0.55;
   ctx.fillStyle = skin.stoneShadow;
   circle(ctx, cx + r * 0.05, cy + r * 0.09, r * 1.03);
@@ -175,16 +193,106 @@ function drawStone(
   ctx.lineWidth = g.hair;
   circle(ctx, cx, cy, r);
   ctx.stroke();
+}
 
-  if (number) {
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = black ? skin.whiteHigh : skin.blackLow;
-    ctx.font = `600 ${r * 0.88}px ${FONT}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(number, cx, cy);
+function drawStoneNumber(
+  ctx: CanvasRenderingContext2D,
+  g: BoardGeometry,
+  cx: number,
+  cy: number,
+  black: boolean,
+  number: string,
+  skin: BoardSkin,
+): void {
+  ctx.fillStyle = black ? skin.whiteHigh : skin.blackLow;
+  ctx.font = `600 ${g.radius * 0.88}px ${FONT}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(number, cx, cy);
+}
+
+/**
+ * 돌 그림 캐시 — 데스크톱 Z6(계획 §6 «DPR 반영 비트맵 캐시»). 분석 중 레이어 2 는 초당 열 번 다시
+ * 그려지고 그 시간의 대부분이 돌마다 새로 만드는 방사 그라디언트 · 그림자 · 테두리였다(계획서 §9.10).
+ * 몸을 작은 캔버스에 한 번 그려 두고 `drawImage` 로 찍는다.
+ *
+ * **화소 위상까지 키에 넣는다.** 교점은 기기 화소의 소수 자리에 앉는데, 위상 0 으로 그린 그림을 소수 자리에
+ * 찍으면 다시 표본화되어 가장자리가 흐려진다. 그래서 그 교점의 위상 그대로 그린 그림을 정수 자리에 찍는다 —
+ * 직접 그린 것과 같은 화소가 나온다(합성 순서만 바뀌고, source-over 는 결합 법칙을 따른다).
+ * 위상은 열 · 행마다 정해져 있어 그림 수는 판 위 돌 수를 넘지 않는다. 불투명한 돌만 — 반투명 고스트는
+ * 그림자가 얼굴 너머로 비치는 그림이라 한 번에 찍으면 달라진다.
+ */
+type SpriteCanvas = OffscreenCanvas | HTMLCanvasElement;
+interface StoneSprite {
+  canvas: SpriteCanvas;
+  pad: number;
+}
+const SPRITE_LIMIT = 1024;
+const spriteCache = new WeakMap<BoardSkin, Map<string, StoneSprite>>();
+
+function newSpriteCanvas(side: number): SpriteCanvas | null {
+  if (typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(side, side);
+  if (typeof document === "undefined") return null;
+  const c = document.createElement("canvas");
+  c.width = side;
+  c.height = side;
+  return c;
+}
+
+/**
+ * 불투명한 돌들의 몸을 찍는다. 찍지 못하면(변환이 기울었거나 캔버스가 없는 시험 환경) `false` —
+ * 부르는 쪽이 직접 그린다.
+ */
+function stampStones(
+  ctx: CanvasRenderingContext2D,
+  g: BoardGeometry,
+  stones: readonly Move[],
+  skin: BoardSkin,
+): boolean {
+  const t = typeof ctx.getTransform === "function" ? ctx.getTransform() : null;
+  if (!t || typeof t.a !== "number" || t.b !== 0 || t.c !== 0 || t.a <= 0 || t.d <= 0) return false;
+  let cache = spriteCache.get(skin);
+  if (!cache) spriteCache.set(skin, (cache = new Map()));
+  if (cache.size > SPRITE_LIMIT) cache.clear();
+
+  const r = g.radius;
+  // 그림자(중심에서 1.12r)와 테두리 반 폭까지, 안티에일리어싱 여유 두 화소.
+  const pad = Math.ceil((r * 1.12 + g.hair) * Math.max(t.a, t.d)) + 2;
+  const side = 2 * pad + 1;
+  const base = `${r}|${g.hair}|${t.a}|${t.d}|`;
+  const sprites: (StoneSprite | null)[] = [];
+  for (let i = 0; i < stones.length; i++) {
+    const m = stones[i]!;
+    const black = i % 2 === 0;
+    const dx = t.a * g.cx(m.x) + t.e;
+    const dy = t.d * g.cy(m.y) + t.f;
+    const fx = dx - Math.floor(dx);
+    const fy = dy - Math.floor(dy);
+    const key = `${base}${black ? 1 : 0}|${fx.toFixed(3)}|${fy.toFixed(3)}`;
+    let s = cache.get(key);
+    if (!s) {
+      const canvas = newSpriteCanvas(side);
+      const sc = canvas?.getContext("2d") as
+        CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+      if (!canvas || !sc) return false;
+      sc.setTransform(t.a, 0, 0, t.d, pad + fx, pad + fy);
+      drawStoneBody(sc, g, 0, 0, black, 1, skin);
+      s = { canvas, pad };
+      cache.set(key, s);
+    }
+    sprites.push(s);
+  }
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  for (let i = 0; i < stones.length; i++) {
+    const m = stones[i]!;
+    const s = sprites[i]!;
+    const dx = t.a * g.cx(m.x) + t.e;
+    const dy = t.d * g.cy(m.y) + t.f;
+    ctx.drawImage(s.canvas, Math.floor(dx) - s.pad, Math.floor(dy) - s.pad);
   }
   ctx.restore();
+  return true;
 }
 
 /**
@@ -288,9 +396,26 @@ export function drawDynamic(
     if (render.tags.get(key)?.label) corner.push([m, mark]);
     else drawMark(ctx, cx(m), cy(m), r * 0.62, mark, skin.line, hair);
   }
-  render.stones.forEach((m, i) => {
-    drawStone(ctx, g, cx(m), cy(m), i % 2 === 0, render.showNumbers ? String(i + 1) : "", 1, skin);
-  });
+  if (stampStones(ctx, g, render.stones, skin)) {
+    if (render.showNumbers) {
+      render.stones.forEach((m, i) => {
+        drawStoneNumber(ctx, g, cx(m), cy(m), i % 2 === 0, String(i + 1), skin);
+      });
+    }
+  } else {
+    render.stones.forEach((m, i) => {
+      drawStone(
+        ctx,
+        g,
+        cx(m),
+        cy(m),
+        i % 2 === 0,
+        render.showNumbers ? String(i + 1) : "",
+        1,
+        skin,
+      );
+    });
+  }
 
   // 방금 둔 돌: 가장자리를 감싸는 얇은 링. 예전의 넓은 안쪽 링은 값 칩과 반지름도
   // 굵기도 같아서, 복잡한 보드에서 최신 수와 63% 가 똑같아 보였다.
@@ -374,7 +499,12 @@ function cross(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number)
   line(ctx, cx - r, cy + r, cx + r, cy - r);
 }
 
-function circle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+function circle(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+): void {
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
 }

@@ -209,6 +209,12 @@ jobs:
               SMOKE_ISOLATE=0 pnpm exec tsx scripts/engine-smoke.ts
               SMOKE_ISOLATE=0 pnpm exec tsx scripts/smoke.ts
               pnpm exec tsx scripts/db-smoke.ts
+          # 데스크톱 Z6 — 계획 §6 성능 예산(기동 · 조작 처리 p95 · 분석 중 메인 점유 · 범위 밖 리렌더 0 ·
+          # 메모리)의 회귀 경보. 혼자 다른 러너에서 돌아야 점유율이 다른 스모크와 섞이지 않는다.
+          - shard: 성능
+            engine: true
+            run: |
+              pnpm exec tsx scripts/perf.ts
           # 엔진 릴리스를 얹지 않은 dist 로 돈다(위 «앱 업로드» 주석).
           # W9 정석 — 판 · 글 입력, 갈래, 메모, 새로고침 뒤 남기, 뒤집은 판으로 찾기, 커리큘럼.
           # W7 — 합성 .rif(RenjuNet 기보가 아니다 — 라이선스)를 보드에 떨어뜨려 변환 · 랭킹 · 오프닝 통계.

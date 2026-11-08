@@ -7,6 +7,7 @@
 //!
 //! - 네이티브 엔진(데스크톱 Z3): 로컬 Rapfi 프로세스 · 원격 TCP 세션 — `engine.rs`.
 //! - settings.txt · settings_dev.txt 직접 읽기 · 쓰기(데스크톱 Z4) — `settings.rs`.
+//! - 기동 시각 기록 `boot_marks`(데스크톱 Z6) — `scripts/perf-shell.ts` 가 읽는다.
 //!
 //! 타이틀바 · 단축키는 웹 쪽(`src/app/desktop/`)에 있다.
 
@@ -16,10 +17,11 @@ mod engine;
 mod settings;
 
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
-use std::time::Duration;
+use std::sync::{Mutex, OnceLock};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
+use tauri::webview::PageLoadEvent;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_window_state::StateFlags;
 
@@ -37,6 +39,36 @@ const OPEN_FILES_EVENT: &str = "desktop://open-files";
 struct OpenFile {
     name: String,
     bytes: Vec<u8>,
+}
+
+/// 기동 시각 기록(데스크톱 Z6) — `main` 진입을 0 으로 한 밀리초. 웹의 성능 측정(scripts/perf.ts · 계획서 §9.10)이
+/// `boot_marks` 로 읽어 «프로세스 → 셸 준비 → 웹 내비 시작 → 창 표시»를 나눠 본다.
+static BOOT: OnceLock<(Instant, u64)> = OnceLock::new();
+
+#[derive(Default)]
+struct BootMarks(Mutex<Vec<(String, u64)>>);
+
+#[derive(Serialize)]
+struct BootReport {
+    /// `main` 진입 시각(유닉스 밀리초) — 웹 `performance.timeOrigin` 과 맞대 본다.
+    main_epoch_ms: u64,
+    marks: Vec<(String, u64)>,
+}
+
+fn mark(app: &AppHandle, name: &str) {
+    let Some((t0, _)) = BOOT.get() else { return };
+    let ms = t0.elapsed().as_millis() as u64;
+    if let Some(m) = app.try_state::<BootMarks>() {
+        m.0.lock().unwrap_or_else(|e| e.into_inner()).push((name.to_owned(), ms));
+    }
+}
+
+#[tauri::command]
+fn boot_marks(marks: tauri::State<'_, BootMarks>) -> BootReport {
+    BootReport {
+        main_epoch_ms: BOOT.get().map(|b| b.1).unwrap_or(0),
+        marks: marks.0.lock().unwrap_or_else(|e| e.into_inner()).clone(),
+    }
 }
 
 /// 첫 실행의 명령줄 파일 — 웹이 준비되면 `take_open_files` 로 가져간다(이벤트는 듣기 전에 지나가 버린다).
@@ -77,6 +109,11 @@ fn bring_to_front(app: &AppHandle) {
 }
 
 fn main() {
+    let epoch = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0);
+    let _ = BOOT.set((Instant::now(), epoch));
     tauri::Builder::default()
         // 단일 인스턴스는 가장 먼저 — 두 번째 프로세스가 다른 플러그인을 띄우기 전에 끝나야 한다.
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
@@ -93,16 +130,26 @@ fn main() {
                 .build(),
         )
         .manage(Pending::default())
+        .manage(BootMarks::default())
         .manage(engine::Engines::default())
         .invoke_handler(tauri::generate_handler![
             take_open_files,
+            boot_marks,
             engine::engine_open,
             engine::engine_write,
             engine::engine_close,
             settings::settings_read,
             settings::settings_write
         ])
+        .on_page_load(|webview, payload| {
+            let name = match payload.event() {
+                PageLoadEvent::Started => "page-start",
+                PageLoadEvent::Finished => "page-finish",
+            };
+            mark(webview.app_handle(), name);
+        })
         .setup(|app| {
+            mark(app.handle(), "setup");
             let cwd = std::env::current_dir().unwrap_or_default();
             let files = read_game_files(std::env::args().skip(1), &cwd);
             *app.state::<Pending>().0.lock().unwrap_or_else(|e| e.into_inner()) = files;
@@ -112,6 +159,7 @@ fn main() {
                 std::thread::sleep(SHOW_FALLBACK);
                 if let Some(w) = handle.get_webview_window(MAIN) {
                     if !w.is_visible().unwrap_or(true) {
+                        mark(&handle, "show-fallback");
                         let _ = w.show();
                     }
                 }

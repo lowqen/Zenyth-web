@@ -4,7 +4,21 @@
 // 파일로 뺐다(docs/engineering-notes.md §4 Phase 1).
 // 검은 배경(AMOLED)은 다크 위의 덧씌움이라 따로 붙인다 — 어떤 색을 바꿀지는 tokens.css 가 정한다.
 // 데스크톱 Z2: Tauri 셸 안이면 첫 프레임부터 데스크톱 밀도 · 타이틀바 칸(:root[data-desktop], src/app/desktop/platform.ts).
-if ("__TAURI_INTERNALS__" in window) document.documentElement.dataset.desktop = "";
+// 데스크톱 Z6: 창은 숨긴 채 뜬다(tauri.conf.json `visible: false`). 첫 프레임(배경 · index.html 의 골격 타이틀바)이 그려지면
+// 곧바로 보인다 — 번들 · React 를 기다리지 않는다. 이 IPC 가 페이지의 첫 IPC 라 뒤에 줄 서지 않는다(전에는 bridge.ts 가
+// 테마 · 최대화 · 설정 · 엔진 IPC 와 함께 불러 내비 시작 뒤 2.5~7.5초에 보였다, 계획서 §9.10). bridge.ts 의 show 는 대비책.
+if ("__TAURI_INTERNALS__" in window) {
+  document.documentElement.dataset.desktop = "";
+  // 렌더를 막는 스타일시트가 오기 전에는 rAF 가 돌지 않는다 — 두 번째 rAF 는 첫 프레임이 나간 뒤다.
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      window.__zenythShowAt = performance.now();
+      Promise.resolve(
+        window.__TAURI_INTERNALS__.invoke("plugin:window|show", { label: "main" }),
+      ).catch(() => {});
+    }),
+  );
+}
 try {
   const t = localStorage.getItem("rapfi.theme");
   if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;

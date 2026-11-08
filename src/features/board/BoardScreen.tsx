@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { BoardCanvas } from "../../core/board/BoardCanvas";
 import { useBoardStore } from "./boardStore";
-import { useGameStore } from "./gameStore";
+import { useGameStore, type BoardMode } from "./gameStore";
 import { AnalysisOptions, AnalysisPanel } from "./AnalysisPanel";
 import { EngineLogPanel } from "../engine/EngineConsole";
 import { DESKTOP_LAYOUT } from "../../app/desktop/platform";
@@ -56,19 +56,14 @@ import { t } from "../../i18n/i18n";
  * 앞선다. 대국 탭에는 얹지 않는다(엔진 분석과 같은 탭 격리).
  */
 export function BoardScreen() {
-  const render = useBoardStore((s) => s.render);
   const showEvalBar = useSettingsStore((s) => s.showEvalBar);
   const markBlocked = useBoardStore((s) => s.markBlocked);
-  const applyAnalysis = useBoardStore((s) => s.applyAnalysis);
   const mode = useGameStore((s) => s.mode);
 
   const tap = useGameStore((s) => s.tap);
   const refreshForbidden = useGameStore((s) => s.refreshForbidden);
   const status = useEngineStore((s) => s.status);
-  const analysis = useCurrentAnalysis();
   useBoardDbSync();
-  const db = useBoardDb();
-  const dbShowText = useDbStore((s) => s.settings.showBoardText);
 
   // 엔진이 **놀게 되는 순간**마다 금수를 물어본다. 기동 직후와 탐색이 끝난
   // 직후가 여기다 — 엔진의 착수 응답은 상태가 아직 searching 일 때 도착하므로,
@@ -96,11 +91,6 @@ export function BoardScreen() {
     [tap, showNotice],
   );
 
-  // 엔진 스냅샷 → 보드. **지금 국면의 것만**(`useCurrentAnalysis`) — 무른 직후 옛 국면의
-  // 값 칩·최선수 링·고스트가 새 판에 얹히지 않는다. 그리고 **분석 탭에서만** — 대국 탭의
-  // 판에 최선수 링과 수순 고스트가 남으면 그것은 대국 중의 훈수다(탭 격리). 스토어를 둘로
-  // 나눠 두고 여기서 잇는 이유는, 보드가 엔진을 **모르는 채로** 그려질 수 있어야 하기
-  // 때문이다(내보내기·정석 미리보기 등).
   // 기보 파일을 판에 끌어다 놓으면 연다. 파일을 끄는 동안에만 테두리를 그린다.
   const [dropping, setDropping] = useState(false);
   const hasFiles = (e: DragEvent) => e.dataTransfer.types.includes("Files");
@@ -117,18 +107,6 @@ export function BoardScreen() {
     const file = e.dataTransfer.files[0];
     if (file) void openGameFile(file).then((r) => showNotice(r.text));
   };
-
-  const overlay = useMemo(() => {
-    if (mode !== "analysis") return EMPTY_SNAPSHOT;
-    if (!db || db.snap.cells.size === 0) return analysis;
-    const tags = new Map(analysis.tags);
-    // round 는 엔진 태그를 낡은 순으로 지울 때만 쓴다 — DB 칩은 매번 새로 얹으므로 0.
-    for (const [k, c] of db.snap.cells) tags.set(k, { ...dbCellTag(c, dbShowText), round: 0 });
-    return { ...analysis, tags };
-  }, [mode, analysis, db, dbShowText]);
-  useEffect(() => {
-    applyAnalysis(overlay);
-  }, [overlay, applyAnalysis]);
 
   const sheet = useSheetLayout();
   const desk = useDeskLayout();
@@ -173,8 +151,8 @@ export function BoardScreen() {
           onDrop={onDrop}
         >
           <div className="boardrow">
-            {showEvalBar && <EvalBar empty={render.stones.length === 0} />}
-            <BoardCanvas render={render} onTap={onTap} onLongPress={markBlocked} keyboard />
+            {showEvalBar && <BoardEvalBar />}
+            <MainBoard mode={mode} onTap={onTap} onLongPress={markBlocked} />
           </div>
           <div className="boarddock">
             <StatusCapsule />
@@ -220,8 +198,8 @@ export function BoardScreen() {
         {/* 평가 바와 판을 한 줄로 — 판은 바 몫을 뺀 정사각형이고, 바는 판과 같은
             높이다(CSS 의 컨테이너 단위). 둘을 묶어 가운데 둔다. */}
         <div className="boardrow">
-          {showEvalBar && <EvalBar empty={render.stones.length === 0} />}
-          <BoardCanvas render={render} onTap={onTap} onLongPress={markBlocked} keyboard />
+          {showEvalBar && <BoardEvalBar />}
+          <MainBoard mode={mode} onTap={onTap} onLongPress={markBlocked} />
         </div>
         {notice && (
           <p className="board-notice" role="status">
@@ -255,4 +233,54 @@ export function BoardScreen() {
       <MoveToolbar navRef={toolbarRef} />
     </div>
   );
+}
+
+/**
+ * 판 — 보드 스토어의 그림과 엔진 스냅샷을 구독하는 것은 **이 잎 하나**다(데스크톱 Z6). 화면 전체가 구독하면 분석 중
+ * 스냅샷(~10Hz)마다 툴바 · 카드 · 설정 칸까지 함께 다시 그려진다(scripts/perf.ts «범위 밖 리렌더»).
+ */
+function MainBoard({
+  mode,
+  onTap,
+  onLongPress,
+}: {
+  mode: BoardMode;
+  onTap: (m: Move) => void;
+  onLongPress: (m: Move) => void;
+}) {
+  const render = useBoardStore((s) => s.render);
+  useAnalysisOverlay(mode);
+  return <BoardCanvas render={render} onTap={onTap} onLongPress={onLongPress} keyboard />;
+}
+
+/** 평가 바 — 빈 판인지만 본다(돌 배열 자체를 구독하면 수마다 다시 그려진다). */
+function BoardEvalBar() {
+  const empty = useBoardStore((s) => s.render.stones.length === 0);
+  return <EvalBar empty={empty} />;
+}
+
+/**
+ * 엔진 스냅샷 → 보드. **지금 국면의 것만**(`useCurrentAnalysis`) — 무른 직후 옛 국면의 값 칩·최선수 링·고스트가 새 판에
+ * 얹히지 않는다. 그리고 **분석 탭에서만** — 대국 탭의 판에 최선수 링과 수순 고스트가 남으면 그것은 대국 중의 훈수다(탭 격리).
+ * 스토어를 둘로 나눠 두고 여기서 잇는 이유는, 보드가 엔진을 **모르는 채로** 그려질 수 있어야 하기 때문이다(내보내기·정석
+ * 미리보기 등).
+ *
+ * 판 잎(`MainBoard`) 안에서만 부른다(데스크톱 Z6) — 스냅샷 구독이 보드 화면 전체를 다시 그리지 않게.
+ */
+function useAnalysisOverlay(mode: BoardMode): void {
+  const applyAnalysis = useBoardStore((s) => s.applyAnalysis);
+  const analysis = useCurrentAnalysis();
+  const db = useBoardDb();
+  const dbShowText = useDbStore((s) => s.settings.showBoardText);
+  const overlay = useMemo(() => {
+    if (mode !== "analysis") return EMPTY_SNAPSHOT;
+    if (!db || db.snap.cells.size === 0) return analysis;
+    const tags = new Map(analysis.tags);
+    // round 는 엔진 태그를 낡은 순으로 지울 때만 쓴다 — DB 칩은 매번 새로 얹으므로 0.
+    for (const [k, c] of db.snap.cells) tags.set(k, { ...dbCellTag(c, dbShowText), round: 0 });
+    return { ...analysis, tags };
+  }, [mode, analysis, db, dbShowText]);
+  useEffect(() => {
+    applyAnalysis(overlay);
+  }, [overlay, applyAnalysis]);
 }

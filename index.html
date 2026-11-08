@@ -16,7 +16,13 @@
     <script src="%BASE_URL%theme-init.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- 데스크톱 Z6: 셸 창이 번들보다 먼저 보일 때의 골격 타이틀바(끌기만 된다 — 셸이 심은 drag-region 처리). React 의 첫
+         커밋이 #root 를 비우며 진짜 TitleBar 로 바뀐다. 웹에서는 숨는다(base.css .bootbar). -->
+    <div id="root">
+      <header class="titlebar bootbar" data-tauri-drag-region>
+        <span class="titlebar__app" data-tauri-drag-region>Zenyth</span>
+      </header>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
