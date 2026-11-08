@@ -18,6 +18,7 @@ import { DEFAULT_SIZE, type Move } from "../../core/model/move";
 import { db } from "../../data/db";
 import { CoordMapper } from "../../engine/engine-protocol";
 import { engineFs, onDbLine, onEngineBooted, useEngineStore } from "../../engine/engine-state";
+import { isNativeVariant } from "../../engine/engine-client";
 import type { EngineCommand } from "../../engine/engine-types";
 import { useGameStore } from "../board/gameStore";
 import { t } from "../../i18n/i18n";
@@ -302,6 +303,12 @@ export const useDbStore = create<DbState>((set, get) => {
       const e = useEngineStore.getState();
       if (e.status === "idle" || e.status === "error")
         return t("엔진이 떠 있지 않습니다. 엔진을 먼저 시작하세요");
+      // 데스크톱 Z3: 네이티브 · 원격 엔진은 DB 파일을 제 폴더에서 연다 — 웹 저장소의 DB 를 넣고 빼는 이 길이
+      // 맞지 않는다. 연동은 다음 단계(Z4)다. 그때까지 엔진 쪽 DB 를 열지도 않는다(`usedatabase` 를 안 보낸다).
+      if (e.engine.variant && isNativeVariant(e.engine.variant))
+        return t(
+          "네이티브 · 원격 엔진의 DB 연동은 아직 준비 중입니다. 엔진 폴더의 DB 는 건드리지 않습니다",
+        );
       set({ status: "attaching", message: null });
       try {
         const row = await storedRow();
@@ -323,6 +330,8 @@ export const useDbStore = create<DbState>((set, get) => {
         }
         baseSize = row?.bytes.byteLength ?? 0;
         journalSize = jrow?.bytes.byteLength ?? 0;
+        // 앞 엔진(또는 DB 없던 때)의 답 없는 조회가 새 인사의 답을 가로채지 않게.
+        ch().resetPairing();
         const s = get().settings;
         useEngineStore
           .getState()
@@ -606,6 +615,7 @@ export function wireDatabase(): void {
   onEngineBooted(() => {
     // 새 엔진의 메모리 FS 는 비어 있다 — 앞 엔진에 붙어 있던 DB 는 이미 없다.
     useDbStore.setState({ status: "off", view: null });
+    channel?.resetPairing();
     if (useDbStore.getState().settings.enabled) void useDbStore.getState().attach();
   });
   // 분석 중이어도 된다 — 저장은 분석을 끄지 않고 잠깐 비켜 세울 뿐이다(`claimForSave`).

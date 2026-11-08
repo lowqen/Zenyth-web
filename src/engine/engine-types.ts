@@ -269,8 +269,18 @@ export type ToWorker =
        * 버리고 다음 탐색에서 다시 푼다(T1: 0.73~0.85초, docs/engineering-notes.md §2 질문 3 · T1).
        */
       settings?: readonly EngineCommand[];
+      /**
+       * 네이티브 엔진(데스크톱 Z3) — 글루를 읽지 않고, 보낼 줄을 `wire` 로 올리고 엔진 줄을 `wireIn` 으로
+       * 받는다(`engine-transport.ts` 의 `NativeTransport` 가 셸과 잇는다). 엔진은 제 스레드에서 도는
+       * 별도 프로세스라 멀티 변형과 같은 비동기 경로(`threaded`)를 탄다.
+       */
+      native?: boolean;
     }
   | { type: "send"; commands: readonly EngineCommand[] }
+  /** 네이티브 엔진이 낸 줄들(프레임 단위 묶음). 요청 줄을 서지 않고 곧바로 해석한다. */
+  | { type: "wireIn"; lines: readonly string[] }
+  /** 네이티브 엔진 프로세스 · 연결이 끝났다. `error` 는 끊긴 까닭(원격 연결 끊김 등). */
+  | { type: "wireExit"; code: number | null; error?: string }
   /**
    * 시간 분할 탐색. 조각 사이에 워커의 이벤트 루프가 돌아온다 — 그 틈에만
    * 정지가 닿는다(단일 스레드 빌드는 탐색 도중에 입력을 읽지 못한다).
@@ -422,7 +432,21 @@ export type FromWorker =
       elapsedMs: number;
     }
   | { type: "exit"; code: number }
-  | { type: "fatal"; message: string };
+  | { type: "fatal"; message: string }
+  /**
+   * 네이티브 엔진에 쓸 명령(여러 줄 블록은 개행으로 이은 한 덩어리). 전송 계층이 받아 셸로 넘긴다 —
+   * 클라이언트까지 가지 않는다.
+   */
+  | { type: "wire"; text: string };
+
+/**
+ * 네이티브 엔진이 어디에 있나(데스크톱 Z3). 셸(`desktop/src-tauri/src/engine.rs`)의 `EngineSpec` 과 같은 모양.
+ *   - `local`  사이드카 실행 파일. `path` 가 비면 셸 옆의 `engine/rapfi.exe` → `rapfi.exe` 순으로 찾는다.
+ *              작업 폴더는 실행 파일의 폴더다(엔진이 `config.toml` · 가중치를 거기서 읽는다).
+ *   - `remote` 원격 엔진의 TCP(지금 `engine_bak.exe` 프록시가 붙는 `rapfi-server:5050`). 줄 프로토콜 그대로다.
+ */
+export type NativeEngineSpec =
+  { kind: "local"; path: string } | { kind: "remote"; host: string; port: number };
 
 /**
  * `postMessage` 로 건너갈 수 있는 모양. 구조화 복제는 `Map`/`Set` 을 그대로

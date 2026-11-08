@@ -232,6 +232,13 @@ function describe(e: unknown): string {
 }
 
 let mod: EmscriptenModule | null = null;
+/**
+ * 글루의 표준 입출력은 **글자 하나 = 바이트 하나**다(`toWireBytes` · `fromWireBytes`). 네이티브 엔진(데스크톱 Z3)은
+ * 셸이 UTF-8 로 읽고 쓰는 진짜 문자열을 주고받으므로 그 변환을 건너뛴다 — 하면 é 같은 글자가 깨진다.
+ */
+let byteWire = true;
+/** 네이티브 엔진인가 — DB 파일 요청의 안내 글이 달라진다. */
+let nativeLink = false;
 let coord = new CoordMapper();
 let agg = new SearchAggregator(15);
 let sliceMs = 500;
@@ -577,7 +584,7 @@ const sendCommand = (lines: readonly string[]) => {
  * UTF-8 바이트를 한 글자씩 담은 문자열로 바꿔 넘긴다 — 엔진(`ConsoleCPToUTF8`)은 UTF-8 을 받는다.
  */
 function toWireBytes(s: string): string {
-  if (!/[\u0080-￿]/.test(s)) return s;
+  if (!byteWire || !/[\u0080-￿]/.test(s)) return s;
   let out = "";
   for (const b of new TextEncoder().encode(s)) out += String.fromCharCode(b);
   return out;
@@ -585,7 +592,7 @@ function toWireBytes(s: string): string {
 
 /** stdout 도 바이트 하나가 글자 하나다(`String.fromCharCode(char)`) — UTF-8 로 다시 읽는다. */
 function fromWireBytes(s: string): string {
-  if (!/[\x80-\xff]/.test(s)) return s;
+  if (!byteWire || !/[\x80-\xff]/.test(s)) return s;
   return new TextDecoder().decode(Uint8Array.from(s, (c) => c.charCodeAt(0) & 0xff));
 }
 
@@ -600,13 +607,34 @@ const sendAll = (cmds: readonly EngineCommand[]) => {
   for (const c of cmds) sendCommand(serialize(c, coord));
 };
 
+/**
+ * 네이티브 엔진(데스크톱 Z3)의 자리 — 보낼 줄을 메인 스레드로 올린다(`wire`). 메인의 `NativeTransport` 가 셸로
+ * 넘기고, 엔진이 낸 줄은 프레임 단위로 묶여 `wireIn` 으로 돌아와 같은 `drain` 을 지난다. 그래서 줄 조립(여러 줄
+ * DB 주석) · 파싱 · 집계 · 탐색 줄 세우기 · 정착 대기 · 감시견이 WASM 멀티 변형과 **한 길**이다.
+ */
+const NATIVE_MODULE: EmscriptenModule = {
+  sendCommand: (text: string) => post({ type: "wire", text }),
+  terminate: () => undefined,
+};
+
 async function boot(msg: Extract<ToWorker, { type: "boot" }>) {
   const t0 = performance.now();
-  threaded = msg.variant.startsWith("multi");
+  nativeLink = msg.native === true;
+  byteWire = !nativeLink;
+  // 네이티브 엔진은 제 스레드에서 도는 별도 프로세스다 — 멀티 변형과 같은 비동기 경로.
+  threaded = nativeLink || msg.variant.startsWith("multi");
   // 멀티 변형은 조각으로 나누지 않는다 — 정지가 탐색 도중에 닿는다.
   sliceMs = threaded ? 0 : msg.sliceMs;
   coord = new CoordMapper(msg.size);
   agg = new SearchAggregator(msg.size);
+  dbTextOpen = false;
+
+  if (nativeLink) {
+    post({ type: "phase", phase: "engine" });
+    mod = NATIVE_MODULE;
+    await handshake(msg, t0, { source: "glue", ms: 0 });
+    return;
+  }
 
   // **가중치 선적재.** 공유 가중치가 있으면 글루를 읽기 **전에** 받기 시작한다 — 20MB
   // 내려받기(또는 캐시 읽기·해시 검증)가 글루 파싱과 겹친다. 글루는 인스턴스를 만들 때
@@ -650,7 +678,15 @@ async function boot(msg: Extract<ToWorker, { type: "boot" }>) {
   if (typeof mod.sendCommand !== "function") {
     throw new Error("Module.sendCommand 가 없습니다: preamble.js 가 빠진 빌드입니다");
   }
+  await handshake(msg, t0, weights);
+}
 
+/** START 핸드셰이크 → 기동 설정 → 예열 → `booted`. WASM 과 네이티브가 같이 쓴다. */
+async function handshake(
+  msg: Extract<ToWorker, { type: "boot" }>,
+  t0: number,
+  weights: Extract<FromWorker, { type: "booted" }>["weights"],
+) {
   // 답을 기다릴 자리를 **보내기 전에** 건다. 단일 변형은 답이 sendCommand 안에서
   // 동기로 와 버리고, 멀티 변형은 엔진 스레드에서 나중에 온다 — 둘 다 이 순서면 잡힌다.
   // START 의 OK 가 핸드셰이크다: 멀티 엔진이 떠 있지 않으면(pthread 를 못 세웠다 등)
@@ -1006,6 +1042,18 @@ let explicitStopWaiter: (() => void) | null = null;
 if (!IS_PTHREAD) {
   self.onmessage = (ev: MessageEvent<ToWorker>) => {
     const msg = ev.data;
+    // 네이티브 엔진의 출력 — 글루의 `onReceiveStdout` 자리다. 요청 줄 뒤에 세우면 탐색이 자기 좌표를 영원히
+    // 기다린다(좌표는 그 탐색이 끝나야 줄이 빈다).
+    if (msg.type === "wireIn") {
+      if (msg.lines.length) drain(msg.lines.join("\n"));
+      return;
+    }
+    if (msg.type === "wireExit") {
+      flushConsole();
+      if (msg.error) post({ type: "fatal", message: msg.error });
+      else post({ type: "exit", code: msg.code ?? -1 });
+      return;
+    }
     if (msg.type === "stop") {
       stopEpoch++;
       interrupt();
@@ -1046,7 +1094,12 @@ async function fsOp(msg: Extract<ToWorker, { type: "fs" }>) {
   };
   const fs = mod?.FS;
   if (!fs) {
-    reply({ ok: false, error: "이 엔진 빌드는 파일 시스템을 내보내지 않습니다(w8 이전 엔진)" });
+    reply({
+      ok: false,
+      error: nativeLink
+        ? "네이티브 엔진은 DB 파일을 엔진 폴더에서 직접 엽니다 — 웹 저장소의 DB 는 붙이지 않습니다"
+        : "이 엔진 빌드는 파일 시스템을 내보내지 않습니다(w8 이전 엔진)",
+    });
     return;
   }
   // 본 파일의 정체. db1 의 저장은 임시 파일에 써서 바꿔 넣으므로 노드 번호가 바뀌고, 저널만

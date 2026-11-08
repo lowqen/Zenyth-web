@@ -2,7 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CoordMapper } from "../../engine/engine-protocol";
 import type { EngineCommand } from "../../engine/engine-types";
 import { queryAll, queryOne } from "../../core/database/yixindb";
-import { DbChannel, replyError, untilDeleted, untilOne, untilText } from "./dbChannel";
+import {
+  DbChannel,
+  LATE_REPLY_MS,
+  replyError,
+  untilDeleted,
+  untilOne,
+  untilText,
+} from "./dbChannel";
 
 /** 엔진 대신 — 받은 명령마다 정해 둔 줄을 (다음 틱에) 돌려준다. */
 function fakeEngine(reply: (cmd: EngineCommand) => string[]) {
@@ -62,7 +69,7 @@ describe("DB 채널", () => {
     expect(b?.snapshot.entry?.value).toBe(5);
   });
 
-  it("답이 없으면 시간 끈에서 null — 다음 요청은 막히지 않는다", async () => {
+  it("답이 없으면 시간 끈에서 null — 짝을 비우면 다음 요청은 막히지 않는다", async () => {
     vi.useFakeTimers();
     let silent = true;
     const e = fakeEngine(() => (silent ? [] : ["DATABASE ONE 0 0 0 0"]));
@@ -71,6 +78,68 @@ describe("DB 채널", () => {
     await vi.advanceTimersByTimeAsync(1001);
     expect(await first).toBeNull();
     expect(replyError(await first)).toMatch(/답하지 않았습니다/);
+    silent = false;
+    ch.resetPairing(); // DB 를 새로 붙일 때(dbStore.attach) · 엔진이 바뀔 때
+    const second = ch.request(queryOne([]), untilOne, 1000);
+    await vi.advanceTimersByTimeAsync(5);
+    expect((await second)?.lines[0]?.kind).toBe("one");
+  });
+
+  it("늦은 답(원격): 끊긴 요청의 답을 다음 요청이 제 것으로 읽지 않는다", async () => {
+    vi.useFakeTimers();
+    // 원격 왕복이 시간 끈보다 길다 — 첫 답이 1.5초 뒤에 온다. 엔진은 받은 차례로 답한다.
+    const sent: EngineCommand[] = [];
+    let listener: ((l: string) => void) | null = null;
+    const port = {
+      send: (cmd: EngineCommand) => {
+        sent.push(cmd);
+        const n = sent.length;
+        const lines =
+          n === 1
+            ? ["DATABASE ONE 119 1 0 0"]
+            : ["DATABASE REFRESH", "DATABASE DONE", `DATABASE TEXT "${n}"`];
+        setTimeout(() => lines.forEach((l) => listener?.(l)), n === 1 ? 1500 : 700);
+      },
+      listen: (fn: (l: string) => void) => {
+        listener = fn;
+        return () => (listener = null);
+      },
+    };
+    const ch = new DbChannel(port, 15, (r, c) => coord.fromWire(r, c));
+    const first = ch.request(queryOne([]), untilOne, 1000);
+    await vi.advanceTimersByTimeAsync(1001);
+    expect(await first).toBeNull();
+    // 둘째 요청이 나간 뒤 첫 답(ONE)이 온다 — 그것은 빚이 가져간다.
+    const second = ch.request(queryAll([]), untilText, 1000);
+    await vi.advanceTimersByTimeAsync(800);
+    const r = await second;
+    expect(r?.lines.map((l) => l.kind)).toEqual(["refresh", "done", "text"]);
+    expect(r?.lines.some((l) => l.kind === "one")).toBe(false);
+  });
+
+  it("빚이 남은 채 또 끊기면 짝을 모두 지운다 — 끊김이 번지지 않는다", async () => {
+    vi.useFakeTimers();
+    let silent = 2;
+    const e = fakeEngine(() => (silent-- > 0 ? [] : ["DATABASE ONE 0 0 0 0"]));
+    const ch = open(e);
+    const a = ch.request(queryOne([]), untilOne, 1000);
+    const b = ch.request(queryOne([]), untilOne, 1000);
+    const c = ch.request(queryOne([]), untilOne, 1000);
+    await vi.advanceTimersByTimeAsync(2005);
+    expect(await a).toBeNull();
+    expect(await b).toBeNull();
+    expect((await c)?.lines[0]?.kind).toBe("one");
+  });
+
+  it("빚은 기한이 지나면 버린다", async () => {
+    vi.useFakeTimers();
+    let silent = true;
+    const e = fakeEngine(() => (silent ? [] : ["DATABASE ONE 0 0 0 0"]));
+    const ch = open(e);
+    const first = ch.request(queryOne([]), untilOne, 1000);
+    await vi.advanceTimersByTimeAsync(1001);
+    expect(await first).toBeNull();
+    await vi.advanceTimersByTimeAsync(LATE_REPLY_MS);
     silent = false;
     const second = ch.request(queryOne([]), untilOne, 1000);
     await vi.advanceTimersByTimeAsync(5);

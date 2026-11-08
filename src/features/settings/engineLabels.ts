@@ -6,6 +6,8 @@ export const VARIANT_LABEL: Readonly<Record<EngineVariant, string>> = localized(
   "multi-simd128": msg("멀티스레드"),
   "single-simd128-relaxed": msg("단일 스레드 · relaxed SIMD"),
   "single-simd128": msg("단일 스레드"),
+  native: msg("네이티브 Rapfi"),
+  remote: msg("원격 서버 Rapfi"),
 });
 
 /** 드롭다운 항목 이름(설정). 사전 열쇠라 그릴 때 `t()`. */
@@ -14,4 +16,6 @@ export const PREFERENCE_LABEL: Record<EnginePreference, string> = {
   multi: "Multi-thread (pthread)",
   relaxed: msg("WASM Relaxed SIMD (단일 스레드)"),
   simd: msg("WASM Standard SIMD (단일 스레드)"),
+  native: msg("네이티브 Rapfi (이 컴퓨터)"),
+  remote: msg("원격 서버 (TCP)"),
 };

@@ -1,5 +1,7 @@
 // 처음 온 사람인지(Z8)는 다른 무엇이 저장소에 쓰기 전에 본다 — 반드시 첫 import.
 import "./app/firstVisit";
+// 데스크톱 Z3: 네이티브 엔진 다리 — 엔진 스토어(능력표)가 생기기 전에. 이유는 그 파일에.
+import "./app/desktop/nativeBoot";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { router } from "./app/routes";

@@ -1,8 +1,11 @@
 import { useId, useState } from "react";
 import { useEngineStore, threadCap } from "../../engine/engine-state";
 import {
+  DEFAULT_REMOTE_HOST,
+  DEFAULT_REMOTE_PORT,
   ENGINE_PREFERENCES,
   isMultiVariant,
+  isNativePreference,
   planOrder,
   preferenceBlocker,
   type EnginePreference,
@@ -48,10 +51,11 @@ export function EngineSelect() {
         className="select__input"
         aria-label={t("엔진 선택")}
         value={pref}
-        disabled={!caps.variant}
+        disabled={!caps.variant && !caps.native}
         onChange={(e) => update({ enginePreference: e.target.value as EnginePreference })}
       >
-        {ENGINE_PREFERENCES.map((p) => {
+        {/* 네이티브 · 원격은 데스크톱(Z3)에서만 — 웹에서는 항목 자체를 보이지 않는다. */}
+        {ENGINE_PREFERENCES.filter((p) => caps.native || !isNativePreference(p)).map((p) => {
           const why = preferenceBlocker(caps, p);
           const name = t(PREFERENCE_LABEL[p]);
           return (
@@ -80,6 +84,7 @@ export function EngineChoiceControl() {
   return (
     <div className="stack">
       <EngineSelect />
+      {caps.native && isNativePreference(pref) ? <NativeTargetField kind={pref} /> : null}
       <p className="srow__hint tnum" data-k="engine-variant" title={why}>
         {shown ?? t("실행 불가")}
         {shown ? ` · ${VARIANT_LABEL[shown]}` : ""}
@@ -91,6 +96,50 @@ export function EngineChoiceControl() {
         {engine.fallbackReason ? ` · ${t("물러섬")}` : ""}
       </p>
     </div>
+  );
+}
+
+/**
+ * 네이티브 엔진의 자리(데스크톱 Z3) — 로컬 실행 파일 경로 또는 원격 `host:port`. 칸을 떠나거나 Enter 를 누를 때
+ * 저장한다 — 글자마다 저장하면 떠 있는 네이티브 엔진이 글자마다 다시 뜬다.
+ */
+function NativeTargetField({ kind }: { kind: "native" | "remote" }) {
+  const id = useId();
+  const key = kind === "native" ? "enginePath" : "engineRemote";
+  const saved = useSettingsStore((s) => s[key]);
+  const update = useSettingsStore((s) => s.update);
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    if (draft !== null && draft !== saved) update({ [key]: draft });
+    setDraft(null);
+  };
+  const label = kind === "native" ? t("엔진 실행 파일") : t("원격 서버 주소");
+  return (
+    <span className="field field--wide">
+      <label htmlFor={id} className="field__label">
+        {label}
+      </label>
+      <span className="field__box">
+        <input
+          id={id}
+          className="field__input field__input--text"
+          value={draft ?? saved}
+          spellCheck={false}
+          autoComplete="off"
+          placeholder={
+            kind === "native"
+              ? t("비우면 앱 옆의 engine/rapfi.exe")
+              : `${DEFAULT_REMOTE_HOST}:${DEFAULT_REMOTE_PORT}`
+          }
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") setDraft(null);
+          }}
+        />
+      </span>
+    </span>
   );
 }
 

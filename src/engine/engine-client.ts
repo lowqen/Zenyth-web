@@ -11,9 +11,19 @@ import {
   type Placement,
   type SearchEndReason,
   type FsOp,
+  type NativeEngineSpec,
   type ToWorker,
   type WeightsSpec,
 } from "./engine-types";
+import {
+  NativeTransport,
+  WasmTransport,
+  nativeAvailable,
+  parseRemoteAddress,
+  nativeBridge,
+  type EngineTransport,
+  type NativeBridge,
+} from "./engine-transport";
 import engineManifest from "./engine-manifest.json";
 import { t } from "../i18n/i18n";
 
@@ -59,12 +69,27 @@ export const RELAXED_SIMD_PROBE = new Uint8Array([
  * 기동 뒤 예열 탐색까지 통과해야 쓴다(워커 `warmup`). 실패하면 일반 SIMD 로 물러선다.
  */
 export type EngineVariant =
-  "multi-simd128-relaxed" | "multi-simd128" | "single-simd128-relaxed" | "single-simd128";
+  | "multi-simd128-relaxed"
+  | "multi-simd128"
+  | "single-simd128-relaxed"
+  | "single-simd128"
+  /** 데스크톱 Z3 — 셸이 띄운 로컬 Rapfi 프로세스(사이드카). */
+  | "native"
+  /** 데스크톱 Z3 — 셸이 TCP 로 붙은 원격 Rapfi(지금 `engine_bak.exe` 프록시가 하는 일). */
+  | "remote";
+
+/** 셸 너머의 엔진인가(데스크톱 Z3). 이 둘은 WASM 이 아니다 — 가중치 · 예열 · relaxed 를 모른다. */
+export type NativeVariant = Extract<EngineVariant, "native" | "remote">;
+export const isNativeVariant = (v: EngineVariant | null | undefined): v is NativeVariant =>
+  v === "native" || v === "remote";
 
 export const isMultiVariant = (v: EngineVariant | null | undefined): boolean =>
   v?.startsWith("multi") ?? false;
 export const isRelaxedVariant = (v: EngineVariant | null | undefined): boolean =>
   v?.endsWith("-relaxed") ?? false;
+/** 엔진이 제 스레드에서 도는가 — 멀티 변형과 네이티브. `thread_num` 을 1 로 묶지 않는다. */
+export const isThreadedVariant = (v: EngineVariant | null | undefined): boolean =>
+  isMultiVariant(v) || isNativeVariant(v);
 
 /**
  * 시도할 변형의 순서 — 앞에서부터 띄워 보고, 기동(핸드셰이크·예열)에 실패하면 다음으로.
@@ -101,9 +126,23 @@ export function planVariants(o: {
  * 고른 것이 기동에 실패하면 **더 낮은 쪽으로** 물러선다(멀티 → 단일, relaxed → 일반).
  * 고른 것을 이 환경에서 아예 못 쓰면 쓸 수 있는 가장 가까운 것으로 띄우고 까닭을 남긴다.
  */
-export type EnginePreference = "auto" | "multi" | "relaxed" | "simd";
+export type EnginePreference = "auto" | "multi" | "relaxed" | "simd" | "native" | "remote";
 
-export const ENGINE_PREFERENCES: readonly EnginePreference[] = ["auto", "multi", "relaxed", "simd"];
+/**
+ * `native` · `remote` 는 데스크톱(Z3)에서만 고를 수 있다. 실패하면(실행 파일이 없거나 서버가 꺼져 있으면) 이
+ * 환경의 WASM 순서로 물러서고 까닭을 남긴다 — 엔진 없이 멈춰 있는 것보다 낫다.
+ */
+export const ENGINE_PREFERENCES: readonly EnginePreference[] = [
+  "auto",
+  "multi",
+  "relaxed",
+  "simd",
+  "native",
+  "remote",
+];
+
+export const isNativePreference = (p: EnginePreference): p is NativeVariant =>
+  p === "native" || p === "remote";
 
 export const isEnginePreference = (v: unknown): v is EnginePreference =>
   typeof v === "string" && (ENGINE_PREFERENCES as readonly string[]).includes(v);
@@ -116,11 +155,15 @@ export function planOrder(
   variants: readonly EngineVariant[],
   pref: EnginePreference,
 ): { order: EngineVariant[]; note: string | null } {
-  const multis = variants.filter((v) => isMultiVariant(v));
-  const singles = variants.filter((v) => !isMultiVariant(v));
+  const wasm = variants.filter((v) => !isNativeVariant(v));
+  const multis = wasm.filter((v) => isMultiVariant(v));
+  const singles = wasm.filter((v) => !isMultiVariant(v));
   switch (pref) {
+    case "native":
+    case "remote":
+      return { order: [pref, ...wasm], note: null };
     case "auto":
-      return { order: [...variants], note: null };
+      return { order: [...wasm], note: null };
     case "multi":
       return multis.length
         ? { order: [...multis, ...singles], note: null }
@@ -142,6 +185,7 @@ export function planOrder(
 
 /** 드롭다운의 각 항목을 이 환경에서 고를 수 있는가 — 못 고르면 그 까닭. */
 export function preferenceBlocker(caps: Capabilities, pref: EnginePreference): string | null {
+  if (isNativePreference(pref)) return caps.native ? null : t("데스크톱 앱에서만 쓸 수 있습니다");
   if (!caps.simd) return caps.note;
   switch (pref) {
     case "auto":
@@ -176,6 +220,8 @@ export interface Capabilities {
   /** 멀티를 못 쓰는 까닭(화면이 그대로 말한다). 쓸 수 있으면 null. */
   threadsNote: string | null;
   note: string | null;
+  /** 셸 너머의 엔진(`native` · `remote`)을 고를 수 있는가 — 데스크톱 Z3. */
+  native: boolean;
 }
 
 /**
@@ -231,6 +277,7 @@ export function detectCapabilities(): Capabilities {
     variants,
     threads,
     threadsNote: threads ? null : threadsNote,
+    native: nativeAvailable(),
     note: simd
       ? null
       : t(
@@ -339,7 +386,20 @@ export interface EngineOptions extends EngineEvents {
    * 전에 보내므로 예열이 확정된 스레드 수에서 한 번만 돈다.
    */
   bootSettings?: (variant: EngineVariant) => readonly EngineCommand[];
+  /**
+   * 네이티브 엔진의 자리(데스크톱 Z3) — 띄울 때마다 묻는다(설정에서 바뀔 수 있다). 글이면 띄울 수 없는 까닭이다
+   * (원격 주소 형식 오류 등) — 그 변형은 실패로 치고 다음으로 물러선다.
+   */
+  nativeSpec?: (variant: NativeVariant) => NativeEngineSpec | string;
+  /** 시험용 — 전송을 갈아 끼운다. 없으면 워커(WASM) · 셸(네이티브)을 띄운다. */
+  transport?: (variant: EngineVariant) => EngineTransport;
 }
+
+/**
+ * 네이티브 엔진의 기동 핸드셰이크 한도. 이 기기(Celeron 2코어)에서 로컬 Rapfi 는 첫 OK 까지 9.5초 걸렸고
+ * (계획 §9.2 — 8GB 해시 할당 실패 · 가중치 로딩), 원격은 VPN 지연이 더해진다.
+ */
+const NATIVE_HANDSHAKE_MS = 60_000;
 
 /**
  * 예열 탐색의 기본 길이. 가중치 풀기(첫 탐색에서 일어난다)는 이와 따로 들고, 이 시간은
@@ -361,7 +421,10 @@ export class BootAbortedError extends Error {
 }
 
 export class EngineClient {
-  private worker: Worker | null = null;
+  /** 지금 엔진에 닿는 길(워커 · 셸). 기동 전 · 내린 뒤에는 null. */
+  private worker: EngineTransport | null = null;
+  /** 셸 연결 — 네이티브 변형을 띄울 때 한 번 기다려 받는다. */
+  private bridge: NativeBridge | null = null;
   private status: EngineStatus = "idle";
   private snapshot: AnalysisSnapshot = EMPTY_SNAPSHOT;
   private readyResolvers: (() => void)[] = [];
@@ -430,12 +493,16 @@ export class EngineClient {
    * 오류·상태 이벤트를 내지 않고 다음 변형도 띄우지 않는다.
    */
   async start(preference: EnginePreference = "auto"): Promise<void> {
+    const wantNative = isNativePreference(preference);
+    const native = wantNative && this.capabilities.native;
     const best = this.capabilities.variant;
-    if (!best) throw new Error(this.capabilities.note ?? t("엔진을 실행할 수 없습니다"));
+    if (!best && !native) throw new Error(this.capabilities.note ?? t("엔진을 실행할 수 없습니다"));
     if (this.booting) return this.booting;
     if (this.worker) return this.whenReady();
 
-    const plan = planOrder(this.capabilities.variants, preference);
+    // 네이티브를 골랐는데 셸이 없으면(웹에 데스크톱 설정을 들여온 경우) 자동으로 띄우고 까닭을 남긴다.
+    const plan = planOrder(this.capabilities.variants, wantNative && !native ? "auto" : preference);
+    if (wantNative && !native) plan.note = preferenceBlocker(this.capabilities, preference);
     const order = plan.order.length ? plan.order : [...this.capabilities.variants];
     const gen = this.generation;
     this.setStatus("starting");
@@ -443,6 +510,10 @@ export class EngineClient {
       let fallbackReason: string | null = plan.note;
       for (const variant of order) {
         try {
+          if (isNativeVariant(variant) && !this.events.transport) {
+            this.bridge ??= await nativeBridge();
+            if (gen !== this.generation) throw new BootAbortedError();
+          }
           const settings = this.bootSettingsFor(variant);
           const booted = await this.spawn(variant, settings);
           if (gen !== this.generation) throw new BootAbortedError();
@@ -539,7 +610,7 @@ export class EngineClient {
       } catch (e) {
         if (gen !== this.generation) return;
         // `spawn` 이 새 워커를 this.worker 에 넣었다 — 위에서 null 로 좁혀진 타입을 푼다.
-        (this.worker as Worker | null)?.terminate();
+        (this.worker as EngineTransport | null)?.terminate();
         this.worker = null;
         last = e;
       }
@@ -556,24 +627,52 @@ export class EngineClient {
     variant: EngineVariant,
     settings: readonly EngineCommand[] = [],
   ): Promise<Extract<FromWorker, { type: "booted" }>> {
+    let worker: EngineTransport;
+    try {
+      worker = this.openTransport(variant);
+    } catch (e) {
+      return Promise.reject(e instanceof Error ? e : new Error(String(e)));
+    }
+    this.worker = worker;
+    return this.bootOn(worker, variant, settings);
+  }
+
+  /** 변형에 맞는 길을 연다 — WASM 은 워커, 네이티브는 같은 워커 + 셸 세션. */
+  private openTransport(variant: EngineVariant): EngineTransport {
+    if (this.events.transport) return this.events.transport(variant);
+    if (isNativeVariant(variant)) {
+      if (!this.bridge) throw new Error(t("데스크톱 앱에서만 쓸 수 있습니다"));
+      const spec = this.events.nativeSpec?.(variant) ?? defaultNativeSpec(variant);
+      if (typeof spec === "string") throw new Error(spec);
+      return new NativeTransport(() => EngineClient.spawnWorker(false), this.bridge, spec);
+    }
+    return new WasmTransport(() => EngineClient.spawnWorker(variant === "multi-simd128-relaxed"));
+  }
+
+  private static spawnWorker(relaxedMulti: boolean): Worker {
     // **클래식 워커다.** 이유는 vite.config.ts 의 worker.format 주석에 있다 —
     // upstream 글루를 읽는 유일한 방법인 importScripts 가 모듈 워커에는 없다.
     // 멀티 변형의 엔진 스레드도 **이 워커 번들을 다시 연다** — 거기서 글루만 읽고
     // 비키는 가드가 워커 머리에 있다(engine-worker.ts 「pthread 가드」). 그 가드가 읽을
     // 글루가 번들마다 정해지므로 relaxed 멀티는 제 번들로 띄운다(engine-worker-relaxed.ts).
     // Vite 가 워커를 번들로 알아보려면 `new Worker(new URL(…))` 가 이 모양 그대로여야 한다.
-    const worker =
-      variant === "multi-simd128-relaxed"
-        ? new Worker(new URL("./engine-worker-relaxed.ts", import.meta.url), {
-            type: "classic",
-            name: "rapfi-engine",
-          })
-        : new Worker(new URL("./engine-worker.ts", import.meta.url), {
-            type: "classic",
-            name: "rapfi-engine",
-          });
-    this.worker = worker;
+    return relaxedMulti
+      ? new Worker(new URL("./engine-worker-relaxed.ts", import.meta.url), {
+          type: "classic",
+          name: "rapfi-engine",
+        })
+      : new Worker(new URL("./engine-worker.ts", import.meta.url), {
+          type: "classic",
+          name: "rapfi-engine",
+        });
+  }
 
+  /** 길 하나에 기동 메시지를 보내고 기동 결과를 기다린다. */
+  private bootOn(
+    worker: EngineTransport,
+    variant: EngineVariant,
+    settings: readonly EngineCommand[],
+  ): Promise<Extract<FromWorker, { type: "booted" }>> {
     let settle: {
       resolve: (b: Extract<FromWorker, { type: "booted" }>) => void;
       reject: (e: Error) => void;
@@ -605,8 +704,7 @@ export class EngineClient {
     };
     this.abortBoot = abort;
 
-    worker.onmessage = (ev: MessageEvent<FromWorker>) => {
-      const m = ev.data;
+    worker.onmessage = (m: FromWorker) => {
       switch (m.type) {
         case "booted":
           clearTimeout(timer);
@@ -677,40 +775,40 @@ export class EngineClient {
           this.events.onError?.(m.message);
           this.setStatus("error");
           break;
+        case "wire":
+          // 네이티브 전송이 가로챈다 — 여기까지 오지 않는다.
+          break;
       }
     };
-    // `String(e)` 로 뭉개면 화면에 «[object Object]» 가 뜬다 — 실제로 그렇게 나와서
-    // 한 런을 통째로 헤맸다. 워커 오류 이벤트가 들고 있는 것을 전부 풀어 적는다.
-    worker.onerror = (e) => {
-      const where = e.filename ? ` (${e.filename}:${e.lineno}:${e.colno})` : "";
-      const what = e.message || e.type || t("알 수 없는 워커 오류");
-      const text = t("워커 오류: {what}", { what: `${what}${where}` });
-      if (failBoot(text)) return;
-      this.events.onError?.(text);
-      this.setStatus("error");
-    };
-    worker.onmessageerror = () => {
-      const text = t("워커 메시지를 복제하지 못했습니다(구조화 복제 실패)");
+    // 전송 자체의 고장(워커 오류 · 복제 실패). 글은 전송이 사람이 읽게 편다(`describeWorkerError`).
+    worker.onerror = (text) => {
       if (failBoot(text)) return;
       this.events.onError?.(text);
       this.setStatus("error");
     };
 
+    const native = isNativeVariant(variant);
     const boot: Extract<ToWorker, { type: "boot" }> = {
       type: "boot",
       engineBaseUrl: this.engineBaseUrl,
       variant,
       sliceMs: this.sliceMs,
       size: this.size,
-      warmupMs: this.warmupMs,
+      // 네이티브는 JIT 이 없다 — 예열은 WASM 의 첫 탐색 비용(가중치 풀기 · TurboFan 승격)을 당기는 일이다.
+      warmupMs: native ? 0 : this.warmupMs,
     };
     if (settings.length) boot.settings = settings;
-    // 공유 가중치 — 워커가 캐시 계층으로 받아 해시를 확인한다. 기본 경로가 절대 주소가
-    // 아니면 이 페이지 기준으로 푼다(워커 안의 상대 주소는 워커 번들 기준이 된다).
-    const weights =
-      typeof location === "undefined" ? null : weightsSpec(this.engineBaseUrl, location.href);
-    if (weights) boot.weights = weights;
-    this.post(boot);
+    if (native) {
+      boot.native = true;
+      boot.handshakeMs = NATIVE_HANDSHAKE_MS;
+    } else {
+      // 공유 가중치 — 워커가 캐시 계층으로 받아 해시를 확인한다. 기본 경로가 절대 주소가
+      // 아니면 이 페이지 기준으로 푼다(워커 안의 상대 주소는 워커 번들 기준이 된다).
+      const weights =
+        typeof location === "undefined" ? null : weightsSpec(this.engineBaseUrl, location.href);
+      if (weights) boot.weights = weights;
+    }
+    worker.post(boot);
     return booted;
   }
 
@@ -825,7 +923,7 @@ export class EngineClient {
       const msg: ToWorker = { type: "fs", id, op, path };
       if (bytes) msg.bytes = bytes;
       if (knownBase !== undefined) msg.knownBase = knownBase;
-      if (bytes) this.worker!.postMessage(msg, [bytes.buffer]);
+      if (bytes) this.worker!.post(msg, [bytes.buffer]);
       else this.post(msg);
     });
   }
@@ -864,6 +962,38 @@ export class EngineClient {
   }
 
   private post(m: ToWorker) {
-    this.worker?.postMessage(m);
+    this.worker?.post(m);
   }
+}
+
+/** `engine_bak.exe` 프록시가 붙는 곳(핸드북 §1 — Tailscale 이름 `rapfi-server`). */
+export const DEFAULT_REMOTE_HOST = "rapfi-server";
+export const DEFAULT_REMOTE_PORT = 5050;
+
+/** 설정이 자리를 주지 않으면 — 로컬은 셸의 기본 위치, 원격은 지금 프록시가 붙는 서버. */
+export function defaultNativeSpec(variant: NativeVariant): NativeEngineSpec {
+  return variant === "native"
+    ? { kind: "local", path: "" }
+    : { kind: "remote", host: DEFAULT_REMOTE_HOST, port: DEFAULT_REMOTE_PORT };
+}
+
+/** 설정이 주는 네이티브 엔진의 자리 — 빈 글이면 기본값(`defaultNativeSpec`). */
+export interface NativeTarget {
+  /** 로컬 실행 파일의 경로. 빈 글이면 셸 옆의 `engine/rapfi.exe` → `rapfi.exe`. */
+  path: string;
+  /** 원격 `host:port`(포트를 빼면 5050). 빈 글이면 `rapfi-server:5050`. */
+  remote: string;
+}
+
+/** 설정값 → 셸에 넘길 자리. 원격 주소의 형식이 틀렸으면 그 까닭(글)을 돌려준다. */
+export function nativeSpecFor(
+  variant: NativeVariant,
+  target: NativeTarget,
+): NativeEngineSpec | string {
+  if (variant === "native") return { kind: "local", path: target.path.trim() };
+  if (!target.remote.trim()) return defaultNativeSpec("remote");
+  const addr = parseRemoteAddress(target.remote, DEFAULT_REMOTE_PORT);
+  return addr
+    ? { kind: "remote", ...addr }
+    : t("원격 서버 주소를 읽지 못했습니다: {addr} (host:port 꼴)", { addr: target.remote });
 }

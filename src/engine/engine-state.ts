@@ -4,11 +4,14 @@ import {
   BootAbortedError,
   EngineClient,
   detectCapabilities,
-  isMultiVariant,
+  isNativeVariant,
+  isThreadedVariant,
+  nativeSpecFor,
   type Capabilities,
   type EnginePreference,
   type EngineVariant,
   type FsResult,
+  type NativeTarget,
   type OpeningResponse,
 } from "./engine-client";
 import {
@@ -99,6 +102,12 @@ interface EngineState {
    */
   enginePreference: EnginePreference;
   setEnginePreference: (p: EnginePreference) => void;
+  /**
+   * 네이티브 엔진의 자리(데스크톱 Z3) — 로컬 실행 파일 경로 · 원격 `host:port`. 떠 있는 엔진이 네이티브면
+   * 바꿀 때 다시 띄운다.
+   */
+  nativeTarget: NativeTarget;
+  setNativeTarget: (t: NativeTarget) => void;
   /**
    * 엔진을 내렸다가 다시 띄운다(변형 전환). 해시는 잃는다. 분석이 켜져 있었으면 새 엔진이
    * 같은 국면을 이어 읽고, 대국에서 엔진이 생각 중이었다면 그 수는 버려진다
@@ -458,7 +467,8 @@ export const useEngineStore = create<EngineState>((set, get) => {
       },
       // 띄울 변형마다 — 멀티에서 단일로 물러서면 thread_num 은 1 이 된다.
       bootSettings: (variant) =>
-        bootCommands(config, isMultiVariant(variant), get().capabilities.hardwareConcurrency),
+        bootCommands(config, isThreadedVariant(variant), get().capabilities.hardwareConcurrency),
+      nativeSpec: (variant) => nativeSpecFor(variant, get().nativeTarget),
       onBooted: (info) => {
         if (client !== c) return;
         // 새 엔진은 기동 메시지로 받은 설정만 안다 — 그것을 「보냄」으로 적어 둬야 아래
@@ -548,6 +558,17 @@ export const useEngineStore = create<EngineState>((set, get) => {
       set({ enginePreference: p });
       // 떠 있거나 뜨는 중이면 깨끗이 다시 띄운다 — 다른 바이너리다. 꺼져 있으면 다음 기동부터.
       if (get().status !== "idle") void get().restart();
+    },
+    nativeTarget: { path: "", remote: "" },
+    setNativeTarget: (next) => {
+      const cur = get().nativeTarget;
+      if (cur.path === next.path && cur.remote === next.remote) return;
+      set({ nativeTarget: next });
+      // 떠 있는 것이 그 자리의 엔진이면 새 자리로 다시 띄운다. WASM 이면 다음 네이티브 기동부터.
+      const v = get().engine.variant;
+      if (!isNativeVariant(v) || get().status === "idle") return;
+      if (v === "native" ? cur.path !== next.path : cur.remote !== next.remote)
+        void get().restart();
     },
 
     restart: async () => {

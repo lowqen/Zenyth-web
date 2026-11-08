@@ -113,6 +113,10 @@ export interface Settings {
    * 사용」 스위치를 대신한다 — 그 스위치를 끈 것은 이제 `relaxed`(단일 스레드)다.
    */
   enginePreference: EnginePreference;
+  /** 네이티브 엔진 실행 파일(데스크톱 Z3). 빈 글이면 셸 옆의 기본 위치. */
+  enginePath: string;
+  /** 원격 엔진 `host:port`(데스크톱 Z3). 빈 글이면 `rapfi-server:5050`. */
+  engineRemote: string;
   /** 앱을 열면 엔진을 곧바로 띄울까. 가중치(20MB)는 한 번 받으면 캐시에서 읽는다. */
   autoBoot: boolean;
   // ── 분석 ──
@@ -137,6 +141,8 @@ export const DEFAULT_SETTINGS: Settings = {
   hashAutoClear: false,
   threads: AUTO_THREADS,
   enginePreference: "auto",
+  enginePath: "",
+  engineRemote: "",
   autoBoot: true,
   multiPv: MULTI_PV.initial,
   analysisSec: 0,
@@ -168,6 +174,8 @@ export function migrate(raw: StoredSettings): Partial<Settings> {
 }
 
 const KEY = "rapfi.settings";
+/** 경로 · 주소 글의 상한 — Windows 긴 경로(32767)까지 받을 일은 없다. */
+const MAX_PATH_CHARS = 1024;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(v)));
 
@@ -180,6 +188,8 @@ export function sanitize(raw: Partial<Settings>): Settings {
   const node = num(raw.maxNode, d.maxNode);
   const sec = num(raw.analysisSec, d.analysisSec);
   const vct = num(raw.vcThread, d.vcThread);
+  const text = (v: unknown, fallback: string) =>
+    typeof v === "string" ? v.trim().slice(0, MAX_PATH_CHARS) : fallback;
   return {
     style: clamp(num(raw.style, d.style), STYLE_RANGE.min, STYLE_RANGE.max),
     hashMb: (HASH_CHOICES_MB as readonly number[]).includes(hash) ? hash : d.hashMb,
@@ -191,6 +201,8 @@ export function sanitize(raw: Partial<Settings>): Settings {
     enginePreference: isEnginePreference(raw.enginePreference)
       ? raw.enginePreference
       : d.enginePreference,
+    enginePath: text(raw.enginePath, d.enginePath),
+    engineRemote: text(raw.engineRemote, d.engineRemote),
     autoBoot: typeof raw.autoBoot === "boolean" ? raw.autoBoot : d.autoBoot,
     multiPv: clamp(num(raw.multiPv, d.multiPv), MULTI_PV.min, MULTI_PV.max),
     analysisSec: sec > 0 ? Math.round(sec) : 0,
@@ -251,6 +263,8 @@ export const toEngineConfig = (s: Settings): EngineConfig => ({
 /** 엔진 스토어로 흘려보낸다. 엔진이 놀고 있으면 곧바로, 아니면 다음 탐색 직전에 닿는다. */
 function push(s: Settings) {
   const e = useEngineStore.getState();
+  // 자리를 먼저 — 선택이 바뀌어 다시 띄울 때 새 자리로 뜨게.
+  e.setNativeTarget({ path: s.enginePath, remote: s.engineRemote });
   e.setEnginePreference(s.enginePreference);
   e.configure(toEngineConfig(s));
   e.setMultiPv(s.multiPv);
@@ -294,6 +308,8 @@ function pick(s: SettingsState): Settings {
     hashAutoClear: s.hashAutoClear,
     threads: s.threads,
     enginePreference: s.enginePreference,
+    enginePath: s.enginePath,
+    engineRemote: s.engineRemote,
     autoBoot: s.autoBoot,
     multiPv: s.multiPv,
     analysisSec: s.analysisSec,

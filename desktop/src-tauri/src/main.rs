@@ -5,9 +5,13 @@
 //! - 창 상태 기억(크기 · 위치 · 최대화). 보이기는 웹이 첫 화면을 그린 뒤에 한다(흰 화면 깜박임 방지).
 //! - 파일 연결(.psq · .sav · .pos): 명령줄로 받은 파일을 읽어 웹에 넘긴다. 해석은 웹의 `openGameFile` 한 곳이다.
 //!
+//! - 네이티브 엔진(데스크톱 Z3): 로컬 Rapfi 프로세스 · 원격 TCP 세션 — `engine.rs`.
+//!
 //! 타이틀바 · 단축키는 웹 쪽(`src/app/desktop/`)에 있다.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+mod engine;
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -87,7 +91,13 @@ fn main() {
                 .build(),
         )
         .manage(Pending::default())
-        .invoke_handler(tauri::generate_handler![take_open_files])
+        .manage(engine::Engines::default())
+        .invoke_handler(tauri::generate_handler![
+            take_open_files,
+            engine::engine_open,
+            engine::engine_write,
+            engine::engine_close
+        ])
         .setup(|app| {
             let cwd = std::env::current_dir().unwrap_or_default();
             let files = read_game_files(std::env::args().skip(1), &cwd);
@@ -104,6 +114,12 @@ fn main() {
             });
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("zenyth-desktop 를 띄우지 못했습니다");
+        .build(tauri::generate_context!())
+        .expect("zenyth-desktop 를 띄우지 못했습니다")
+        .run(|app, event| {
+            // 창을 닫으면 엔진 프로세스도 함께 — 웹이 `END` 를 보낼 틈이 없었어도 고아로 남기지 않는다.
+            if let tauri::RunEvent::Exit = event {
+                app.state::<engine::Engines>().close_all();
+            }
+        });
 }

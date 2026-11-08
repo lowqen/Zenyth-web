@@ -1363,4 +1363,23 @@ export const EN: Readonly<Record<string, string>> = {
     "Could not reach the dev server. Check that it was started with pnpm studio",
   "저장소 파일에 썼습니다(버전 {v}). pnpm curriculum:publish 로 커밋 · push 합니다":
     "Wrote the repository file (version {v}). Commit and push it with pnpm curriculum:publish",
+  // 데스크톱 Z3: 네이티브 · 원격 엔진
+  "데스크톱 앱에서만 쓸 수 있습니다": "Available only in the desktop app",
+  "원격 서버 주소를 읽지 못했습니다: {addr} (host:port 꼴)":
+    "Could not read the remote server address: {addr} (use host:port)",
+  "엔진에 쓰지 못했습니다: {why}": "Could not write to the engine: {why}",
+  "네이티브 엔진을 띄우지 못했습니다({path}): {why}":
+    "Could not start the native engine ({path}): {why}",
+  "기본 위치": "default location",
+  "원격 엔진 {addr} 에 붙지 못했습니다: {why}":
+    "Could not connect to the remote engine {addr}: {why}",
+  "네이티브 · 원격 엔진의 DB 연동은 아직 준비 중입니다. 엔진 폴더의 DB 는 건드리지 않습니다":
+    "Database support for native and remote engines is not ready yet. The database in the engine folder is left untouched",
+  "엔진 실행 파일": "Engine executable",
+  "원격 서버 주소": "Remote server address",
+  "비우면 앱 옆의 engine/rapfi.exe": "Leave empty for engine/rapfi.exe next to the app",
+  "네이티브 Rapfi": "Native Rapfi",
+  "원격 서버 Rapfi": "Remote server Rapfi",
+  "네이티브 Rapfi (이 컴퓨터)": "Native Rapfi (this computer)",
+  "원격 서버 (TCP)": "Remote server (TCP)",
 };

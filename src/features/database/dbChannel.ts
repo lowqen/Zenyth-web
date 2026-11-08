@@ -12,6 +12,13 @@ import { t } from "../../i18n/i18n";
  *
  * 엔진이 DB 를 쥐고 있지 않으면 질의에 **아무 답도 하지 않는다**(`if (ctx.storage)`). 그래서
  * 모든 요청에 시간 끈이 있다 — 끈이 끊기면 `null` 이고, 부르는 쪽은 «답 없음»으로 읽는다.
+ *
+ * **늦은 답(데스크톱 Z3, 원격 엔진)**: 시간 끈이 끊긴 요청의 답이 뒤늦게 올 수 있다. 그 줄을 다음 요청이
+ * 제 답으로 읽으면 안 된다(데스크톱의 `dbqueryseq`/`dbdoneseq` 가 막는 바로 그 어긋남). 그래서 끊긴 요청은
+ * «빚»으로 남아 `LATE_REPLY_MS` 동안 들어오는 줄을 먼저 가져간다 — 제 끝 줄(또는 ERROR)이 오면 갚은 것이다.
+ * 빚은 오래된 것부터 갚는다(엔진은 받은 차례대로 답한다). 끝내 답이 없는 요청(DB 없는 엔진)의 빚은 기한이
+ * 지나면 버린다. 엔진이 바뀌거나 DB 를 새로 붙이면 `resetPairing()` 으로 빚을 지운다 — 새 엔진은 옛 요청에
+ * 답하지 않는다(Z0 녹취: «페어링은 답 없는 조회를 견뎌야 한다»).
  */
 
 export interface DbPort {
@@ -27,11 +34,21 @@ export interface DbReply {
 }
 
 const DEFAULT_TIMEOUT_MS = 8_000;
+/** 끊긴 요청의 늦은 답을 받아 줄 기한. 원격 왕복 지연보다 넉넉하게. */
+export const LATE_REPLY_MS = 30_000;
+
+type Until = (l: DbLine, seen: readonly DbLine[]) => boolean;
+interface Owed {
+  until: Until;
+  seen: DbLine[];
+  expiresAt: number;
+}
 
 export class DbChannel {
   readonly agg: DbAggregator;
   private chain: Promise<unknown> = Promise.resolve();
   private waiter: ((l: DbLine) => void) | null = null;
+  private owed: Owed[] = [];
   private unlisten: () => void;
 
   constructor(
@@ -40,14 +57,32 @@ export class DbChannel {
     fromWire: (row: number, col: number) => Move,
     /** 요청 밖에서 온 줄도 포함해 줄마다 — 화면의 기록용. */
     private readonly onLine?: (l: DbLine) => void,
+    private readonly now: () => number = Date.now,
   ) {
     this.agg = new DbAggregator(size, fromWire);
     this.unlisten = port.listen((text) => {
       const l = this.agg.consume(text);
       if (!l) return;
       this.onLine?.(l);
+      if (this.payDebt(l)) return;
       this.waiter?.(l);
     });
+  }
+
+  /** 줄이 끊긴 요청의 늦은 답이면 그 빚에 넘기고 참. */
+  private payDebt(l: DbLine): boolean {
+    const now = this.now();
+    this.owed = this.owed.filter((o) => o.expiresAt > now);
+    const debt = this.owed[0];
+    if (!debt) return false;
+    debt.seen.push(l);
+    if (l.kind === "error" || debt.until(l, debt.seen)) this.owed.shift();
+    return true;
+  }
+
+  /** 끊긴 요청의 빚을 모두 지운다 — 엔진이 바뀌었거나 DB 를 새로 붙일 때. */
+  resetPairing(): void {
+    this.owed = [];
   }
 
   close(): void {
@@ -60,7 +95,7 @@ export class DbChannel {
    */
   request(
     cmd: EngineCommand,
-    until: ((l: DbLine, seen: readonly DbLine[]) => boolean) | null,
+    until: Until | null,
     timeoutMs = DEFAULT_TIMEOUT_MS,
   ): Promise<DbReply | null> {
     const run = () =>
@@ -74,6 +109,13 @@ export class DbChannel {
         const finish = (ok: boolean) => {
           clearTimeout(timer);
           this.waiter = null;
+          // 끊겼다 — 이미 받은 줄을 안고 빚으로 남는다. 나머지 답은 다음 요청이 아니라 이 빚이 가져간다.
+          // 빚이 남은 채 또 끊겼다면 짝이 이미 틀어진 것이다(앞 빚이 남의 답을 먹었을 수 있다) — 빚을 쌓지
+          // 않고 모두 지운다. 끊김이 줄줄이 번지지 않게.
+          if (!ok) {
+            if (this.owed.length > 0) this.owed = [];
+            else this.owed.push({ until, seen: lines, expiresAt: this.now() + LATE_REPLY_MS });
+          }
           resolve(ok ? { lines, snapshot: this.agg.snapshot() } : null);
         };
         const timer = setTimeout(() => finish(false), timeoutMs);
