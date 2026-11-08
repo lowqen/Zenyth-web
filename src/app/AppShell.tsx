@@ -12,6 +12,8 @@ import { useAutoBoot } from "./useAutoBoot";
 import { RifImportLayer } from "../features/research/rif/RifImportLayer";
 import { CopySheetHost } from "../components/CopySheet";
 import { prefetchScreens } from "./screens";
+import { IS_DESKTOP } from "./desktop/platform";
+import { TitleBar } from "./desktop/TitleBar";
 
 /** 첫 화면이 그려지고 이만큼 지나 한가할 때 나머지 화면 조각을 받는다(screens.ts). */
 const PREFETCH_DELAY_MS = 1500;
@@ -48,29 +50,33 @@ export function AppShell() {
   }, []);
 
   return (
-    <div className="shell" data-compact={compact || undefined}>
-      {!compact && <NavRail />}
-      {/* 보드 화면은 판의 나무색으로 물든다(앱 WoodTheme — tokens.css 의 [data-wood] 블록). 레일 · 하단 탭은 그대로. */}
-      <div className="shell__main" data-wood={pathname.startsWith("/board") || undefined}>
-        <TopBar title={title} />
-        {inResearch && <ResearchTabs />}
-        <main className="shell__content">
-          {/* 보드 밖의 화면은 처음 열 때 받는 조각이다(screens.ts) — 받는 동안 내용 칸만 비운다. */}
-          <Suspense fallback={null}>
-            <Outlet />
-          </Suspense>
-        </main>
-      </div>
-      {compact && (
-        <div className="shell__bottom">
-          <MiniAnalysisBar />
-          <BottomTabs />
+    <>
+      {/* 데스크톱 Z2: Tauri 창이면 맨 위에 커스텀 타이틀바(웹에서는 그리지 않는다). 셸 높이는 그만큼 준다(base.css). */}
+      {IS_DESKTOP && <TitleBar />}
+      <div className="shell" data-compact={compact || undefined}>
+        {!compact && <NavRail />}
+        {/* 보드 화면은 판의 나무색으로 물든다(앱 WoodTheme — tokens.css 의 [data-wood] 블록). 레일 · 하단 탭은 그대로. */}
+        <div className="shell__main" data-wood={pathname.startsWith("/board") || undefined}>
+          <TopBar title={title} />
+          {inResearch && <ResearchTabs />}
+          <main className="shell__content">
+            {/* 보드 밖의 화면은 처음 열 때 받는 조각이다(screens.ts) — 받는 동안 내용 칸만 비운다. */}
+            <Suspense fallback={null}>
+              <Outlet />
+            </Suspense>
+          </main>
         </div>
-      )}
-      {/* W7: 어느 화면에 .rif 를 놓아도 변환하고, 진행 · 결과 카드를 띄운다. */}
-      <RifImportLayer />
-      {/* Z6: 클립보드를 못 쓸 때 링크 · 국면 문자열을 보여 주는 시트(앱 ZenythSheet). */}
-      <CopySheetHost />
-    </div>
+        {compact && (
+          <div className="shell__bottom">
+            <MiniAnalysisBar />
+            <BottomTabs />
+          </div>
+        )}
+        {/* W7: 어느 화면에 .rif 를 놓아도 변환하고, 진행 · 결과 카드를 띄운다. */}
+        <RifImportLayer />
+        {/* Z6: 클립보드를 못 쓸 때 링크 · 국면 문자열을 보여 주는 시트(앱 ZenythSheet). */}
+        <CopySheetHost />
+      </div>
+    </>
   );
 }

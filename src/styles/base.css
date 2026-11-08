@@ -147,6 +147,74 @@ a:focus-visible {
   flex-direction: column;
 }
 
+/* ── 데스크톱 셸 (데스크톱 Z2) ─────────────────────────────────────
+   Tauri 창 안에서만 쓰인다(:root[data-desktop] — public/theme-init.js 가 첫 프레임 전에 붙인다). 웹 배포는
+   이 블록의 어느 선택자에도 걸리지 않는다. 새 색 · 반경 · 움직임 없음(Z1 규약) — 닫기 버튼의 빨강도 error 토큰.
+   Mica(Windows 11, :root[data-mica])는 타이틀바에만 비친다. 셸 · 판은 불투명(판의 색 = 값). */
+:root[data-desktop] .shell {
+  height: calc(100% - var(--titlebar-height));
+  height: calc(100dvh - var(--titlebar-height));
+}
+:root[data-mica] body {
+  background: transparent;
+}
+:root[data-mica] .shell {
+  background: var(--c-background);
+}
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  height: var(--titlebar-height);
+  padding-left: var(--space-m);
+  background: var(--c-background);
+  color: var(--c-on-surface-variant);
+  font: var(--type-label-large);
+  letter-spacing: var(--track-label-large);
+  user-select: none;
+}
+:root[data-mica] .titlebar {
+  background: var(--c-chrome);
+}
+.titlebar__icon {
+  width: 16px;
+  height: 16px;
+}
+.titlebar__app {
+  color: var(--c-on-surface);
+}
+.titlebar__doc {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.titlebar__caption {
+  display: flex;
+  align-self: stretch;
+  margin-left: auto;
+}
+.titlebar__caption button {
+  display: grid;
+  place-items: center;
+  width: var(--caption-button-width);
+  color: var(--c-on-surface);
+}
+.titlebar__caption button:hover {
+  background: var(--c-surface-container-high);
+}
+.titlebar__caption .titlebar__close:hover {
+  background: var(--c-error);
+  color: var(--c-on-error);
+}
+.titlebar__caption svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
 /* ── 좌측 레일 ──────────────────────────────────────────────────── */
 .rail {
   flex: 0 0 auto;

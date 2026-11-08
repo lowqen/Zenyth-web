@@ -31,6 +31,10 @@ renju*.sqlite
 .env.*
 !.env.example
 
+# 데스크톱 셸(Tauri) 빌드 산출물 — cargo target 과 tauri 가 만드는 스키마
+/desktop/src-tauri/target/
+/desktop/src-tauri/gen/
+
 # 편집기/OS
 .DS_Store
 desktop.ini

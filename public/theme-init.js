@@ -3,6 +3,8 @@
 // 예전에는 index.html 의 인라인 <script> 였다. CSP(script-src 'self')가 인라인 스크립트를 막으므로
 // 파일로 뺐다(docs/engineering-notes.md §4 Phase 1).
 // 검은 배경(AMOLED)은 다크 위의 덧씌움이라 따로 붙인다 — 어떤 색을 바꿀지는 tokens.css 가 정한다.
+// 데스크톱 Z2: Tauri 셸 안이면 첫 프레임부터 데스크톱 밀도 · 타이틀바 칸(:root[data-desktop], src/app/desktop/platform.ts).
+if ("__TAURI_INTERNALS__" in window) document.documentElement.dataset.desktop = "";
 try {
   const t = localStorage.getItem("rapfi.theme");
   if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;

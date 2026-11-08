@@ -1,0 +1,28 @@
+# zenyth-desktop — Zenyth Web 을 감싸는 Tauri 2 셸(데스크톱 계획 Z2).
+# 계획: gomoku-dev test-yixin/docs/Zenyth_데스크톱_리디자인_계획.md
+# 웹 빌드(`pnpm build` → dist/)를 그대로 싣는다. 엔진은 아직 웹과 같은 WASM 이다(네이티브 엔진은 Z3).
+[package]
+name = "zenyth-desktop"
+version = "0.1.0"
+description = "Zenyth — 오목·렌주 분석반 (데스크톱)"
+license = "GPL-3.0-or-later"
+edition = "2021"
+rust-version = "1.80"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+tauri = { version = "2.12", features = [] }
+tauri-plugin-single-instance = "2.5"
+tauri-plugin-window-state = "2.5"
+serde = { version = "1", features = ["derive"] }
+
+[profile.release]
+# 셸은 작게(계획 §6 «배포 크기»). 무거운 일은 웹뷰 · 엔진이 한다.
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

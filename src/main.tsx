@@ -18,6 +18,7 @@ import { loadOpeningTables } from "./data/opening-tables";
 import { wireDatabase } from "./features/database/dbStore";
 import { t } from "./i18n/i18n";
 import { Root } from "./app/Root";
+import { IS_DESKTOP } from "./app/desktop/platform";
 
 // 화면 조각(app/screens.ts)을 받지 못했다 — 배포가 바뀐 뒤 오래 열어 둔 탭이 지워진 옛 조각을 찾은 것이다
 // (Cloudflare Pages 는 배포마다 자산을 통째로 갈아 끼운다). 새로고침해 새 번들로 연다 — 판은 IndexedDB 에
@@ -59,3 +60,6 @@ createRoot(root).render(
     <Root />
   </StrictMode>,
 );
+
+// 데스크톱 Z2: Tauri 셸 안이면 창 · 파일 연결 · 단축키를 잇는다. 웹 번들은 이 조각을 받지 않는다(동적 import).
+if (IS_DESKTOP) void import("./app/desktop/bridge").then((m) => m.startDesktop());

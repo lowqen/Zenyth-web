@@ -17,6 +17,10 @@ export const EN: Readonly<Record<string, string>> = {
   랭킹: "Rankings",
   "주 메뉴": "Main menu",
   "엔진: {s}": "Engine: {s}",
+  // 데스크톱 타이틀바(데스크톱 Z2)
+  최소화: "Minimize",
+  최대화: "Maximize",
+  "이전 크기로": "Restore",
   "연구 하위 항목": "Research sections",
   꺼짐: "Off",
   "기동 중": "Starting",
