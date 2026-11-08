@@ -1,0 +1,50 @@
+{"t":121,"dir":"gui>eng","line":"info show_detail 3"}
+{"t":121,"dir":"gui>eng","line":"yxshowinfo"}
+{"t":121,"dir":"gui>eng","line":"info database_readonly 0"}
+{"t":121,"dir":"gui>eng","line":"START 15"}
+{"t":121,"dir":"gui>eng","line":"INFO max_node -1"}
+{"t":121,"dir":"gui>eng","line":"INFO timeout_match 100000000"}
+{"t":121,"dir":"gui>eng","line":"INFO time_left 100000000"}
+{"t":121,"dir":"gui>eng","line":"INFO timeout_turn 2000000"}
+{"t":121,"dir":"gui>eng","line":"INFO max_depth 225"}
+{"t":121,"dir":"gui>eng","line":"INFO time_increment 0"}
+{"t":122,"dir":"gui>eng","line":"INFO caution_factor 3"}
+{"t":122,"dir":"gui>eng","line":"INFO thread_num 4"}
+{"t":122,"dir":"gui>eng","line":"INFO hash_size 1048576"}
+{"t":122,"dir":"gui>eng","line":"INFO pondering 0"}
+{"t":122,"dir":"gui>eng","line":"INFO vcthread 0"}
+{"t":122,"dir":"gui>eng","line":"INFO rule 2"}
+{"t":122,"dir":"gui>eng","line":"start 15"}
+{"t":122,"dir":"gui>eng","line":"yxboard"}
+{"t":122,"dir":"gui>eng","line":"done"}
+{"t":122,"dir":"gui>eng","line":"yxshowforbid"}
+{"t":122,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":122,"dir":"gui>eng","line":"done"}
+{"t":122,"dir":"gui>eng","line":"info usedatabase 1"}
+{"t":122,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":122,"dir":"gui>eng","line":"done"}
+{"t":881,"dir":"eng>gui","line":"MESSAGE Load config from \"config.toml\""}
+{"t":882,"dir":"eng>gui","line":"MESSAGE Setting default thread num to 2."}
+{"t":891,"dir":"eng>gui","line":"ERROR Failed to allocate 8388608 KB for transposition table."}
+{"t":892,"dir":"eng>gui","line":"MESSAGE Allocated 2097152 KB for transposition table."}
+{"t":2145,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":2145,"dir":"gui>eng","line":"done"}
+{"t":5314,"dir":"eng>gui","line":"MESSAGE Evaluator set to mix9svq."}
+{"t":5329,"dir":"eng>gui","line":"MESSAGE Rapfi 0.43.01 (clang++ 19.1.5 on Windows SSE41)"}
+{"t":5329,"dir":"eng>gui","line":"MESSAGE INFO MAX_THREAD_NUM 256"}
+{"t":5329,"dir":"eng>gui","line":"MESSAGE INFO MAX_HASH_SIZE 30"}
+{"t":5364,"dir":"eng>gui","line":"OK"}
+{"t":10185,"dir":"eng>gui","line":"OK"}
+{"t":10218,"dir":"eng>gui","line":"FORBID ."}
+{"t":10269,"dir":"eng>gui","line":"MESSAGE Opening yixin database at rapfi.db ..."}
+{"t":10277,"dir":"eng>gui","line":"MESSAGE DATABASE LOAD START rapfi.db"}
+{"t":10281,"dir":"eng>gui","line":"MESSAGE DATABASE LOAD DONE"}
+{"t":10283,"dir":"eng>gui","line":"MESSAGE Loaded Yixin database (1 records) using 28 ms."}
+{"t":10293,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":10294,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":10294,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":10310,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":10311,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":10311,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":23025,"dir":"gui>eng","line":"end"}
+{"t":23113,"dir":"exit","line":"0"}

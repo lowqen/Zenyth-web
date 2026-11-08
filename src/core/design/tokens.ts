@@ -117,3 +117,58 @@ export const LAYOUT = {
   railWide: 1280,
   railIconOnly: 1024,
 } as const;
+
+// ── 데스크톱 셸(zenyth-desktop) ──────────────────────────────────────────────────────────────────
+// gomoku-dev `test-yixin/docs/Zenyth_데스크톱_리디자인_계획.md` 의 «데스크톱 Z1». 웹 UI 개편의 Z1 · Z2 와
+// 이름만 같고 다른 단계다.
+//
+// **새 색 · 새 반경 · 새 움직임은 만들지 않는다.** 데스크톱이 바꾸는 것은 셋뿐이다: 창 크롬의 치수,
+// 마우스 정밀도에 맞춘 밀도, Mica 위 크롬의 불투명도. 웹은 이 값을 쓰지 않는다 — 밀도와 크롬 색은 셸이
+// 문서에 `data-desktop` 을 붙였을 때만 켜지고, 치수 변수는 그것을 읽는 데스크톱 컴포넌트가 생길 때까지 놀고 있다.
+
+/**
+ * 창 크롬의 치수(px). Mornye 데스크톱 셸(`desktop_navigation.dart` · `desktop_inspector.dart`)을 참고했다.
+ *
+ * 브레이크포인트는 CSS 변수가 될 수 없으므로(`@media` 안에서 `var()` 를 못 쓴다) 이 상수를 `matchMedia`
+ * 쪽에서 읽는다 — `useIsCompact` 가 `LAYOUT.compactMax` 를 읽는 것과 같다.
+ */
+export const DESKTOP = {
+  /** 커스텀 타이틀바. Windows 캡션 버튼(46×32)을 세로 가운데 담고, 드래그 영역이 손에 잡히는 높이. */
+  titleBar: 40,
+  captionButtonWidth: 46,
+  /** 펼친 레일(라벨 옆). 접힌 레일은 지금 웹의 80px 그대로다. Mornye `desktopSidebarWidth` = 220. */
+  railExpanded: 220,
+  /** 오른쪽 인스펙터(분석 · DB · 로그). */
+  inspectorMin: 320,
+  inspectorMax: 400,
+  /** 이 폭 이상이면 인스펙터가 내용 옆에 붙고, 미만이면 위에 뜬다. 레일이 펼쳐지는 폭(`LAYOUT.railWide`)과 같다. */
+  inspectorBeside: LAYOUT.railWide,
+  /** 보드 아래에 떠 있는 상태 캡슐(depth · nps · 승률). */
+  capsuleHeight: 40,
+} as const;
+
+/**
+ * 데스크톱 밀도 — `RHYTHM` 위에 덮어쓰는 값만. Mornye `AppTokens.desktop` 처럼 **행의 높이와 안쪽 여백만**
+ * 줄인다. 글자 크기 · 반경 · 움직임은 그대로다(같은 앱이 손가락과 마우스에서 다르게 생기면 안 된다).
+ *
+ * `minTouch` 32 는 마우스 기준이다. WCAG 2.5.8(대상 크기 최소 24px) 아래로는 내려가지 않는다 —
+ * `ramps.test.ts` 가 지킨다.
+ */
+export const RHYTHM_DESKTOP: Readonly<Partial<Record<keyof typeof RHYTHM, number>>> = {
+  rowPaddingH: 16,
+  rowPaddingV: 10,
+  rowMinHeight: 48,
+  minTouch: 32,
+};
+
+/**
+ * Mica 위 크롬(타이틀바 · 레일 · 상태 캡슐)의 불투명도 — 페이지 색(`background`)을 이만큼 덮는다.
+ *
+ * Mornye 는 0.60(다크) / 0.70(라이트)을 쓰지만 이 값은 **뒤에 무엇이 비치든** 글자가 4.5:1 을 지키는
+ * 최소값 근처에서 골랐다: 배경화면이 순백이든 순흑이든(Mica 는 배경화면을 흐려 비춘다) `on-surface` ·
+ * `on-surface-variant` · `primary` 가 크롬 위에서 읽혀야 한다. 시험(`ramps.test.ts`)이 브라우저와 같은
+ * **sRGB 합성**으로 라이트 · 다크 · 검은 배경 셋을 검사한다.
+ *
+ * **판은 언제나 불투명이다.** 판의 색은 곧 값이라(칩 · 나무 · 등급) 뒤가 비치면 값이 바뀐다.
+ */
+export const CHROME_ALPHA = 0.88;

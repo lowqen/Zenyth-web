@@ -12,6 +12,7 @@ import {
   type TokenValue,
 } from "./scheme";
 import type { Rgb } from "./oklch";
+import { CHROME_ALPHA, DESKTOP, LAYOUT, RHYTHM, RHYTHM_DESKTOP } from "./tokens";
 import golden from "./tokens.golden.json";
 
 /**
@@ -166,5 +167,57 @@ describe("면과 강조 — 앱 ThemeContrastTest 의 성질 (Z1)", () => {
     expect(
       AMOLED_KEYS.every((k) => k === "background" || k === "surface" || k.startsWith("surface-")),
     ).toBe(true);
+  });
+});
+
+describe("데스크톱 셸 — Mica 위 크롬과 밀도 (데스크톱 Z1)", () => {
+  /** 브라우저의 알파 합성: `color-mix(in srgb, …)` 와 투명 크롬 위 합성은 둘 다 **감마 공간**에서 섞는다. */
+  const overSrgb = (fg: Rgb, alpha: number, backdrop: Rgb): Rgb => ({
+    r: fg.r * alpha + backdrop.r * (1 - alpha),
+    g: fg.g * alpha + backdrop.g * (1 - alpha),
+    b: fg.b * alpha + backdrop.b * (1 - alpha),
+  });
+  // Mica 는 배경화면을 흐려 비춘다 — 무엇이 비칠지 모르므로 두 극단을 다 견뎌야 한다.
+  const BACKDROPS = [
+    { name: "흰 배경화면", c: { r: 1, g: 1, b: 1 } },
+    { name: "검은 배경화면", c: { r: 0, g: 0, b: 0 } },
+  ];
+  const CHROME_TEXT = ["on-surface", "on-surface-variant", "primary"] as const;
+  const CHROME_SCHEMES = [
+    { name: "light", s: LightScheme },
+    { name: "dark", s: DarkScheme },
+    { name: "amoled", s: AmoledScheme },
+  ];
+
+  for (const { name, s } of CHROME_SCHEMES) {
+    for (const fg of CHROME_TEXT) {
+      for (const bd of BACKDROPS) {
+        it(`${name}: ${fg} 가 크롬(${CHROME_ALPHA}) 위에서 ${bd.name}이 비쳐도 4.5:1 이상`, () => {
+          const chrome = overSrgb(rgb(s, "background"), CHROME_ALPHA, bd.c);
+          expect(contrastRatio(rgb(s, fg), chrome)).toBeGreaterThanOrEqual(4.5);
+        });
+      }
+    }
+  }
+
+  it("크롬은 실제로 비친다(불투명도 1 이면 Mica 를 쓸 이유가 없다)", () => {
+    expect(CHROME_ALPHA).toBeLessThan(1);
+  });
+
+  it("밀도는 RHYTHM 의 열쇠만 덮어쓰고, 마우스 대상도 WCAG 2.5.8(24px) 아래로 가지 않는다", () => {
+    for (const k of Object.keys(RHYTHM_DESKTOP)) expect(Object.keys(RHYTHM)).toContain(k);
+    expect(RHYTHM_DESKTOP.minTouch).toBeGreaterThanOrEqual(24);
+    // 데스크톱이 더 넓어질 이유는 없다 — 밀도는 줄이기만 한다.
+    for (const [k, v] of Object.entries(RHYTHM_DESKTOP)) {
+      expect(v, k).toBeLessThanOrEqual(RHYTHM[k as keyof typeof RHYTHM]);
+    }
+  });
+
+  it("인스펙터 폭이 말이 되고, 옆에 붙는 폭에서 보드 칸이 남는다", () => {
+    expect(DESKTOP.inspectorMin).toBeLessThanOrEqual(DESKTOP.inspectorMax);
+    // 옆에 붙는 최소 창 폭에서: 펼친 레일 + 가장 넓은 인스펙터를 빼고도 읽기 폭(640)이 남아야 한다.
+    expect(
+      DESKTOP.inspectorBeside - DESKTOP.railExpanded - DESKTOP.inspectorMax,
+    ).toBeGreaterThanOrEqual(LAYOUT.readingWidth);
   });
 });

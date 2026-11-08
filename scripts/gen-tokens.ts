@@ -39,6 +39,9 @@ import {
   MOTION,
   LAYOUT,
   RHYTHM,
+  DESKTOP,
+  RHYTHM_DESKTOP,
+  CHROME_ALPHA,
 } from "../src/core/design/tokens.ts";
 
 import { SPRINGS, SPRING_FALLBACK, springEasing } from "../src/core/design/springs.ts";
@@ -91,6 +94,22 @@ function typeBlock(): string {
   for (const [k, v] of Object.entries(RHYTHM)) lines.push(`  --${kebab(k)}: ${v}px;`);
   lines.push(`  --reading-width: ${LAYOUT.readingWidth}px;`);
   lines.push(`  --wide-min: ${LAYOUT.wideMin}px;`);
+  // 데스크톱 셸의 창 크롬 치수. 브레이크포인트(inspectorBeside)는 @media 에 못 들어가므로 내보내지 않는다.
+  lines.push(`  --titlebar-height: ${DESKTOP.titleBar}px;`);
+  lines.push(`  --caption-button-width: ${DESKTOP.captionButtonWidth}px;`);
+  lines.push(`  --rail-expanded: ${DESKTOP.railExpanded}px;`);
+  lines.push(`  --inspector-min: ${DESKTOP.inspectorMin}px;`);
+  lines.push(`  --inspector-max: ${DESKTOP.inspectorMax}px;`);
+  lines.push(`  --capsule-height: ${DESKTOP.capsuleHeight}px;`);
+  return lines.join("\n");
+}
+
+/** 데스크톱 셸이 `data-desktop` 을 붙였을 때만: 밀도 덮어쓰기와 Mica 위 크롬 색. */
+function desktopBlock(): string {
+  const lines = Object.entries(RHYTHM_DESKTOP).map(([k, v]) => `  --${kebab(k)}: ${v}px;`);
+  // 페이지 색을 따라가므로(라이트 · 다크 · 검은 배경) 스킴마다 따로 굽지 않는다. 합성은 브라우저와 같은 sRGB.
+  const pct = Math.round(CHROME_ALPHA * 100);
+  lines.push(`  --c-chrome: color-mix(in srgb, var(--c-background) ${pct}%, transparent);`);
   return lines.join("\n");
 }
 
@@ -105,6 +124,12 @@ const css = `/* 생성물입니다 — 손으로 고치지 마세요.
 ${colorBlock(LightScheme, "  ")}
 
 ${typeBlock()}
+}
+
+/* 데스크톱 셸(zenyth-desktop)이 붙이는 data-desktop — 마우스 밀도와 Mica 위 크롬. 웹에서는 켜지지 않는다.
+ * --c-chrome 은 :root 에서 계산되어 상속된다(보드의 [data-wood] 가 페이지 색을 바꿔도 크롬은 그대로). */
+:root[data-desktop] {
+${desktopBlock()}
 }
 
 /* 크롬 스프링(Z9 — springs.ts, 앱 ChromeMotion). 판에는 쓰지 않는다. */
