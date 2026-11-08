@@ -2056,7 +2056,13 @@ a:focus-visible {
 .engineconsole__count {
   margin-left: auto;
 }
-.engineconsole__filter {
+/* 저장 · 지우기는 줄 수 옆에 붙인다 — `.panel__link` 의 margin-left:auto 가 남은 폭을 나눠 벌려 놓는다. */
+.engineconsole__bar .panel__link {
+  margin-left: 0;
+}
+/* 거르기는 제 줄 — 아래 공통 규칙의 flex:1 이 세로 열에서는 콘솔 높이를 빼앗는다. */
+.engineconsole > .engineconsole__filter {
+  flex: none;
   margin-top: var(--space-s);
 }
 .engineconsole__filter,
