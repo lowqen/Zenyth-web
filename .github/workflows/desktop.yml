@@ -152,6 +152,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
+          # target/ 은 cargo 캐시에서 돌아온다 — 옛 버전 설치판이 아티팩트에 섞이지 않게 번들만 비운다.
+          rm -rf src-tauri/target/release/bundle
           for i in 1 2 3 4; do
             pnpm exec tauri build --ci && exit 0
             echo "::warning::셸 빌드 실패($i/4) — 30초 뒤 다시"

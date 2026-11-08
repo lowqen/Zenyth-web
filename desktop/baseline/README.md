@@ -1,7 +1,7 @@
 # 데스크톱 Z0 — 엔진 대화 골든 녹취
 
-zenyth-desktop(Tauri 셸) 계획의 Z0 산출물이다. 계획 전체와 기준선 수치는 gomoku-dev
-`test-yixin/docs/Zenyth_데스크톱_리디자인_계획.md`에 있다. 단계 이름 «Z0 · Z1 …»은 이 저장소의
+zenyth-desktop(Tauri 셸) 계획의 Z0 산출물이다. 결정 · 구조 · 기준선 수치는 gomoku-dev
+`test-yixin/docs/개발_핸드북.md` §14(옛 계획서를 병합)에 있다. 단계 이름 «Z0 · Z1 …»은 이 저장소의
 UI 개편 Z1 · Z2 · Z9와 다른 단계다. 그래서 코드 주석에서는 «데스크톱 Z1»처럼 쓴다.
 
 ## 왜 녹취하나
