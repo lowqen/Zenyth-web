@@ -109,6 +109,13 @@ interface EngineState {
   nativeTarget: NativeTarget;
   setNativeTarget: (t: NativeTarget) => void;
   /**
+   * 엔진이 둘 규칙(`INFO RULE` 번호: 프리스타일 0 · 스탠다드 1 · 렌주 4). 렌주 밖의 둘은 네이티브 · 원격
+   * 엔진만 받는다 — WASM 은 언제나 렌주로 뜬다(데스크톱 Z4). 떠 있는 네이티브 엔진에는 곧바로 보낸다
+   * (엔진이 새 판을 열고 TT 를 비운다 — 다음 탐색이 국면을 통째로 다시 보낸다).
+   */
+  ruleId: 0 | 1 | 4;
+  setRuleId: (id: 0 | 1 | 4) => void;
+  /**
    * 엔진을 내렸다가 다시 띄운다(변형 전환). 해시는 잃는다. 분석이 켜져 있었으면 새 엔진이
    * 같은 국면을 이어 읽고, 대국에서 엔진이 생각 중이었다면 그 수는 버려진다
    * (`onEngineReset` — 대국이 판을 풀어 사람이 다시 «두어라» 할 수 있다).
@@ -298,6 +305,8 @@ let config: EngineConfig = { info: [], hashAutoClear: false, threads: 1 };
 const sentInfo = new Map<string, string>();
 /** 마지막으로 분석한 국면 — 밀려 끝난 분석을 다시 이을 때 쓴다. */
 let analysisStones: readonly Placement[] = [];
+/** 마지막 네이티브 기동 메시지에 실린 규칙. */
+let bootRule: 0 | 1 | 4 = 4;
 /** 마지막 탐색 요청 국면의 돌 수 — 짝수면 흑 차례. 평가 바의 관점을 정한다. */
 let requestPly = 0;
 /** 마지막 탐색 요청 국면의 키(`positionKey`). 스냅샷·평가에 꼬리표로 붙는다. */
@@ -469,8 +478,12 @@ export const useEngineStore = create<EngineState>((set, get) => {
       bootSettings: (variant) =>
         bootCommands(config, isThreadedVariant(variant), get().capabilities.hardwareConcurrency),
       nativeSpec: (variant) => nativeSpecFor(variant, get().nativeTarget),
+      rule: () => (bootRule = get().ruleId),
       onBooted: (info) => {
         if (client !== c) return;
+        // 기동하는 사이 규칙이 바뀌었으면 — 기동 메시지는 옛 규칙을 실었다.
+        if (isNativeVariant(info.variant) && get().ruleId !== bootRule)
+          c.send({ kind: "rule", id: get().ruleId });
         // 새 엔진은 기동 메시지로 받은 설정만 안다 — 그것을 「보냄」으로 적어 둬야 아래
         // `flushConfig` 가 같은 thread_num 을 다시 보내 스레드를 재구성하지 않는다.
         sentInfo.clear();
@@ -559,6 +572,16 @@ export const useEngineStore = create<EngineState>((set, get) => {
       // 떠 있거나 뜨는 중이면 깨끗이 다시 띄운다 — 다른 바이너리다. 꺼져 있으면 다음 기동부터.
       if (get().status !== "idle") void get().restart();
     },
+    ruleId: 4,
+    setRuleId: (id) => {
+      if (id === get().ruleId) return;
+      set({ ruleId: id });
+      // 뜨는 중이면 `onBooted` 가 기동 메시지의 규칙과 맞춰 본다.
+      const st = client?.currentStatus;
+      if ((st === "ready" || st === "searching") && isNativeVariant(get().engine.variant))
+        client!.send({ kind: "rule", id });
+    },
+
     nativeTarget: { path: "", remote: "" },
     setNativeTarget: (next) => {
       const cur = get().nativeTarget;

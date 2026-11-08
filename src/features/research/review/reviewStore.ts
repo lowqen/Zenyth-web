@@ -27,6 +27,7 @@ import { useBoardStore } from "../../board/boardStore";
 import { useGameStore } from "../../board/gameStore";
 import { runReview, type ReviewPort } from "./runner";
 import { t } from "../../../i18n/i18n";
+import { researchBlockedBy } from "../../../core/model/rules";
 
 /**
  * 게임 리뷰의 화면 쪽 — 앱 `ReviewRepositoryImpl` 의 큐 · 실행 · 리포트 상태.
@@ -289,7 +290,7 @@ export const useReviewStore = create<ReviewState>((set, get) => {
     },
 
     start: async () => {
-      const why = refusal();
+      const why = researchBlockedBy(useGameStore.getState().rule) ?? refusal();
       if (why) return why;
       const runnable = () =>
         get().jobs.filter((j) => j.status === "pending" || j.status === "paused");

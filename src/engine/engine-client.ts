@@ -393,6 +393,11 @@ export interface EngineOptions extends EngineEvents {
    * (원격 주소 형식 오류 등) — 그 변형은 실패로 치고 다음으로 물러선다.
    */
   nativeSpec?: (variant: NativeVariant) => NativeEngineSpec | string;
+  /**
+   * 네이티브 엔진이 뜰 규칙(`INFO RULE` 번호) — 띄울 때마다 묻는다. WASM 은 묻지 않고 언제나 렌주다
+   * (`.data` 에 렌주 가중치만 있다). 데스크톱 Z4.
+   */
+  rule?: () => 0 | 1 | 4;
   /** 시험용 — 전송을 갈아 끼운다. 없으면 워커(WASM) · 셸(네이티브)을 띄운다. */
   transport?: (variant: EngineVariant) => EngineTransport;
 }
@@ -804,6 +809,8 @@ export class EngineClient {
     if (native) {
       boot.native = true;
       boot.handshakeMs = NATIVE_HANDSHAKE_MS;
+      const rule = this.events.rule?.();
+      if (rule !== undefined) boot.rule = rule;
     } else {
       // 공유 가중치 — 워커가 캐시 계층으로 받아 해시를 확인한다. 기본 경로가 절대 주소가
       // 아니면 이 페이지 기준으로 푼다(워커 안의 상대 주소는 워커 번들 기준이 된다).

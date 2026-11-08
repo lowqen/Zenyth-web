@@ -10,7 +10,8 @@ import {
   type ComputerSide,
   type OpeningProtocol,
 } from "../../core/model/game";
-import { RULE_LABEL } from "../../core/model/rules";
+import { PLAY_RULES, RULE_LABEL } from "../../core/model/rules";
+import { IS_DESKTOP } from "../../app/desktop/platform";
 import { ANALYSIS_SEC_CHOICES, useSettingsStore } from "../settings/settingsStore";
 import {
   Chip,
@@ -34,26 +35,47 @@ const SIDES: readonly ComputerSide[] = ["none", "black", "white", "both"];
 const OPENINGS: readonly OpeningProtocol[] = ["none", "rif", "swapFirst"];
 
 /**
- * 룰셋 — 기반 규칙(렌주 고정)과 개시 방식을 한 줄에. 웹은 렌주 가중치만 싣기 때문에
- * 규칙은 고르는 것이 아니라 **보여 주는** 것이고, 고르는 것은 개시다.
+ * 룰셋 — 기반 규칙과 개시 방식을 한 줄에. 웹은 렌주 가중치만 싣기 때문에 규칙은 고르는 것이 아니라
+ * **보여 주는** 것이고, 고르는 것은 개시다. 데스크톱(Z4)은 네이티브 · 원격 엔진이 가중치 넷을 다 읽으므로
+ * 프리스타일 · 스탠다드도 고른다 — 렌주가 아니면 개시는 「없음」뿐이다.
  */
 export function RulesetControl() {
+  const rule = useGameStore((s) => s.rule);
+  const ruleNotice = useGameStore((s) => s.ruleNotice);
+  const setRule = useGameStore((s) => s.setRule);
   const opening = useGameStore((s) => s.opening);
   const setOpening = useGameStore((s) => s.setOpening);
+  const desktop = IS_DESKTOP;
+  const renju = rule === "renju";
   return (
     <div className="stack">
       <div className="ruleset">
-        <span className="pill" title={`INFO RULE 4. ${t("웹 버전은 렌주 가중치만 싣습니다")}`}>
-          {RULE_LABEL.renju}
-        </span>
+        {desktop ? (
+          <ChipGroup label={t("규칙")}>
+            {PLAY_RULES.map((r) => (
+              <Chip key={r} on={rule === r} onClick={() => setRule(r)}>
+                {RULE_LABEL[r]}
+              </Chip>
+            ))}
+          </ChipGroup>
+        ) : (
+          <span className="pill" title={`INFO RULE 4. ${t("웹 버전은 렌주 가중치만 싣습니다")}`}>
+            {RULE_LABEL.renju}
+          </span>
+        )}
         <ChipGroup label={t("오프닝")}>
-          {OPENINGS.map((o) => (
+          {OPENINGS.filter((o) => renju || o === "none").map((o) => (
             <Chip key={o} on={opening === o} title={OPENING_HINT[o]} onClick={() => setOpening(o)}>
               {OPENING_LABEL[o]}
             </Chip>
           ))}
         </ChipGroup>
       </div>
+      {ruleNotice && (
+        <p className="panel__hint" data-k="rule-notice" role="status">
+          {ruleNotice}
+        </p>
+      )}
       {/* 왜 셋뿐인지는 툴팁으로 — 늘 펼쳐 둘 문장이 아니다. 대국 스모크가 data-k 로 읽는다. */}
       <span
         className="infodot"

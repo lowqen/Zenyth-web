@@ -11,7 +11,33 @@ import { localized, msg, t } from "../../i18n/i18n";
  * 규칙별 lazy load(`/weights/` 에서 필요할 때 받기)로 넷을 다 지원할 수도 있었지만,
  * 이 프로젝트는 렌주 도구라 그 복잡도를 사지 않기로 했다. 나중에 프리스타일까지
  * 원하면 여기와 `wasm_preloads.txt`, 그리고 로더 하나를 더하면 된다.
+ *
+ * **데스크톱 Z4**: 네이티브 · 원격 Rapfi 는 엔진 폴더의 가중치 4종을 모두 읽으므로 프리스타일 · 스탠다드로
+ * **대국 · 분석**을 할 수 있다(`PLAY_RULES`). 연구 도구(리뷰 · 증명 · 4수 명칭 · 흑 5수 유불리 · 정석)는
+ * 렌주 전제라 렌주에서만 연다(`researchBlockedBy`). 2026-11-08 사용자 결정.
  */
+
+/** 대국 · 분석에 쓸 수 있는 규칙. 렌주 밖의 둘은 데스크톱 네이티브 엔진에서만. */
+export type PlayRule = "renju" | "freestyle" | "standard";
+export const PLAY_RULES: readonly PlayRule[] = ["renju", "freestyle", "standard"];
+
+/**
+ * 장목(6목 이상)이 이기는가 — Rapfi `inforule != 1`. 렌주에서도 참이다: 흑의 장목은 금수로 막히고(엔진이
+ * 알려 준다), 백의 장목은 이긴다.
+ */
+export const allowsOverline = (r: PlayRule): boolean => r !== "standard";
+
+/** 금수가 있는 규칙 — 렌주뿐. */
+export const hasForbidden = (r: PlayRule): boolean => r === "renju";
+
+/** 렌주 전제 연구 도구를 이 규칙에서 열 수 없으면 그 까닭. */
+export function researchBlockedBy(r: PlayRule): string | null {
+  return r === "renju"
+    ? null
+    : t("{rule} 대국 중입니다. 이 도구는 렌주 전용이라 렌주로 바꾼 뒤에 쓸 수 있습니다", {
+        rule: RULE_LABEL[r],
+      });
+}
 
 /** 엔진의 `INFO RULE <id>` 값. `command/gomocup.cpp` 가 정한 번호다. */
 export const RULE_ID = {

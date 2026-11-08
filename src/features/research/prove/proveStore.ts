@@ -19,6 +19,7 @@ import { useBoardStore } from "../../board/boardStore";
 import { useGameStore } from "../../board/gameStore";
 import { proveRefusal, runProve, type ProvePort } from "./proveRunner";
 import { t } from "../../../i18n/i18n";
+import { researchBlockedBy } from "../../../core/model/rules";
 
 /**
  * 국면 증명의 화면 쪽 — 앱 `ProveRepositoryImpl` 의 상태(진행 · 덧그림 · 결과 · 기록).
@@ -93,6 +94,8 @@ export const useProveStore = create<ProveStoreState>((set, get) => {
     log: [],
 
     start: async () => {
+      const blocked = researchBlockedBy(useGameStore.getState().rule);
+      if (blocked) return blocked;
       if (get().running) return t("이미 증명이 진행 중입니다");
       if (useGameStore.getState().thinking) return t("증명: 진행 중인 계산을 먼저 중지하세요");
       const { stones, size } = useBoardStore.getState().render;

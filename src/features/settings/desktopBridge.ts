@@ -59,6 +59,7 @@ export function readWeb(): WebSettings {
   const p = useProveStore.getState().options;
   const d = useDbStore.getState().settings;
   return {
+    rule: g.rule,
     opening: g.opening,
     computerSide: g.computerSide,
     maxDepth: s.maxDepth,
@@ -108,7 +109,15 @@ export async function applyWeb(w: WebSettings): Promise<string[]> {
   const g = useGameStore.getState();
   if (g.computerSide !== w.computerSide) g.setComputerSide(w.computerSide);
   if (g.showForbidden !== w.showForbidden) g.toggleForbidden();
-  if (g.opening !== w.opening) {
+  if (g.rule !== w.rule) {
+    // 규칙도 개시처럼 새 대국이다 — 빈 판에서만. 고를 수 없으면(브라우저 엔진) 그 까닭을 메모로.
+    if (useBoardStore.getState().render.stones.length === 0) {
+      g.setRule(w.rule);
+      const why = useGameStore.getState().ruleNotice;
+      if (useGameStore.getState().rule !== w.rule && why) notes.push(why);
+    } else notes.push(t("판에 돌이 있어 규칙은 그대로 둡니다(새 판에서 바꾸세요)"));
+  }
+  if (useGameStore.getState().opening !== w.opening && useGameStore.getState().rule === "renju") {
     // 개시를 바꾸면 새 대국이다 — 둔 판을 지우지 않게 빈 판에서만.
     if (useBoardStore.getState().render.stones.length === 0) g.setOpening(w.opening);
     else notes.push(t("판에 돌이 있어 개시는 그대로 둡니다(새 판에서 바꾸세요)"));

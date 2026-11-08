@@ -250,6 +250,11 @@ export type ToWorker =
       variant: string;
       sliceMs: number;
       size: number;
+      /**
+       * START 앞에 보낼 규칙(`INFO RULE`). 없으면 렌주(4). 렌주 밖의 둘은 네이티브 엔진만 — WASM `.data` 에는
+       * 렌주 가중치만 있다(데스크톱 Z4).
+       */
+      rule?: 0 | 1 | 4;
       /** 기동 핸드셰이크 한도(ms). 기본 15초 — 시험이 줄여 쓴다. */
       handshakeMs?: number;
       /**

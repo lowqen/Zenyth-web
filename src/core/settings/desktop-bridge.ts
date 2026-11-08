@@ -1,5 +1,6 @@
 import type { ComputerSide, OpeningProtocol } from "../model/game";
 import type { GradingPreset } from "../review/move-quality";
+import type { PlayRule } from "../model/rules";
 import { DESKTOP_DEFAULTS, type DesktopValues } from "./desktop-settings";
 import { msg, t } from "../../i18n/i18n";
 
@@ -15,6 +16,8 @@ import { msg, t } from "../../i18n/i18n";
 
 /** 웹의 지금 값 — 데스크톱 칸에 대응하는 것만. */
 export interface WebSettings {
+  /** 규칙 — 렌주 밖의 둘은 데스크톱 네이티브 엔진에서만 둔다(Z4). */
+  rule: PlayRule;
   opening: OpeningProtocol;
   computerSide: ComputerSide;
   maxDepth: number;
@@ -66,9 +69,12 @@ export const WEB_LIMITS = {
   unlimitedNodes: 1_000_000_000,
 };
 
-// 데스크톱 rule 칸(main.c) ↔ 웹 개시. 0·1·5·6 은 웹에 없다(렌주 전용 · Soosorv/스왑2 내림).
+// 데스크톱 rule 칸(main.c) ↔ 웹 개시. 0·1 은 규칙(프리스타일 · 스탠다드, 개시 없음 — 데스크톱 Z4),
+// 5·6 은 웹에 없다(Soosorv/스왑2 내림).
 const RULE_TO_OPENING: Record<number, OpeningProtocol> = { 2: "none", 3: "swapFirst", 4: "rif" };
 const OPENING_TO_RULE: Record<OpeningProtocol, number> = { none: 2, swapFirst: 3, rif: 4 };
+const PLAY_RULE_TO_RULE: Partial<Record<PlayRule, number>> = { freestyle: 0, standard: 1 };
+const RULE_TO_PLAY_RULE: Record<number, PlayRule> = { 0: "freestyle", 1: "standard" };
 const RULE_NAME: Record<number, string> = {
   0: msg("프리스타일"),
   1: msg("스탠다드"),
@@ -98,7 +104,7 @@ export function overlayWeb(base: DesktopValues, w: WebSettings): DesktopValues {
   const threads = w.threads > 0 ? w.threads : (w.threadsResolved ?? n("threadNum"));
   const out: Record<string, number | boolean | string> = { ...base };
   Object.assign(out, {
-    rule: OPENING_TO_RULE[w.opening],
+    rule: PLAY_RULE_TO_RULE[w.rule] ?? OPENING_TO_RULE[w.opening],
     computerBlack: w.computerSide === "black" || w.computerSide === "both",
     computerWhite: w.computerSide === "white" || w.computerSide === "both",
     maxDepth: capped("maxDepth", w.maxDepth, WEB_LIMITS.maxDepth),
@@ -173,9 +179,15 @@ export function webFromDesktop(v: DesktopValues, current: WebSettings): WebPatch
   const b = (id: string) => Boolean(v[id] ?? DESKTOP_DEFAULTS[id]);
 
   let opening = current.opening;
+  let playRule = current.rule;
   const rule = n("rule");
-  if (RULE_TO_OPENING[rule]) opening = RULE_TO_OPENING[rule];
-  else
+  if (RULE_TO_OPENING[rule]) {
+    opening = RULE_TO_OPENING[rule];
+    playRule = "renju";
+  } else if (RULE_TO_PLAY_RULE[rule]) {
+    playRule = RULE_TO_PLAY_RULE[rule];
+    opening = "none";
+  } else
     notes.push(
       t("규칙 {rule}({name})은 웹에 없어 개시를 그대로 둡니다", {
         rule,
@@ -199,6 +211,7 @@ export function webFromDesktop(v: DesktopValues, current: WebSettings): WebPatch
   return {
     notes,
     web: {
+      rule: playRule,
       opening,
       computerSide: sideOf(b("computerBlack"), b("computerWhite")),
       maxDepth,

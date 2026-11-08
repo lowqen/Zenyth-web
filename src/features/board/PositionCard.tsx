@@ -39,8 +39,10 @@ function usePosition() {
   const result = useGameStore((s) => s.result);
   const tables = useOpeningTables((s) => s.tables);
   const review = useCurrentReview();
-  const names = chain(render.stones, tables, render.size);
-  const grade = gradeAt(render.stones, tables, render.size);
+  const renju = useGameStore((s) => s.rule) === "renju";
+  // 주형 이름 · 흑 5수 유불리는 렌주 표다 — 다른 규칙의 판에 붙이면 거짓말이다.
+  const names = renju ? chain(render.stones, tables, render.size) : [];
+  const grade = renju ? gradeAt(render.stones, tables, render.size) : null;
   const badge =
     review.data && matchesPrefix(review.data, render.stones)
       ? currentBadge(
@@ -87,6 +89,7 @@ function usePosition() {
 export function PositionCard({ game }: { game: boolean }) {
   const p = usePosition();
   const opening = useGameStore((s) => s.opening);
+  const rule = useGameStore((s) => s.rule);
   const resign = useGameStore((s) => s.resign);
   const offerDraw = useGameStore((s) => s.offerDraw);
   const gameName = useGameStore((s) => s.gameName);
@@ -102,7 +105,7 @@ export function PositionCard({ game }: { game: boolean }) {
           {t("국면")}
         </h2>
         <span className="poscard__rule" data-k="ruleset">
-          {RULE_LABEL.renju} · {OPENING_LABEL[opening]}
+          {RULE_LABEL[rule]} · {OPENING_LABEL[opening]}
         </span>
       </div>
       {p.result && (

@@ -1403,4 +1403,13 @@ export const EN: Readonly<Record<string, string>> = {
   "설정 파일 폴더": "Settings folder",
   "비우면 앱 폴더": "Leave empty for the app folder",
   "파일에서 다시 읽기": "Reload from files",
+  "{rule} 대국 중입니다. 이 도구는 렌주 전용이라 렌주로 바꾼 뒤에 쓸 수 있습니다":
+    "You are playing {rule}. This tool is for renju only, so switch to renju to use it",
+  "{rule}은 데스크톱의 로컬 · 원격 엔진에서만 둘 수 있습니다. 엔진 설정에서 바꾸세요":
+    "{rule} needs the desktop local or remote engine. Change it in the engine settings",
+  "엔진이 브라우저 엔진으로 떠서 {rule}에서 렌주로 돌아왔습니다":
+    "The engine started as the browser engine, so the rule went back from {rule} to renju",
+  "렌주로 바꾸고 새 대국": "Switch to renju and start a new game",
+  "판에 돌이 있어 규칙은 그대로 둡니다(새 판에서 바꾸세요)":
+    "The board has stones, so the rule stays as it is (change it on a new board)",
 };

@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppShell } from "./AppShell";
 import { BoardScreen } from "../features/board/BoardScreen";
+import { RenjuOnly } from "../features/board/RenjuOnly";
 import {
   CurriculumStudio,
   DatabaseScreen,
@@ -40,13 +41,41 @@ export const router = createBrowserRouter(
 
         { path: "research", element: <Navigate to="/research/review" replace /> },
         // W6b: 리뷰(설정 · 큐 · 체크포인트 · 리포트). 증명(W6d)은 같은 화면의 다음 단계.
-        { path: "research/review", element: <ReviewScreen /> },
+        {
+          path: "research/review",
+          element: (
+            <RenjuOnly>
+              <ReviewScreen />
+            </RenjuOnly>
+          ),
+        },
         // W6a: 이름 사슬 · 유불리 · 환원 · 이론 다음 수. W7: 빈도 통계 · 대국 목록(팩이 있으면).
-        { path: "research/explorer", element: <OpeningExplorer /> },
+        {
+          path: "research/explorer",
+          element: (
+            <RenjuOnly>
+              <OpeningExplorer />
+            </RenjuOnly>
+          ),
+        },
         // W6c: 같은 돌에 이르는 다른 수순(MoveOrder — 계산은 워커에서).
-        { path: "research/sequence", element: <SequenceScreen /> },
+        {
+          path: "research/sequence",
+          element: (
+            <RenjuOnly>
+              <SequenceScreen />
+            </RenjuOnly>
+          ),
+        },
         // W7: RenjuNet `.rif` 를 이 브라우저 안에서 변환한 팩(없으면 내 기보)으로 26주형 · 5수 모양 랭킹.
-        { path: "research/ranking", element: <RankingScreen /> },
+        {
+          path: "research/ranking",
+          element: (
+            <RenjuOnly>
+              <RankingScreen />
+            </RenjuOnly>
+          ),
+        },
 
         // W8: 엔진 yixindb — 파일은 IndexedDB, 엔진이 뜰 때 메모리 FS 로 올린다.
         { path: "database", element: <DatabaseScreen /> },
@@ -55,9 +84,23 @@ export const router = createBrowserRouter(
         { path: "engine", element: <EngineScreen /> },
 
         // W9: 정석 — 수순 입력(판 · 글), 분기, 메모(마크다운), 분류 자동, 국면으로 찾기.
-        { path: "joseki", element: <JosekiScreen /> },
+        {
+          path: "joseki",
+          element: (
+            <RenjuOnly>
+              <JosekiScreen />
+            </RenjuOnly>
+          ),
+        },
         // 관리자 도구: 공식 커리큘럼 스튜디오(docs/공식-정석-관리.md).
-        { path: "joseki/studio", element: <CurriculumStudio /> },
+        {
+          path: "joseki/studio",
+          element: (
+            <RenjuOnly>
+              <CurriculumStudio />
+            </RenjuOnly>
+          ),
+        },
 
         // 앱 `SettingsScreen.kt` 의 분류(대국·엔진·표시…)를 옮긴 것. 대국 설정·조작은
         // 보드 옆 칸에서 이리로 왔다. settings.txt 67항목 파일 왕복(W5b)은 고급 ▸ 시스템에 있다.

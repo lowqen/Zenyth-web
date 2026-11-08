@@ -705,7 +705,8 @@ async function handshake(
     // (Cloudflare 25MB 상한 — `tools/build_engine_wasm.sh` [2.5/6] 참고), 기본 규칙인
     // 프리스타일로 START 하면 없는 가중치를 찾게 된다.
     // 보드가 생기기 전에 보내야 규칙 변경이 newGame()/TT 비우기를 유발하지 않는다.
-    { kind: "rule", id: RENJU_RULE_ID },
+    // 네이티브 엔진은 엔진 폴더의 가중치 넷을 다 읽으므로 고른 규칙으로 뜬다(데스크톱 Z4).
+    { kind: "rule", id: msg.native ? (msg.rule ?? RENJU_RULE_ID) : RENJU_RULE_ID },
     { kind: "start", size: msg.size },
     { kind: "about" },
   ]);

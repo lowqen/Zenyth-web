@@ -26,7 +26,15 @@ import {
   swapAfterFirstMove,
 } from "../../core/model/referee";
 import { useBoardStore } from "./boardStore";
-import { setGameHandlers, useEngineStore } from "../../engine/engine-state";
+import { onEngineBooted, setGameHandlers, useEngineStore } from "../../engine/engine-state";
+import { isNativeVariant } from "../../engine/engine-client";
+import {
+  RULE_ID,
+  RULE_LABEL,
+  allowsOverline,
+  hasForbidden,
+  type PlayRule,
+} from "../../core/model/rules";
 import type { EngineCommand } from "../../engine/engine-types";
 import { msg, t } from "../../i18n/i18n";
 
@@ -129,8 +137,19 @@ export const REVIEW_BUSY = msg(
   "게임 리뷰나 국면 증명이 엔진을 쓰는 중입니다. 끝나거나 멈춘 뒤에 하세요",
 );
 
-/** 렌주에서는 장목이 흑의 **금수**라 승리 판정에서는 장목을 인정한다. */
-const ALLOW_OVERLINE = true;
+/**
+ * 렌주 밖의 규칙을 지금 고를 수 없으면 그 까닭 — 네이티브 · 원격 엔진(데스크톱)을 골라 두어야 한다.
+ * WASM `.data` 에는 렌주 가중치만 있다(`rules.ts` 머리 주석).
+ */
+export function ruleUnavailable(rule: PlayRule): string | null {
+  if (rule === "renju") return null;
+  const pref = useEngineStore.getState().enginePreference;
+  return pref === "native" || pref === "remote"
+    ? null
+    : t("{rule}은 데스크톱의 로컬 · 원격 엔진에서만 둘 수 있습니다. 엔진 설정에서 바꾸세요", {
+        rule: RULE_LABEL[rule],
+      });
+}
 
 const LOG_LIMIT = 30;
 
@@ -187,6 +206,13 @@ interface GameState {
   level: number;
   setLevel: (n: number) => void;
   computerSide: ComputerSide;
+  /**
+   * 규칙(데스크톱 Z4) — 렌주 밖의 둘은 네이티브 · 원격 엔진에서만(`ruleUnavailable`). 렌주가 아니면 개시는
+   * 「없음」뿐이고 금수도 없다. 엔진이 WASM 으로 뜨면(물러서기) 렌주로 돌아간다.
+   */
+  rule: PlayRule;
+  /** 규칙을 바꾸지 못했거나 되돌린 까닭 — 규칙 줄 아래에 보인다. 다음 성공한 변경이 지운다. */
+  ruleNotice: string | null;
   opening: OpeningProtocol;
   /** 대국 탐색이 돌고 있다(데스크톱의 `isthinking`). */
   thinking: boolean;
@@ -206,6 +232,8 @@ interface GameState {
    */
   swapSides: () => void;
   setOpening: (o: OpeningProtocol) => void;
+  /** 규칙을 바꾼다 — 새 대국이다. 고를 수 없으면 `ruleNotice` 만 남기고 그대로 둔다. */
+  setRule: (r: PlayRule) => void;
   setMoveTime: (ms: number) => void;
   toggleForbidden: () => void;
   /**
@@ -290,7 +318,7 @@ export const useGameStore = create<GameState>((set, get) => {
    * 결과가 사라지는 방향(무르기)도 반영한다.
    */
   const judge = () => {
-    const r = refereeResult(board().render.stones, board().render.size, ALLOW_OVERLINE);
+    const r = refereeResult(board().render.stones, board().render.size, allowsOverline(get().rule));
     const s = get();
     if (r && !s.result) {
       set({ result: r, thinking: false });
@@ -322,6 +350,7 @@ export const useGameStore = create<GameState>((set, get) => {
   function refreshForbidden() {
     const s = get();
     const wanted =
+      hasForbidden(s.rule) &&
       s.showForbidden &&
       !s.thinking &&
       !s.result &&
@@ -462,7 +491,8 @@ export const useGameStore = create<GameState>((set, get) => {
       disarmWatchdog();
       log(`예상치 못한 협상 응답: ${r.kind}`);
     },
-    onForbid: (cells) => board().setForbidden(get().showForbidden ? cells : []),
+    onForbid: (cells) =>
+      board().setForbidden(get().showForbidden && hasForbidden(get().rule) ? cells : []),
     onEngineRecovered: () => {
       // 멈춘 멀티 엔진이 단일로 갈아 끼워졌다 — 생각하던 수는 옛 워커와 함께 사라졌다. 그대로
       // 두면 `thinking` 이 켜진 채라 무제한 대국은 「엔진이 생각 중」으로 영영 잠기고, 「지금 두기」도
@@ -550,7 +580,7 @@ export const useGameStore = create<GameState>((set, get) => {
     restoreSessions: ({ game, analysis, base }, what) => {
       const s = get();
       // 대국 판의 승패는 판에서 다시 본다(기권 · 무승부는 저장하지 않는다 — 새로고침 전과 같다).
-      const gameResult = refereeResult(game.stones, board().render.size, ALLOW_OVERLINE);
+      const gameResult = refereeResult(game.stones, board().render.size, allowsOverline(s.rule));
       if (s.mode === "game") {
         get().loadMoves(game.stones, {
           future: game.future,
@@ -609,6 +639,8 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     computerSide: "none",
+    rule: "renju",
+    ruleNotice: null,
     opening: "none",
     thinking: false,
     result: null,
@@ -644,7 +676,19 @@ export const useGameStore = create<GameState>((set, get) => {
       }
     },
 
+    setRule: (rule) => {
+      if (rule === get().rule) return set({ ruleNotice: null });
+      const why = ruleUnavailable(rule);
+      if (why) return set({ ruleNotice: why });
+      // 렌주 개시(RIF · 첫 수 이후 교환)는 렌주 것이다.
+      set({ rule, ruleNotice: null, ...(rule === "renju" ? {} : { opening: "none" }) });
+      useEngineStore.getState().setRuleId(RULE_ID[rule]);
+      log(`규칙: ${rule}`);
+      get().newGame();
+    },
+
     setOpening: (opening) => {
+      if (opening !== "none" && get().rule !== "renju") return;
       set({ opening });
       log(`오프닝: ${opening}`);
       // 개시는 판이 빈 상태에서만 의미가 있다 — 규칙을 바꾸면 새 대국이다.
@@ -963,5 +1007,24 @@ useBoardStore.subscribe((s, prev) => {
     const e = useEngineStore.getState();
     if (!e.analyzing || useGameStore.getState().thinking) return;
     void e.analyze(useBoardStore.getState().placements());
+  });
+});
+
+/**
+ * **WASM 으로 뜬 엔진은 렌주만 안다.** 네이티브를 골랐어도 실패하면 WASM 으로 물러서고, 엔진 설정을 WASM 으로
+ * 돌리면 다음 기동부터 WASM 이다 — 그때 규칙이 렌주 밖이면 렌주로 돌아가 판을 새로 연다(판정 · 금수가 엔진과
+ * 어긋나지 않게).
+ */
+onEngineBooted(() => {
+  const g = useGameStore.getState();
+  if (g.rule === "renju" || isNativeVariant(useEngineStore.getState().engine.variant)) return;
+  const was = g.rule;
+  useGameStore.setState({ rule: "renju" });
+  useEngineStore.getState().setRuleId(RULE_ID.renju);
+  g.newGame();
+  useGameStore.setState({
+    ruleNotice: t("엔진이 브라우저 엔진으로 떠서 {rule}에서 렌주로 돌아왔습니다", {
+      rule: RULE_LABEL[was],
+    }),
   });
 });

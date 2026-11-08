@@ -197,9 +197,15 @@ describe("네이티브 DB 저장(데스크톱 Z4)", () => {
       size: 15,
       handshakeMs: 2_000,
       native: true,
+      rule: 1,
     } as ToWorker);
     await until(() => posted.some((m) => m.type === "booted" || m.type === "fatal"));
     expect(posted.find((m) => m.type === "fatal")).toBeUndefined();
+    // 네이티브는 고른 규칙으로 뜬다 — START 보다 먼저(데스크톱 Z4).
+    expect(wrote.indexOf("INFO RULE 1")).toBeGreaterThanOrEqual(0);
+    expect(wrote.indexOf("INFO RULE 1")).toBeLessThan(
+      wrote.findIndex((l) => l.startsWith("START")),
+    );
 
     send({ type: "fs", id: 7, op: "compact", path: "rapfi.db" } as ToWorker);
     await until(() => posted.some((m) => m.type === "fs"));

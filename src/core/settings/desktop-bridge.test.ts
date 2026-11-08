@@ -9,6 +9,7 @@ import {
 import { ALL_SPECS, DESKTOP_DEFAULTS, parse, render, type DesktopValues } from "./desktop-settings";
 
 const WEB: WebSettings = {
+  rule: "renju",
   opening: "none",
   computerSide: "none",
   maxDepth: 225,
@@ -70,6 +71,21 @@ describe("가져오기(데스크톱 → 웹)", () => {
     expect(notes[0]).toMatch(/규칙 6\(스왑2\)/);
     expect(webFromDesktop({ ...deployed, rule: 3 }, WEB).web.opening).toBe("swapFirst");
     expect(webFromDesktop({ ...deployed, rule: 4 }, WEB).web.opening).toBe("rif");
+  });
+
+  it("규칙 칸 0·1 은 프리스타일 · 스탠다드(개시 없음), 2~4 는 렌주 개시 — 데스크톱 Z4", () => {
+    const free = webFromDesktop({ ...deployed, rule: 0 }, { ...WEB, opening: "rif" });
+    expect(free.web).toMatchObject({ rule: "freestyle", opening: "none" });
+    expect(free.notes).toEqual(expect.not.arrayContaining([expect.stringMatching(/^규칙/)]));
+    expect(webFromDesktop({ ...deployed, rule: 1 }, WEB).web.rule).toBe("standard");
+    expect(
+      webFromDesktop({ ...deployed, rule: 4 }, { ...WEB, rule: "standard" }).web,
+    ).toMatchObject({ rule: "renju", opening: "rif" });
+    // 내보내기 — 렌주 밖이면 규칙이 칸을 정하고, 렌주면 개시가 정한다.
+    const base = DESKTOP_DEFAULTS;
+    expect(overlayWeb(base, { ...WEB, rule: "freestyle" }).rule).toBe(0);
+    expect(overlayWeb(base, { ...WEB, rule: "standard", opening: "rif" }).rule).toBe(1);
+    expect(overlayWeb(base, { ...WEB, opening: "swapFirst" }).rule).toBe(3);
   });
 
   it("컴퓨터 진영 비트", () => {
