@@ -8,6 +8,9 @@
 //! - 네이티브 엔진(데스크톱 Z3): 로컬 Rapfi 프로세스 · 원격 TCP 세션 — `engine.rs`.
 //! - settings.txt · settings_dev.txt 직접 읽기 · 쓰기(데스크톱 Z4) — `settings.rs`.
 //! - 기동 시각 기록 `boot_marks`(데스크톱 Z6) — `scripts/perf-shell.ts` 가 읽는다.
+//! - 자동 업데이트(데스크톱 Z7): `tauri-plugin-updater` — 확인 · 설치는 웹(`src/app/desktop/updater.ts`)이 부른다.
+//!   설치판(NSIS)을 띄우기 직전에 엔진 프로세스를 닫는다 — 살아 있으면 `engine/` 의 exe 를 덮어쓰지 못한다.
+//!   포터블판(zip, 셸 옆 `portable.txt`)은 `is_portable` 로 알리고, 웹이 설치 대신 안내만 한다.
 //!
 //! 타이틀바 · 단축키는 웹 쪽(`src/app/desktop/`)에 있다.
 
@@ -95,6 +98,19 @@ fn read_game_files<I: IntoIterator<Item = String>>(args: I, cwd: &Path) -> Vec<O
         .collect()
 }
 
+/// 포터블판 표지 — zip 에만 들어 있다(desktop.yml «포터블 zip»).
+const PORTABLE_MARK: &str = "portable.txt";
+
+/// 포터블판인가. 자동 업데이트는 설치판(NSIS)을 %LOCALAPPDATA% 에 까므로, 포터블 폴더를 고치지 못하고 사본을
+/// 하나 더 만든다 — 그래서 웹은 포터블판에서 새 버전을 알리기만 한다.
+#[tauri::command]
+fn is_portable() -> bool {
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.join(PORTABLE_MARK)))
+        .is_some_and(|p| p.is_file())
+}
+
 #[tauri::command]
 fn take_open_files(pending: tauri::State<'_, Pending>) -> Vec<OpenFile> {
     std::mem::take(&mut *pending.0.lock().unwrap_or_else(|e| e.into_inner()))
@@ -135,6 +151,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             take_open_files,
             boot_marks,
+            is_portable,
             engine::engine_open,
             engine::engine_write,
             engine::engine_close,
@@ -150,6 +167,14 @@ fn main() {
         })
         .setup(|app| {
             mark(app.handle(), "setup");
+            // 업데이터는 앱 핸들이 생긴 뒤에 단다 — 설치판을 띄우기 직전(Windows 는 곧바로 프로세스를 끝낸다,
+            // RunEvent::Exit 가 오지 않는다) 엔진 프로세스를 닫아야 하기 때문이다.
+            let for_update = app.handle().clone();
+            app.handle().plugin(
+                tauri_plugin_updater::Builder::new()
+                    .on_before_exit(move || for_update.state::<engine::Engines>().close_all())
+                    .build(),
+            )?;
             let cwd = std::env::current_dir().unwrap_or_default();
             let files = read_game_files(std::env::args().skip(1), &cwd);
             *app.state::<Pending>().0.lock().unwrap_or_else(|e| e.into_inner()) = files;

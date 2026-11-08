@@ -5,6 +5,7 @@ import { router } from "../routes";
 import { RAIL } from "../destinations";
 import { useThemeStore, type ThemeMode } from "../theme";
 import { desktopAction, isWindows11 } from "./keys";
+import { startUpdater } from "./updater";
 import { openGameFile, saveGameFile } from "../../features/board/gameFileActions";
 import { pickAndOpenGame } from "../commands/registry";
 import { usePalette } from "../commands/palette";
@@ -56,6 +57,9 @@ export async function startDesktop(): Promise<void> {
     read: (dir) => invoke<SettingsFiles>("settings_read", { dir }),
     write: (dir, main, dev) => invoke<void>("settings_write", { dir, main, dev }),
   });
+
+  // 자동 업데이트(데스크톱 Z7) — 버전 · 포터블 여부를 읽고, 조금 뒤 조용히 한 번 확인한다.
+  void startUpdater();
 
   await openAll(await invoke<OpenFileMsg[]>("take_open_files"));
   await listen<OpenFileMsg[]>(OPEN_FILES_EVENT, (e) => void openAll(e.payload));

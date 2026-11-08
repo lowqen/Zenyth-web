@@ -3,6 +3,8 @@ import engineManifest from "../../engine/engine-manifest.json";
 import { msg, t } from "../../i18n/i18n";
 import { ZenythMark } from "../../components/ZenythMark";
 import { RELEASE_NAME, useFirstVisit } from "../../app/firstVisit";
+import { IS_DESKTOP } from "../../app/desktop/platform";
+import { downloadProgress, useUpdateStore, type UpdatePhase } from "../../app/desktop/updateStore";
 
 /**
  * 설정 ▸ 정보 — GPLv3 §0 · §5(d) 의 «적절한 법적 고지»(Appropriate Legal Notices).
@@ -29,6 +31,19 @@ interface Component {
   license: string;
 }
 
+/**
+ * 데스크톱이 동봉하는 네이티브 Rapfi — 공식 릴리스를 손대지 않고 싣는다(desktop.yml `RAPFI_NATIVE_TAG`).
+ * 대응 소스는 그 릴리스의 태그다. 설치 폴더 `engine/SOURCE.txt` 에도 같은 안내가 있다.
+ */
+const RAPFI_NATIVE_TAG = "250615";
+
+const NATIVE_RAPFI: Component = {
+  name: `Rapfi ${RAPFI_NATIVE_TAG}`,
+  href: `https://github.com/dhbloo/rapfi/releases/tag/${RAPFI_NATIVE_TAG}`,
+  role: msg("탐색 엔진(데스크톱 네이티브 빌드 · 공식 릴리스)"),
+  license: "GPL-3.0-or-later",
+};
+
 const COMPONENTS: readonly Component[] = [
   {
     name: "Rapfi",
@@ -36,6 +51,7 @@ const COMPONENTS: readonly Component[] = [
     role: msg("탐색 엔진(WebAssembly 빌드)"),
     license: "GPL-3.0-or-later",
   },
+  ...(IS_DESKTOP ? [NATIVE_RAPFI] : []),
   {
     name: "rapfi-networks",
     href: "https://github.com/dhbloo/rapfi-networks",
@@ -124,8 +140,88 @@ export function AboutPanel() {
   return (
     <>
       <Brand />
+      {IS_DESKTOP && <DesktopRelease />}
       <AboutLegal />
     </>
+  );
+}
+
+/** 셸 안에서만 받는다 — 웹 번들은 `@tauri-apps/plugin-updater` 를 싣지 않는다. */
+const loadUpdater = () => import("../../app/desktop/updater");
+
+function updateStatus(phase: UpdatePhase, portable: boolean): string {
+  switch (phase.kind) {
+    case "idle":
+      return t("새 버전은 앱을 열 때 확인합니다");
+    case "checking":
+      return t("확인하는 중…");
+    case "latest":
+      return t("최신 버전입니다");
+    case "available":
+      return portable
+        ? t("새 버전 {v} 이 있습니다. 포터블판은 릴리스에서 직접 받아 폴더를 바꿉니다", {
+            v: phase.version,
+          })
+        : t("새 버전 {v} 을 설치할 수 있습니다", { v: phase.version });
+    case "downloading":
+      return t("받는 중 {p}", { p: downloadProgress(phase.done, phase.total) });
+    case "installing":
+      return t("설치 프로그램을 엽니다. 앱이 곧 닫힙니다");
+    case "error":
+      return phase.message;
+  }
+}
+
+/**
+ * 데스크톱 판 · 자동 업데이트(데스크톱 Z7). 설치는 사용자가 누를 때만 한다 — 분석 중에 앱이 저절로 닫히면 안 된다.
+ * 포터블판은 설치판을 따로 깔게 되므로 릴리스 쪽만 가리킨다.
+ */
+function DesktopRelease() {
+  const version = useUpdateStore((s) => s.appVersion);
+  const portable = useUpdateStore((s) => s.portable);
+  const phase = useUpdateStore((s) => s.phase);
+  const busy =
+    phase.kind === "checking" || phase.kind === "downloading" || phase.kind === "installing";
+  const canInstall = phase.kind === "available" && !portable;
+  return (
+    <section className="panel about" aria-labelledby="sg-desktop" data-k="desktop-release">
+      <header className="sgroup__head">
+        <h2 id="sg-desktop" className="sgroup__title">
+          Zenyth Desktop
+        </h2>
+        <p className="sgroup__desc tnum">
+          {t("버전 {v}", { v: version ?? "—" })}
+          {portable ? ` · ${t("포터블")}` : ""}
+        </p>
+      </header>
+      <p className="about__intro tnum" role="status" aria-live="polite">
+        {updateStatus(phase, portable)}
+      </p>
+      <div className="about__actions">
+        {canInstall ? (
+          <button
+            type="button"
+            className="btn btn--tonal"
+            disabled={busy}
+            onClick={() => void loadUpdater().then((m) => m.installUpdate())}
+          >
+            {t("설치하고 다시 시작")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn"
+            disabled={busy}
+            onClick={() => void loadUpdater().then((m) => m.checkForUpdate(true))}
+          >
+            {t("업데이트 확인")}
+          </button>
+        )}
+        {phase.kind === "available" && portable ? (
+          <Ext href={`${REPO}/releases/tag/desktop-v${phase.version}`}>{t("릴리스 열기")}</Ext>
+        ) : null}
+      </div>
+    </section>
   );
 }
 

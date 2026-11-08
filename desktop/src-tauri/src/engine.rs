@@ -38,6 +38,10 @@ use tauri::{AppHandle, Manager, State};
 const FRAME: Duration = Duration::from_millis(16);
 /// 원격 연결 한도. Tailscale 이 꺼져 있으면 이름 풀이나 연결이 여기서 끝난다.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(8);
+/// 셸 종료 때 엔진에 보내는 마지막 명령 — 웹 `EngineClient.shutdown` 의 순서.
+const SHUTDOWN_LINES: &str = "YXSTOP\nYXSAVEDATABASE\nEND\n";
+/// 그 뒤 엔진이 DB 를 쓰고 끝나기를 기다리는 한도. 로컬 DB 저장은 수백 ms ~ 수 초다(핸드북 §13).
+const SHUTDOWN_GRACE: Duration = Duration::from_secs(8);
 /// 표준 출력이 닫힌 뒤 프로세스의 종료 코드를 기다리는 한도.
 const EXIT_WAIT: Duration = Duration::from_secs(2);
 /// Windows: 콘솔 앱(Rapfi)을 띄울 때 검은 창을 만들지 않는다. 셸은 `windows_subsystem = "windows"` 라 콘솔이 없다.
@@ -48,7 +52,7 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum EngineSpec {
-    /// `path` 가 비면 셸 옆의 `engine/rapfi.exe` → `rapfi.exe` 순으로 찾는다.
+    /// `path` 가 비면 셸 옆 `engine/` 의 동봉 변형(CPU 에 맞는 것) → `engine/rapfi.exe` → `rapfi.exe` 순으로 찾는다.
     Local { path: String },
     Remote { host: String, port: u16 },
 }
@@ -211,6 +215,36 @@ impl Session {
         }
     }
 
+    /// 셸이 끝날 때의 정상 종료(데스크톱 Z7) — 웹 `EngineClient.shutdown` 과 같은 순서
+    /// `YXSTOP` → `YXSAVEDATABASE` → `END` 를 보내고 `grace` 만큼 끝나길 기다린 뒤에야 죽인다.
+    /// yixindb 는 메모리에 있고 명령이나 종료 때만 파일에 쓰이므로, 곧바로 죽이면 그 세션이 배운 DB 가 사라진다
+    /// (창 닫기 · 업데이트 설치 둘 다 이 길로 온다). 원격은 서버 엔진을 끝내지 않는다 — 연결만 끊는다.
+    fn finish(&self, grace: Duration) {
+        if !matches!(&*lock(&self.conn), Conn::Child(_)) {
+            return self.kill();
+        }
+        self.closed.store(true, Ordering::SeqCst);
+        {
+            let mut w = lock(&self.writer);
+            let _ = w
+                .write_all(&self.codec.encode(SHUTDOWN_LINES))
+                .and_then(|_| w.flush());
+        }
+        let deadline = Instant::now() + grace;
+        loop {
+            if let Conn::Child(c) = &mut *lock(&self.conn) {
+                if matches!(c.try_wait(), Ok(Some(_))) {
+                    return;
+                }
+            }
+            if Instant::now() >= deadline {
+                break;
+            }
+            thread::sleep(Duration::from_millis(25));
+        }
+        self.kill();
+    }
+
     /// 출력이 모두 닫힌 뒤의 끝 — 종료 코드와, 우리가 닫은 게 아니면 그 까닭.
     fn outcome(&self) -> (Option<i32>, Option<String>) {
         let closed = self.closed.load(Ordering::SeqCst);
@@ -265,11 +299,16 @@ impl Engines {
         lock(&self.map).remove(&id)
     }
 
-    /// 셸이 끝날 때 — 남은 엔진 프로세스를 고아로 두지 않는다.
+    /// 셸이 끝날 때 — 로컬 엔진은 DB 를 저장하고 끝나게 한 뒤(`Session::finish`), 그래도 남으면 죽인다.
+    /// 엔진 프로세스를 고아로 두지 않는다. 세션이 여럿이면 함께 기다린다(한도는 하나 몫).
     pub fn close_all(&self) {
         let all: Vec<_> = lock(&self.map).drain().map(|(_, s)| s).collect();
-        for s in all {
-            s.kill();
+        let waits: Vec<_> = all
+            .into_iter()
+            .map(|s| thread::spawn(move || s.finish(SHUTDOWN_GRACE)))
+            .collect();
+        for w in waits {
+            let _ = w.join();
         }
     }
 }
@@ -278,7 +317,61 @@ fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
     m.lock().unwrap_or_else(|e| e.into_inner())
 }
 
-/// 로컬 엔진 실행 파일 — 지정한 경로, 아니면 셸 옆의 기본 위치.
+/// 이 CPU 의 명령어 집합 — 동봉한 Rapfi 변형 중 무엇을 돌릴 수 있는가(데스크톱 Z7).
+///
+/// 각 묶음은 그 변형의 빌드 옵션보다 넉넉하게 잡는다(AVX2 빌드는 FMA · BMI2 를 함께 켠다). 잘못 골라
+/// «잘못된 명령어»로 죽는 것보다 한 단계 느린 변형이 낫다.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CpuIsa {
+    pub avx2: bool,
+    pub avxvnni: bool,
+    pub avx512: bool,
+    pub avx512vnni: bool,
+}
+
+impl CpuIsa {
+    #[cfg(target_arch = "x86_64")]
+    pub fn detect() -> Self {
+        use std::arch::is_x86_feature_detected as has;
+        let avx2 = has!("avx2") && has!("fma") && has!("bmi1") && has!("bmi2");
+        let avx512 =
+            avx2 && has!("avx512f") && has!("avx512bw") && has!("avx512dq") && has!("avx512vl");
+        CpuIsa {
+            avx2,
+            avxvnni: avx2 && has!("avxvnni"),
+            avx512,
+            avx512vnni: avx512 && has!("avx512vnni"),
+        }
+    }
+
+    #[cfg(not(target_arch = "x86_64"))]
+    pub fn detect() -> Self {
+        CpuIsa::default()
+    }
+}
+
+/// 이 CPU 가 돌릴 수 있는 동봉 변형(공식 Rapfi 릴리스 250615 의 Windows 파일 이름) — 빠른 순.
+/// SSE 변형은 하한선으로 언제나 끝에 둔다.
+pub fn variant_order(isa: CpuIsa) -> Vec<&'static str> {
+    let mut v = Vec::with_capacity(5);
+    if isa.avx512vnni {
+        v.push("pbrain-rapfi-windows-avx512vnni.exe");
+    }
+    if isa.avx512 {
+        v.push("pbrain-rapfi-windows-avx512.exe");
+    }
+    if isa.avxvnni {
+        v.push("pbrain-rapfi-windows-avxvnni.exe");
+    }
+    if isa.avx2 {
+        v.push("pbrain-rapfi-windows-avx2.exe");
+    }
+    v.push("pbrain-rapfi-windows-sse.exe");
+    v
+}
+
+/// 로컬 엔진 실행 파일 — 지정한 경로, 아니면 셸 옆 `engine/` 에 동봉한 변형 중 이 CPU 에 맞는 가장 빠른 것
+/// (`variant_order`), 그다음 예전 자리 `engine/rapfi.exe` → `rapfi.exe`.
 fn resolve_local(path: &str) -> Result<PathBuf, String> {
     let exe_dir = std::env::current_exe()
         .ok()
@@ -293,11 +386,71 @@ fn resolve_local(path: &str) -> Result<PathBuf, String> {
             Err(format!("파일이 없습니다: {}", p.display()))
         };
     }
-    let tried = [exe_dir.join("engine").join("rapfi.exe"), exe_dir.join("rapfi.exe")];
+    let engine_dir = exe_dir.join("engine");
+    let tried: Vec<PathBuf> = variant_order(CpuIsa::detect())
+        .into_iter()
+        .map(|name| engine_dir.join(name))
+        .chain([engine_dir.join("rapfi.exe"), exe_dir.join("rapfi.exe")])
+        .collect();
     tried.iter().find(|p| p.is_file()).cloned().ok_or_else(|| {
-        let list: Vec<String> = tried.iter().map(|p| p.display().to_string()).collect();
-        format!("엔진 실행 파일을 찾지 못했습니다: {}", list.join(" · "))
+        format!(
+            "엔진 실행 파일을 찾지 못했습니다: {} (pbrain-rapfi-windows-*.exe · rapfi.exe)",
+            engine_dir.display()
+        )
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SSE: &str = "pbrain-rapfi-windows-sse.exe";
+
+    #[test]
+    fn sse_only_cpu_gets_the_floor() {
+        // 개발 기기(Celeron N4500 · Jasper Lake)가 이 경우다 — 운영 engine.exe 도 SSE 변형이다.
+        assert_eq!(variant_order(CpuIsa::default()), vec![SSE]);
+    }
+
+    #[test]
+    fn avx2_cpu_prefers_avx2_then_sse() {
+        let isa = CpuIsa { avx2: true, ..CpuIsa::default() };
+        assert_eq!(variant_order(isa), vec!["pbrain-rapfi-windows-avx2.exe", SSE]);
+    }
+
+    #[test]
+    fn alder_lake_like_cpu_uses_avxvnni_first() {
+        let isa = CpuIsa { avx2: true, avxvnni: true, ..CpuIsa::default() };
+        assert_eq!(
+            variant_order(isa),
+            vec!["pbrain-rapfi-windows-avxvnni.exe", "pbrain-rapfi-windows-avx2.exe", SSE]
+        );
+    }
+
+    #[test]
+    fn full_avx512_cpu_orders_fastest_first() {
+        let isa = CpuIsa { avx2: true, avxvnni: true, avx512: true, avx512vnni: true };
+        assert_eq!(
+            variant_order(isa),
+            vec![
+                "pbrain-rapfi-windows-avx512vnni.exe",
+                "pbrain-rapfi-windows-avx512.exe",
+                "pbrain-rapfi-windows-avxvnni.exe",
+                "pbrain-rapfi-windows-avx2.exe",
+                SSE,
+            ]
+        );
+    }
+
+    #[test]
+    fn detect_is_consistent() {
+        // 상위 묶음은 하위 묶음을 전제한다 — 감지가 그 전제를 깨면 순서가 틀어진다.
+        let isa = CpuIsa::detect();
+        assert!(!isa.avx512 || isa.avx2);
+        assert!(!isa.avx512vnni || isa.avx512);
+        assert!(!isa.avxvnni || isa.avx2);
+        assert_eq!(variant_order(isa).last(), Some(&SSE));
+    }
 }
 
 fn connect(host: &str, port: u16) -> Result<TcpStream, String> {

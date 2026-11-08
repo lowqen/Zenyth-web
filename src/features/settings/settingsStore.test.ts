@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   AUTO_THREADS,
+  DEFAULT_ENGINE_PREFERENCE,
   DEFAULT_SETTINGS,
   autoThreads,
   SETTINGS_VERSION,
@@ -88,6 +89,25 @@ describe("후보 수 · 고급 설정", () => {
     );
     expect("allowThreads" in migrate({ allowThreads: false })).toBe(false);
     expect(sanitize(migrate({ allowThreads: false, v: SETTINGS_VERSION })).enginePreference).toBe(
+      "auto",
+    );
+  });
+
+  it("데스크톱의 기본 엔진은 네이티브, 웹은 자동(데스크톱 Z7)", () => {
+    expect(DEFAULT_ENGINE_PREFERENCE(true)).toBe("native");
+    expect(DEFAULT_ENGINE_PREFERENCE(false)).toBe("auto");
+    // 시험 환경은 웹이다 — 웹 기본값은 그대로.
+    expect(DEFAULT_SETTINGS.enginePreference).toBe("auto");
+  });
+
+  it("판 4 전 데스크톱의 「자동」은 옛 기본값이라 네이티브로 옮긴다", () => {
+    expect(migrate({ enginePreference: "auto", v: 3 }, true).enginePreference).toBe("native");
+    expect(migrate({ v: 3 }, true).enginePreference).toBe("native");
+    // 일부러 고른 다른 엔진 · 웹 · 새 판의 「자동」은 그대로.
+    expect(migrate({ enginePreference: "relaxed", v: 3 }, true).enginePreference).toBe("relaxed");
+    expect(migrate({ allowThreads: false }, true).enginePreference).toBe("relaxed");
+    expect(migrate({ enginePreference: "auto", v: 3 }, false).enginePreference).toBe("auto");
+    expect(migrate({ enginePreference: "auto", v: SETTINGS_VERSION }, true).enginePreference).toBe(
       "auto",
     );
   });

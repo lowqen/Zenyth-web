@@ -34,6 +34,9 @@ renju*.sqlite
 # 데스크톱 셸(Tauri) 빌드 산출물 — cargo target 과 tauri 가 만드는 스키마
 /desktop/src-tauri/target/
 /desktop/src-tauri/gen/
+# 데스크톱 Z7: CI 가 공식 Rapfi 릴리스에서 채우는 동봉 엔진 · 포터블 zip(desktop.yml)
+/desktop/engine-bundle/
+/desktop/*.zip
 
 # 편집기/OS
 .DS_Store

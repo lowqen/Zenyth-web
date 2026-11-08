@@ -989,7 +989,7 @@ export function defaultNativeSpec(variant: NativeVariant): NativeEngineSpec {
 
 /** 설정이 주는 네이티브 엔진의 자리 — 빈 글이면 기본값(`defaultNativeSpec`). */
 export interface NativeTarget {
-  /** 로컬 실행 파일의 경로. 빈 글이면 셸 옆의 `engine/rapfi.exe` → `rapfi.exe`. */
+  /** 로컬 실행 파일의 경로. 빈 글이면 셸 옆 `engine/` 의 동봉 변형(CPU 에 맞는 것) → `engine/rapfi.exe` → `rapfi.exe`. */
   path: string;
   /** 원격 `host:port`(포트를 빼면 5050). 빈 글이면 `rapfi-server:5050`. */
   remote: string;

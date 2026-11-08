@@ -17,9 +17,23 @@ const conf = JSON.parse(
     windows: { label: string; dragDropEnabled?: boolean; decorations?: boolean }[];
     security: { csp: string; headers: Record<string, string> };
   };
-  bundle: { fileAssociations: { ext: string[] }[] };
+  version: string;
+  bundle: {
+    fileAssociations: { ext: string[] }[];
+    createUpdaterArtifacts?: boolean;
+    resources?: Record<string, string>;
+  };
+  plugins?: { updater?: { pubkey: string; endpoints: string[] } };
 };
-const mainRs = readFileSync(new URL("../desktop/src-tauri/src/main.rs", import.meta.url), "utf8");
+const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
+const mainRs = read("../desktop/src-tauri/src/main.rs");
+const engineRs = read("../desktop/src-tauri/src/engine.rs");
+const cargoToml = read("../desktop/src-tauri/Cargo.toml");
+const desktopYml = read("../.github/workflows/desktop.yml");
+const aboutPanel = read("../src/features/settings/AboutPanel.tsx");
+const capability = JSON.parse(read("../desktop/src-tauri/capabilities/default.json")) as {
+  permissions: string[];
+};
 const site = siteHeaders();
 
 const IPC_SOURCES = ["ipc:", "http://ipc.localhost", "https://ipc.localhost"];
@@ -69,5 +83,44 @@ describe("tauri.conf.json ↔ public/_headers (데스크톱 Z2)", () => {
     expect([...rs.matchAll(/"([a-z]+)"/g)].map((m) => m[1]).sort()).toEqual(
       [...GAME_FILE_FORMATS].sort(),
     );
+  });
+});
+
+describe("배포 구성 (데스크톱 Z7)", () => {
+  it("셸 버전 한 벌 — tauri.conf.json = Cargo.toml(릴리스 태그 desktop-v<버전>)", () => {
+    const cargo = /^version = "([^"]+)"/m.exec(cargoToml)?.[1];
+    expect(conf.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(cargo).toBe(conf.version);
+  });
+
+  it("자동 업데이트: 서명 산출물 · 공개키 · 롤링 릴리스 주소 · 권한", () => {
+    expect(conf.bundle.createUpdaterArtifacts).toBe(true);
+    const up = conf.plugins?.updater;
+    // minisign 공개키(base64) — 개인키는 저장소에 없다(시크릿).
+    expect(atob(up?.pubkey ?? "")).toMatch(/^untrusted comment: minisign public key/);
+    expect(up?.endpoints).toEqual([
+      "https://github.com/lowqen/Zenyth-web/releases/download/desktop-latest/latest.json",
+    ]);
+    expect(desktopYml).toContain("gh release upload desktop-latest latest.json --clobber");
+    expect(capability.permissions).toContain("updater:default");
+    expect(mainRs).toContain("tauri_plugin_updater::Builder");
+  });
+
+  it("동봉 엔진: CI 가 싣는 변형 = 셸이 고르는 변형, 설치 폴더 engine/", () => {
+    expect(conf.bundle.resources).toEqual({ "../engine-bundle/*": "engine/" });
+    const shell = [...engineRs.matchAll(/"(pbrain-rapfi-windows-[a-z0-9]+\.exe)"/g)].map(
+      (m) => m[1],
+    );
+    const variants = [...new Set(shell)].map((f) => /windows-([a-z0-9]+)\.exe/.exec(f!)![1]);
+    expect(variants).toEqual(["avx512vnni", "avx512", "avxvnni", "avx2", "sse"]);
+    expect(desktopYml).toContain(`pbrain-rapfi-windows-{${variants.join(",")}}.exe`);
+  });
+
+  it("동봉 엔진 판 = 정보 화면이 가리키는 대응 소스(GPL)", () => {
+    const yml = /RAPFI_NATIVE_TAG: "(\d+)"/.exec(desktopYml)?.[1];
+    const about = /const RAPFI_NATIVE_TAG = "(\d+)"/.exec(aboutPanel)?.[1];
+    expect(yml).toBeTruthy();
+    expect(about).toBe(yml);
+    expect(desktopYml).toMatch(/RAPFI_NATIVE_SHA256: [0-9a-f]{64}\s*$/m);
   });
 });

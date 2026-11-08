@@ -4,6 +4,7 @@ import { isEnginePreference, type EnginePreference } from "../../engine/engine-c
 import type { EngineCommand } from "../../engine/engine-types";
 import { DEFAULT_SIZE } from "../../core/model/move";
 import { msg } from "../../i18n/i18n";
+import { IS_DESKTOP } from "../../app/desktop/platform";
 
 /**
  * 설정 화면이 **소유하는** 값들 — 엔진 파라미터·분석·표시.
@@ -132,6 +133,14 @@ export interface Settings {
   showAdvanced: boolean;
 }
 
+/**
+ * 데스크톱의 기본 엔진은 **네이티브 Rapfi**(데스크톱 Z7 결정) — 셸 옆 `engine/` 에 CPU 별 변형을 동봉하고 셸이
+ * 맞는 것을 고른다. WASM 은 웹뷰 안에 해시 · 가중치를 들고 있어 웹뷰가 451MB 까지 커지고(Z6 실측), 렌주 가중치만
+ * 있다. 네이티브가 못 뜨면 WASM 으로 물러선다(`planOrder`).
+ */
+export const DEFAULT_ENGINE_PREFERENCE = (desktop: boolean): EnginePreference =>
+  desktop ? "native" : "auto";
+
 export const DEFAULT_SETTINGS: Settings = {
   style: 3,
   hashMb: 128,
@@ -140,7 +149,7 @@ export const DEFAULT_SETTINGS: Settings = {
   vcThread: 0,
   hashAutoClear: false,
   threads: AUTO_THREADS,
-  enginePreference: "auto",
+  enginePreference: DEFAULT_ENGINE_PREFERENCE(IS_DESKTOP),
   enginePath: "",
   engineRemote: "",
   autoBoot: true,
@@ -159,16 +168,22 @@ export const DEFAULT_SETTINGS: Settings = {
  *     기본값」으로 보고 1 로 옮긴다. 5 가 아닌 값은 사용자가 고른 것이다.
  *   - **3** 부터 「멀티스레드 사용」 스위치(`allowThreads`)가 엔진 선택(`enginePreference`)
  *     으로 바뀌었다. 스위치를 꺼 두었던 사람은 단일 스레드(relaxed — 못 쓰면 일반 SIMD)로.
+ *   - **4** 부터 데스크톱의 기본 엔진이 `native` 다(데스크톱 Z7). 그 전 판의 데스크톱이 저장한 `auto` 는
+ *     「고른 값」이 아니라 「옛 기본값」이다(설정 하나만 바꿔도 전체가 저장된다 — 판 2 와 같은 사정) — `native`
+ *     로 옮긴다. 웹은 바뀌지 않는다.
  */
-export const SETTINGS_VERSION = 3;
+export const SETTINGS_VERSION = 4;
 type StoredSettings = Partial<Settings> & { v?: number; allowThreads?: unknown };
-export function migrate(raw: StoredSettings): Partial<Settings> {
+export function migrate(raw: StoredSettings, desktop: boolean = IS_DESKTOP): Partial<Settings> {
   const v = raw.v ?? 1;
   const { allowThreads, ...rest } = raw;
   const out: Partial<Settings> = { ...rest };
   if (v < 2 && raw.multiPv === 5) out.multiPv = 1;
   if (v < 3 && allowThreads === false && raw.enginePreference === undefined) {
     out.enginePreference = "relaxed";
+  }
+  if (v < 4 && desktop && (out.enginePreference ?? "auto") === "auto") {
+    out.enginePreference = "native";
   }
   return out;
 }

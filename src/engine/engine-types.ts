@@ -451,7 +451,7 @@ export type FromWorker =
 
 /**
  * 네이티브 엔진이 어디에 있나(데스크톱 Z3). 셸(`desktop/src-tauri/src/engine.rs`)의 `EngineSpec` 과 같은 모양.
- *   - `local`  사이드카 실행 파일. `path` 가 비면 셸 옆의 `engine/rapfi.exe` → `rapfi.exe` 순으로 찾는다.
+ *   - `local`  사이드카 실행 파일. `path` 가 비면 셸 옆 `engine/` 의 동봉 변형(engine.rs `variant_order`) → `engine/rapfi.exe` → `rapfi.exe` 순으로 찾는다.
  *              작업 폴더는 실행 파일의 폴더다(엔진이 `config.toml` · 가중치를 거기서 읽는다).
  *   - `remote` 원격 엔진의 TCP(지금 `engine_bak.exe` 프록시가 붙는 `rapfi-server:5050`). 줄 프로토콜 그대로다.
  */

@@ -1393,7 +1393,8 @@ export const EN: Readonly<Record<string, string>> = {
     "The engine did not confirm that the database was saved",
   "엔진 실행 파일": "Engine executable",
   "원격 서버 주소": "Remote server address",
-  "비우면 앱 옆의 engine/rapfi.exe": "Leave empty for engine/rapfi.exe next to the app",
+  "비우면 앱에 든 엔진(이 CPU에 맞는 변형)":
+    "Leave empty for the bundled engine (the build matched to this CPU)",
   "네이티브 Rapfi": "Native Rapfi",
   "원격 서버 Rapfi": "Remote server Rapfi",
   "네이티브 Rapfi (이 컴퓨터)": "Native Rapfi (this computer)",
@@ -1493,4 +1494,24 @@ export const EN: Readonly<Record<string, string>> = {
     "Saves and copies a 16:9 image of the board with a review summary",
   "공유 카드를 저장하고 복사했습니다": "Share card saved and copied",
   "공유 카드를 저장했습니다": "Share card saved",
+  // 데스크톱 Z7 — 자동 업데이트 · 동봉 엔진
+  "탐색 엔진(데스크톱 네이티브 빌드 · 공식 릴리스)":
+    "Search engine (desktop native build · official release)",
+  포터블: "portable",
+  "새 버전은 앱을 열 때 확인합니다": "New versions are checked when the app opens",
+  "확인하는 중…": "Checking…",
+  "최신 버전입니다": "You are on the latest version",
+  "새 버전 {v} 을 설치할 수 있습니다": "Version {v} is ready to install",
+  "새 버전 {v} 이 있습니다. 포터블판은 릴리스에서 직접 받아 폴더를 바꿉니다":
+    "Version {v} is available. For the portable build, download it from the release and replace the folder",
+  "받는 중 {p}": "Downloading {p}",
+  "설치 프로그램을 엽니다. 앱이 곧 닫힙니다": "Opening the installer. The app will close shortly",
+  "설치하고 다시 시작": "Install and restart",
+  "업데이트 확인": "Check for updates",
+  "릴리스 열기": "Open release",
+  "새 버전 {v} 이 나왔습니다. 포터블판은 릴리스에서 직접 받으세요":
+    "Version {v} is out. For the portable build, download it from the release",
+  "새 버전 {v} 이 나왔습니다. 설정 ▸ 정보에서 설치합니다":
+    "Version {v} is out. Install it from Settings ▸ About",
+  "업데이트 정보를 받지 못했습니다: {why}": "Could not get update information: {why}",
 };

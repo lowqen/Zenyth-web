@@ -128,7 +128,7 @@ function NativeTargetField({ kind }: { kind: "native" | "remote" }) {
           autoComplete="off"
           placeholder={
             kind === "native"
-              ? t("비우면 앱 옆의 engine/rapfi.exe")
+              ? t("비우면 앱에 든 엔진(이 CPU에 맞는 변형)")
               : `${DEFAULT_REMOTE_HOST}:${DEFAULT_REMOTE_PORT}`
           }
           onChange={(e) => setDraft(e.target.value)}

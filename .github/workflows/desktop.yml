@@ -1,14 +1,27 @@
-# zenyth-desktop(Tauri 셸) 빌드 — 데스크톱 Z2.
+# zenyth-desktop(Tauri 셸) 빌드 · 배포 — 데스크톱 Z2 · Z7.
 #
 # 개발 기기에는 Rust · MSVC 를 깔지 않고 이 잡이 Windows 러너에서 셸을 빌드한다(2026-11-08 사용자 결정).
-# 산출물(셸 exe · NSIS 설치판 · Cargo.lock)은 아티팩트로 내려받아 실제 창에서 확인한다.
-# 웹 번들 · 엔진 조립은 deploy.yml 과 같은 단계를 그대로 쓴다 — 셸은 dist/ 를 실을 뿐이다.
+# 웹 번들 · WASM 엔진 조립은 deploy.yml 과 같은 단계를 그대로 쓴다 — 셸은 dist/ 를 실을 뿐이다.
+#
+# 산출물(아티팩트):
+#   - Zenyth_<ver>_x64-setup.exe (+ .sig)   설치판(NSIS, 사용자 단위) · 자동 업데이트 서명
+#   - Zenyth_<ver>_x64-portable.zip         포터블판(Zenyth.exe + engine/ + portable.txt)
+#   - zenyth-desktop.exe · Cargo.lock       실기 스모크 · perf-shell 용, 잠금 파일 회수용
+#
+# 기본 엔진은 네이티브 Rapfi(데스크톱 Z7 결정): 공식 릴리스(dhbloo/rapfi, 가중치 CC0)를 sha256 으로 고정해 받아
+# engine/ 에 Windows 변형 5개 · 가중치 · config 를 싣고, 셸(engine.rs `variant_order`)이 CPU 를 보고 고른다.
+# RenjuNet 파생 데이터 · rapfi.db 는 싣지 않는다(사용자 반입).
+#
+# 릴리스: `desktop-v<버전>` 태그를 올리면 «release» 잡이 GitHub 릴리스를 만들고, 자동 업데이트가 읽는
+# 롤링 릴리스 `desktop-latest` 의 latest.json 을 바꾼다. 서명 개인키는 시크릿에만 있다(TAURI_SIGNING_PRIVATE_KEY*).
 name: desktop
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
+    # 태그 푸시에는 paths 가 걸리지 않는다(GitHub 규칙) — 릴리스 태그는 언제나 돈다.
+    tags: ["desktop-v*"]
     paths:
       - "desktop/src-tauri/**"
       - "src/app/desktop/**"
@@ -22,21 +35,38 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # deploy.yml 과 같은 엔진 릴리스(src/engine/engine-manifest.json 의 tag).
+  # deploy.yml 과 같은 엔진 릴리스(src/engine/engine-manifest.json 의 tag) — WASM 폴백.
   ENGINE_TAG: engine-3c94c2a9-a6
+  # 동봉 네이티브 엔진 — 공식 Rapfi 릴리스와 그 압축 파일의 sha256(GitHub 자산 digest).
+  # 바꾸면 src/features/settings/AboutPanel.tsx 의 RAPFI_NATIVE_TAG 도 같이(tauri-config.test.ts 가 대조).
+  RAPFI_NATIVE_TAG: "250615"
+  RAPFI_NATIVE_SHA256: 1a3e24024062a153ac079060ee9589a37c6bdd1ecc54fed3908793c519594e05
 
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
 
+      - name: 버전
+        id: ver
+        shell: bash
+        run: |
+          v=$(node -p "require('./desktop/src-tauri/tauri.conf.json').version")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" == refs/tags/desktop-v* && "${GITHUB_REF#refs/tags/desktop-v}" != "$v" ]]; then
+            echo "::error::태그 ${GITHUB_REF#refs/tags/} 와 tauri.conf.json 버전 $v 가 다릅니다."
+            exit 1
+          fi
+
       - shell: bash
         run: pnpm build
 
-      - name: 엔진 조립
+      - name: WASM 엔진 조립(폴백)
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -51,6 +81,38 @@ jobs:
       - name: 소스맵 빼기
         shell: bash
         run: find dist -name '*.map' -delete
+
+      # tauri.conf.json `bundle.resources` 가 desktop/engine-bundle/* 를 설치 폴더의 engine/ 으로 싣는다.
+      # tauri-build 가 빌드 때 이 파일들을 확인하므로 cargo test · tauri build 보다 먼저다.
+      - name: 네이티브 엔진 동봉(공식 Rapfi)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tmp="$RUNNER_TEMP/rapfi"; out=desktop/engine-bundle
+          mkdir -p "$tmp" "$out"
+          gh release download "$RAPFI_NATIVE_TAG" -R dhbloo/rapfi -p Rapfi-engine.7z -D "$tmp"
+          echo "$RAPFI_NATIVE_SHA256  $tmp/Rapfi-engine.7z" | sha256sum -c -
+          7z e -y -r -o"$out" "$tmp/Rapfi-engine.7z" 'pbrain-rapfi-windows-*.exe' '*.bin.lz4' 'model*.bin' config.toml AUTHORS > /dev/null
+          # 셸이 고르는 변형(engine.rs variant_order) · config 가 읽는 가중치 · 모델이 모두 있는가.
+          for f in pbrain-rapfi-windows-{avx512vnni,avx512,avxvnni,avx2,sse}.exe config.toml AUTHORS \
+                   $(grep -oE '"[^"]+\.bin(\.lz4)?"' "$out/config.toml" | tr -d '"'); do
+            [ -s "$out/$f" ] || { echo "::error::동봉 엔진에 $f 가 없습니다."; exit 1; }
+          done
+          cp LICENSE "$out/LICENSE.txt"
+          cat > "$out/SOURCE.txt" <<EOF
+          Rapfi — Gomoku/Renju engine, GPL-3.0-or-later (LICENSE.txt)
+          Binaries and config: official release $RAPFI_NATIVE_TAG, unmodified
+            https://github.com/dhbloo/rapfi/releases/tag/$RAPFI_NATIVE_TAG
+          Corresponding source: https://github.com/dhbloo/rapfi/tree/$RAPFI_NATIVE_TAG
+          Networks (*.bin.lz4): https://github.com/dhbloo/rapfi-networks (CC0-1.0)
+          Authors: AUTHORS
+
+          Zenyth Desktop picks the fastest build this CPU can run
+          (avx512vnni > avx512 > avxvnni > avx2 > sse). rapfi.db is created here on first use.
+          EOF
+          ls -la "$out"
 
       # 러너에 rustup 이 깔려 있다 — 바깥 액션 없이 안정판만 맞춘다.
       - name: Rust
@@ -70,6 +132,12 @@ jobs:
           key: desktop-cargo-${{ runner.os }}-${{ hashFiles('desktop/src-tauri/Cargo.toml', 'desktop/src-tauri/Cargo.lock') }}
           restore-keys: desktop-cargo-${{ runner.os }}-
 
+      # 셸의 순수 논리(변형 고르기 등) — engine.rs 의 #[cfg(test)].
+      - name: 셸 시험
+        shell: bash
+        working-directory: desktop/src-tauri
+        run: cargo test --quiet
+
       # NSIS 도구(nsis · nsis_tauri_utils.dll)는 tauri 가 GitHub 릴리스에서 받는다 — 그 내려받기가 504 로
       # 연달아 떨어진 적이 있어(Z4) 받아 둔 것을 캐시하고, 번들 단계만 몇 번 다시 해 본다(컴파일은 증분이다).
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -77,9 +145,12 @@ jobs:
           path: ~/AppData/Local/tauri
           key: desktop-tauri-tools-${{ runner.os }}-v1
 
-      - name: 셸 빌드 (exe + NSIS)
+      - name: 셸 빌드 (exe + NSIS + 업데이트 서명)
         shell: bash
         working-directory: desktop
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           for i in 1 2 3 4; do
             pnpm exec tauri build --ci && exit 0
@@ -88,16 +159,35 @@ jobs:
           done
           exit 1
 
+      - name: 포터블 zip
+        shell: bash
+        run: |
+          set -euo pipefail
+          v="${{ steps.ver.outputs.version }}"
+          root="$RUNNER_TEMP/portable"; p="$root/Zenyth"
+          mkdir -p "$p/engine"
+          cp desktop/src-tauri/target/release/zenyth-desktop.exe "$p/Zenyth.exe"
+          cp desktop/engine-bundle/* "$p/engine/"
+          cp LICENSE "$p/LICENSE.txt"
+          cat > "$p/portable.txt" <<'EOF'
+          Zenyth Desktop — portable build.
+
+          This file marks the folder as portable: the app does not install updates by itself here
+          (an update would install a second copy under %LOCALAPPDATA%). When a new version is out,
+          download the new portable zip and replace this folder — keep engine/rapfi.db if you use the DB.
+          Requires Microsoft Edge WebView2 (built into Windows 11).
+          EOF
+          (cd "$root" && 7z a -tzip -mx=7 "$GITHUB_WORKSPACE/desktop/Zenyth_${v}_x64-portable.zip" Zenyth > /dev/null)
+
       - name: 크기
         shell: bash
         run: |
-          ls -la desktop/src-tauri/target/release/zenyth-desktop.exe desktop/src-tauri/target/release/bundle/nsis/
           {
-            echo "### zenyth-desktop"
+            echo "### zenyth-desktop ${{ steps.ver.outputs.version }}"
             echo '```'
-            ls -la desktop/src-tauri/target/release/zenyth-desktop.exe desktop/src-tauri/target/release/bundle/nsis/*.exe
+            ls -la desktop/src-tauri/target/release/zenyth-desktop.exe desktop/src-tauri/target/release/bundle/nsis/ desktop/*.zip
             echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -105,6 +195,66 @@ jobs:
           path: |
             desktop/src-tauri/target/release/zenyth-desktop.exe
             desktop/src-tauri/target/release/bundle/nsis/*.exe
+            desktop/src-tauri/target/release/bundle/nsis/*.sig
+            desktop/*.zip
             desktop/src-tauri/Cargo.lock
           if-no-files-found: error
           retention-days: 14
+
+  # 릴리스 — `desktop-v<버전>` 태그에서만. 설치판 · 서명 · 포터블을 올리고, 자동 업데이트가 읽는 latest.json 을
+  # 롤링 릴리스 `desktop-latest` 에 덮어쓴다. 데스크톱 릴리스는 «Latest» 표지를 가져가지 않는다(엔진 릴리스와 섞이지 않게).
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: zenyth-desktop-${{ github.sha }}
+          path: out
+
+      - name: GitHub 릴리스 · latest.json
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VER: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="desktop-v$VER"
+          setup=$(find out -name "Zenyth_${VER}_x64-setup.exe" | head -n1)
+          sig="$setup.sig"; zip=$(find out -name "Zenyth_${VER}_x64-portable.zip" | head -n1)
+          for f in "$setup" "$sig" "$zip"; do [ -s "$f" ] || { echo "::error::$f 가 없습니다"; exit 1; }; done
+
+          cat > notes.md <<EOF
+          Zenyth Desktop $VER — Windows 10/11 x64.
+
+          - 설치판: \`Zenyth_${VER}_x64-setup.exe\` (사용자 단위 설치, 자동 업데이트)
+          - 포터블: \`Zenyth_${VER}_x64-portable.zip\` (압축을 풀고 Zenyth.exe 실행)
+
+          엔진: 공식 Rapfi $RAPFI_NATIVE_TAG 동봉 — CPU 에 맞는 변형을 자동 선택. 코드 서명이 없어 처음 실행 때
+          SmartScreen 경고가 뜰 수 있습니다(추가 정보 → 실행).
+          EOF
+          gh release create "$tag" --target "$GITHUB_SHA" --title "Zenyth Desktop $VER" \
+            --notes-file notes.md --latest=false "$setup" "$sig" "$zip"
+
+          url="https://github.com/$GH_REPO/releases/download/$tag/$(basename "$setup")"
+          node -e '
+            const fs = require("fs");
+            const [ver, sigPath, url] = process.argv.slice(1);
+            fs.writeFileSync("latest.json", JSON.stringify({
+              version: ver,
+              notes: `Zenyth Desktop ${ver}`,
+              pub_date: new Date().toISOString(),
+              platforms: { "windows-x86_64": { signature: fs.readFileSync(sigPath, "utf8").trim(), url } },
+            }, null, 2));
+          ' "$VER" "$sig" "$url"
+          cat latest.json
+
+          gh release view desktop-latest > /dev/null 2>&1 || gh release create desktop-latest \
+            --target "$GITHUB_SHA" --title "Zenyth Desktop — 업데이트 정보" --latest=false --prerelease \
+            --notes "자동 업데이트가 읽는 latest.json 자리입니다. 설치 파일은 desktop-v* 릴리스에 있습니다."
+          gh release upload desktop-latest latest.json --clobber
