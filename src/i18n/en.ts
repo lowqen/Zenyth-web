@@ -1479,4 +1479,12 @@ export const EN: Readonly<Record<string, string>> = {
   "단축키 없음": "No shortcut",
   "Yixin 사용자 툴바 · 단축키 자리. 명령 팔레트(Ctrl+K)와 묶은 단축키로 부릅니다. Yixin function 폴더의 txt 를 가져올 수 있습니다":
     "Replaces Yixin's user toolbar and hotkeys. Run them from the command palette (Ctrl+K) or their shortcut. You can import the txt files from Yixin's function folder",
+  "공유 카드": "Share card",
+  "Zenyth 대국": "Zenyth game",
+  "{rule} · {size}x{size} · {n}수 · {date}": "{rule} · {size}x{size} · {n} {n|move|moves} · {date}",
+  "대국 리뷰를 하면 정확도와 등급이 나옵니다.": "Run Game Review for accuracy and grades.",
+  "판과 리뷰 요약을 담은 16:9 그림을 저장하고 복사합니다":
+    "Saves and copies a 16:9 image of the board with a review summary",
+  "공유 카드를 저장하고 복사했습니다": "Share card saved and copied",
+  "공유 카드를 저장했습니다": "Share card saved",
 };

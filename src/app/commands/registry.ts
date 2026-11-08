@@ -5,7 +5,11 @@ import { useBoardStore } from "../../features/board/boardStore";
 import { useBoardNotice } from "../../features/board/boardNotice";
 import { useClockStore } from "../../features/board/clockStore";
 import { openGameFile, saveGameFile } from "../../features/board/gameFileActions";
-import { copyPositionString, saveBoardImage } from "../../features/board/shareActions";
+import {
+  copyPositionString,
+  saveBoardImage,
+  saveShareCard,
+} from "../../features/board/shareActions";
 import { copyPositionLink } from "../../features/board/positionLink";
 import { useEngineStore } from "../../engine/engine-state";
 import { useDbStore } from "../../features/database/dbStore";
@@ -187,6 +191,7 @@ const BASE: readonly AppCommand[] = [
   },
   { id: "file.copy-link", title: msg("국면 링크 복사"), group: G.file, run: copyPositionLink },
   { id: "file.save-image", title: msg("판 그림 저장"), group: G.file, run: saveBoardImage },
+  { id: "file.share-card", title: msg("공유 카드"), group: G.file, run: saveShareCard },
 
   { id: "engine.start", title: msg("엔진 시작"), group: G.engine, run: () => engine().start() },
   { id: "engine.stop", title: msg("엔진 종료"), group: G.engine, run: () => engine().terminate() },

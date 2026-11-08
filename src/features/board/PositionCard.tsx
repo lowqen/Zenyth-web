@@ -12,7 +12,8 @@ import { GradeBadge } from "../../components/GradeBadge";
 import { Menu } from "../../components/Menu";
 import { Icon } from "../../components/icons";
 import { ICON } from "../../components/icon-paths";
-import { saveBoardImage, copyPositionString } from "./shareActions";
+import { saveBoardImage, saveShareCard, copyPositionString } from "./shareActions";
+import { IS_DESKTOP } from "../../app/desktop/platform";
 import { useCurrentReview } from "../../data/current-review";
 import {
   QUALITY_INFO,
@@ -256,6 +257,16 @@ export function PositionCard({ game }: { game: boolean }) {
               disabled: p.count === 0,
               onSelect: () => void copyPositionString(),
             },
+            // 공유 카드(데스크톱 Z4) — 판 · 정확도 · 승률 곡선을 담은 16:9 그림.
+            ...(IS_DESKTOP
+              ? [
+                  {
+                    label: t("공유 카드"),
+                    title: t("판과 리뷰 요약을 담은 16:9 그림을 저장하고 복사합니다"),
+                    onSelect: () => void saveShareCard(),
+                  },
+                ]
+              : []),
           ]}
         />
         <button type="button" className="filekey" onClick={() => void saveBoardImage()}>
