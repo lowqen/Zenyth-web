@@ -130,13 +130,74 @@ export function pthreadVariant(): string {
   );
 }
 
+/**
+ * 엔진 스레드가 읽힌 번들의 실제 주소. 보통은 `self.location.href` 지만, 데스크톱 셸에서는
+ * 엔진 스레드가 blob 부트스트랩으로 열려 그 값이 `blob:` 이 된다 — 부트스트랩이 원래 주소를
+ * `__RAPFI_PTHREAD_SCRIPT__` 에 심어 둔다(`installBlobPthreads`).
+ */
+function pthreadScriptUrl(): string {
+  return (
+    (globalThis as { __RAPFI_PTHREAD_SCRIPT__?: string }).__RAPFI_PTHREAD_SCRIPT__ ??
+    self.location.href
+  );
+}
+
 /** 멀티 변형 글루의 주소 — 엔진 스레드가 읽는다. */
 export function pthreadGlueUrl(): string {
   const base = import.meta.env?.VITE_ENGINE_BASE_URL ?? "/engine/";
-  return new URL(`${base}rapfi-${pthreadVariant()}.js`, self.location.href).href;
+  return new URL(`${base}rapfi-${pthreadVariant()}.js`, pthreadScriptUrl()).href;
 }
 
 if (IS_PTHREAD) importScripts(pthreadGlueUrl());
+
+// ── 데스크톱 셸: 엔진 스레드를 blob 부트스트랩으로 연다 ─────────────────
+//
+// Tauri(WebView2)의 `https://tauri.localhost` 에서는 **워커 안에서** 같은 출처 주소로
+// 중첩 워커를 열면 스크립트를 읽지 못하고 error 이벤트만 난다(2026-11-08 실측 — 같은
+// 워커의 fetch 는 200, blob 주소로 연 중첩 워커는 COI 를 유지한 채 importScripts 가 된다).
+// 그래서 멀티 변형이 기동 중 «워커 오류»로 단일 변형으로 물러섰다.
+//
+// 해법: 글루가 엔진 스레드를 열 때(`name: "em-pthread"`) 주소를 blob 부트스트랩으로 바꾼다.
+// 부트스트랩은 원래 주소를 심고 그 번들을 importScripts 할 뿐이다 — 번들은 위 가드대로
+// 글루만 읽고 비킨다. 웹 배포에는 쓰지 않는다: 그쪽 CSP(`worker-src 'self'`)가 blob 워커를
+// 막고, 애초에 필요가 없다.
+
+/** 엔진 스레드를 blob 부트스트랩으로 열어야 하는 셸인가(데스크톱 셸의 출처). */
+export function needsBlobPthreads(href: string): boolean {
+  try {
+    return new URL(href).hostname === "tauri.localhost";
+  } catch {
+    return false;
+  }
+}
+
+/** 엔진 스레드용 blob 부트스트랩 소스. */
+export function pthreadBootstrapSource(scriptUrl: string): string {
+  const u = JSON.stringify(scriptUrl);
+  return `self.__RAPFI_PTHREAD_SCRIPT__=${u};importScripts(${u});`;
+}
+
+/** `self.Worker` 를 감싸 em-pthread 워커만 blob 부트스트랩으로 연다. 한 번만 감싼다. */
+export function installBlobPthreads(scope: { Worker: typeof Worker; location: { href: string } }) {
+  const Native = scope.Worker as typeof Worker & { __rapfiBlob?: true };
+  if (Native.__rapfiBlob) return;
+  const boots = new Map<string, string>(); // 번들 주소 → blob 주소(엔진 스레드마다 새로 만들지 않는다)
+  const Wrapped = function (url: string | URL, opts?: WorkerOptions) {
+    if (opts?.name !== "em-pthread") return new Native(url, opts);
+    const abs = new URL(String(url), scope.location.href).href;
+    let boot = boots.get(abs);
+    if (!boot) {
+      boot = URL.createObjectURL(
+        new Blob([pthreadBootstrapSource(abs)], { type: "text/javascript" }),
+      );
+      boots.set(abs, boot);
+    }
+    return new Native(boot, opts);
+  } as unknown as typeof Worker & { __rapfiBlob?: true };
+  Wrapped.prototype = Native.prototype;
+  Wrapped.__rapfiBlob = true;
+  scope.Worker = Wrapped;
+}
 
 /**
  * 이 웹앱은 **렌주 전용**이다. `.data` 에 렌주 가중치만 구워져 있고
@@ -466,6 +527,9 @@ function drain(chunk: string) {
  */
 function loadFactory(baseUrl: string, variant: string): ModuleFactory {
   const url = `${baseUrl}rapfi-${variant}.js`;
+  if (variant.startsWith("multi") && needsBlobPthreads(self.location?.href ?? "")) {
+    installBlobPthreads(self as unknown as Parameters<typeof installBlobPthreads>[0]);
+  }
   importScripts(url);
   const factory = (self as unknown as Record<string, unknown>)["Rapfi"];
   if (typeof factory !== "function") {
