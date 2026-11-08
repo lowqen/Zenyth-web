@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { t } from "../../i18n/i18n";
 import { useEngineStore } from "../../engine/engine-state";
-import type { SearchStats } from "../../engine/engine-types";
+import { compact, formatEval } from "./statFormat";
 import { useBoardStore } from "./boardStore";
 import { label } from "../../core/model/move";
 import { colorsForTag, DEFAULT_PALETTE } from "../../core/board/ladder";
@@ -264,22 +264,6 @@ function Stat({
       <dd className="stat__value tnum">{children}</dd>
     </div>
   );
-}
-
-function formatEval(stats: Pick<SearchStats, "evalCp" | "mate">): string {
-  if (stats.mate !== null && stats.mate !== 0) {
-    return stats.mate > 0 ? `+M${stats.mate}` : `-M${-stats.mate}`;
-  }
-  return stats.evalCp === null ? NONE() : String(stats.evalCp);
-}
-
-/** 노드·속도는 자릿수만 읽히면 된다 — 1,234,567 보다 1.23M 이 흘깃 읽힌다. */
-function compact(n: number | null): string {
-  if (n === null) return NONE();
-  if (n < 1e3) return String(n);
-  if (n < 1e6) return `${(n / 1e3).toFixed(n < 1e4 ? 1 : 0)}K`;
-  if (n < 1e9) return `${(n / 1e6).toFixed(n < 1e7 ? 2 : 1)}M`;
-  return `${(n / 1e9).toFixed(2)}G`;
 }
 
 function formatTime(ms: number | null): string {

@@ -3,7 +3,7 @@ import { isNativeVariant } from "../../engine/engine-client";
 import { useSettingsStore } from "../settings/settingsStore";
 import { localized, msg, t } from "../../i18n/i18n";
 import { useProMode } from "../../app/proMode";
-import { IS_DESKTOP } from "../../app/desktop/platform";
+import { DESKTOP_LAYOUT } from "../../app/desktop/platform";
 import { EngineConsole } from "./EngineConsole";
 
 /**
@@ -112,7 +112,7 @@ export function EngineScreen() {
 
       {/* 콘솔은 고급 사용자 모드에서만(앱: 엔진 화면은 연결만 — 도구 · 콘솔 · 명령줄은 고급 모드).
           데스크톱은 늘 — Yixin 의 명령 창 · 로그 창을 대신한다(Z4). */}
-      {(pro || IS_DESKTOP) && (
+      {(pro || DESKTOP_LAYOUT) && (
         <section className="panel enginescreen__console">
           <h2 className="panel__title">{t("콘솔")}</h2>
           <EngineConsole />

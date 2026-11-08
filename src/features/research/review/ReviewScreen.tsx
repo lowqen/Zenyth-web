@@ -9,6 +9,7 @@ import { GAME_FILE_ACCEPT } from "../../../core/model/game-file";
 import { reportOf, useReviewStore } from "./reviewStore";
 import { ReportView } from "./ReportView";
 import { ProveSection } from "../prove/ProveSection";
+import { useDesktopSplit } from "../../../app/useDesktopSplit";
 import { localized, msg, t } from "../../../i18n/i18n";
 import type { JobStatus } from "../../../data/db";
 
@@ -61,8 +62,21 @@ export function ReviewScreen() {
   const say = (why: string | null) => setNotice(why);
 
   const { budget } = s.settings;
-  return (
-    <div className="review">
+  // 데스크톱 Z5 ②: 넓은 데스크톱 창은 목록 | 리포트 2열(마스터-디테일). 고른 리포트가 목록 밑이 아니라 오른쪽
+  // 칸에 펼쳐져, 리포트를 바꿔 가며 읽어도 목록이 밀려 내려가지 않는다.
+  const split = useDesktopSplit();
+  const detail =
+    report && selected ? (
+      <ReportView
+        report={report}
+        log={selected.log ?? []}
+        onOpenOnBoard={s.openOnBoard}
+        onDelete={() => void s.removeReview(selected.id!)}
+      />
+    ) : null;
+
+  const main = (
+    <>
       {/* 할 일이 맨 위 — 「지금 판 리뷰」 하나면 된다. 예산 · 등급 기준은 그 밑에 접혀 있다. */}
       <section className="panel" aria-busy={s.running} aria-labelledby="review-title">
         <h2 id="review-title" className="panel__title">
@@ -305,19 +319,30 @@ export function ReviewScreen() {
                 );
               })}
             </ul>
-            {report && selected && (
-              <ReportView
-                report={report}
-                log={selected.log ?? []}
-                onOpenOnBoard={s.openOnBoard}
-                onDelete={() => void s.removeReview(selected.id!)}
-              />
-            )}
+            {!split && detail}
           </>
         )}
       </section>
 
       <ProveSection />
+    </>
+  );
+
+  if (!split) return <div className="review">{main}</div>;
+  return (
+    <div className="review" data-split>
+      <div className="review__main">{main}</div>
+      <div className="review__detail">
+        <section className="panel" aria-label={t("리포트")}>
+          {detail ?? (
+            <p className="panel__hint">
+              {s.reviews.length === 0
+                ? t("리뷰한 대국의 리포트가 여기에 펼쳐집니다.")
+                : t("왼쪽 목록에서 리포트를 고르세요.")}
+            </p>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

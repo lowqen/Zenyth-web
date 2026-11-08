@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useDesktopSplit } from "../../../app/useDesktopSplit";
 import { Chip, ChipGroup } from "../../../components/controls";
 import { ConfirmBox } from "../../../components/ConfirmBox";
 import { Disclosure } from "../../../components/Disclosure";
@@ -68,8 +69,26 @@ export function SequenceScreen() {
       .filter(Boolean)
       .join(" · ") || t("없음");
 
-  return (
-    <div className="sequence">
+  // 데스크톱 Z5 ②: 넓은 데스크톱 창은 판 | 카드 2열 — 판이 왼쪽 칸 높이를 다 쓰고, 갈래를 고르는 목록이 옆에
+  // 선다(한 줄이면 판 밑으로 스크롤해야 후보가 보인다). 판이 없을 때(빈 판)는 한 줄 그대로.
+  const split = useDesktopSplit() && Boolean(v);
+  const board = v && (
+    <div className="sequence__board">
+      <MoveOrderBoard
+        size={s.size}
+        prefix={v.prefix}
+        ghosts={v.ghosts}
+        rows={rows}
+        selected={s.selected}
+        onTap={(cell) => {
+          if (rows.some((x) => x.cell === cell)) void s.drill(cell);
+        }}
+      />
+    </div>
+  );
+
+  const cards = (
+    <>
       <section className="panel" aria-busy={s.computing}>
         <h2 className="panel__title" data-k="sequence-headline">
           {title}
@@ -168,20 +187,7 @@ export function SequenceScreen() {
         </section>
       )}
 
-      {v && (
-        <div className="sequence__board">
-          <MoveOrderBoard
-            size={s.size}
-            prefix={v.prefix}
-            ghosts={v.ghosts}
-            rows={rows}
-            selected={s.selected}
-            onTap={(cell) => {
-              if (rows.some((x) => x.cell === cell)) void s.drill(cell);
-            }}
-          />
-        </div>
-      )}
+      {!split && board}
 
       {rows.length > 0 && (
         <section className="panel">
@@ -220,6 +226,14 @@ export function SequenceScreen() {
           </ul>
         </section>
       )}
+    </>
+  );
+
+  if (!split) return <div className="sequence">{cards}</div>;
+  return (
+    <div className="sequence" data-split>
+      {board}
+      <div className="sequence__side">{cards}</div>
     </div>
   );
 }

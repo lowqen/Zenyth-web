@@ -158,9 +158,6 @@ a:focus-visible {
 :root[data-mica] body {
   background: transparent;
 }
-:root[data-mica] .shell {
-  background: var(--c-background);
-}
 .titlebar {
   display: flex;
   align-items: center;
@@ -213,6 +210,319 @@ a:focus-visible {
   fill: none;
   stroke: currentColor;
   stroke-width: 1;
+}
+
+/* ── 데스크톱 배치 (데스크톱 Z5) ───────────────────────────────────
+   :root[data-desktop] 아래에서만 — 웹 배포 · 웹 스크린샷은 이 블록에 걸리지 않는다. 새 색 · 반경 · 움직임 없음.
+   Mornye 데스크톱 문법: 넓은 창(≥ 1280)에서 레일이 라벨을 옆에 단 220 칸으로 펼쳐지고, Mica 창이면 레일도
+   크롬(타이틀바와 한 면)이 되고 내용 칸은 불투명한 면으로 떠서 왼쪽 위 모서리가 둥글다. */
+:root[data-mica] .shell {
+  background: transparent;
+}
+:root[data-mica] .rail {
+  background: var(--c-chrome);
+}
+:root[data-mica] .shell__main {
+  overflow: hidden;
+  background: var(--c-background);
+  border-top-left-radius: var(--radius-card);
+}
+@media (min-width: 1280px) {
+  :root[data-desktop] .rail {
+    width: var(--rail-expanded);
+    padding: var(--space-m) var(--space-l) var(--space-l);
+  }
+  :root[data-desktop] .rail__list {
+    gap: var(--space-xs);
+  }
+  /* 행 전체가 알약이다(Mornye 사이드바 — 아이콘 뒤만 칠하는 Material 레일과 다르다). 높이 40 · 반경 20. */
+  :root[data-desktop] .rail__link {
+    flex-direction: row;
+    gap: var(--space-l);
+    height: 40px;
+    padding: 0 var(--space-l);
+    border-radius: var(--radius-card);
+    transition: background var(--motion-quick) ease-out;
+  }
+  :root[data-desktop] .rail__pill {
+    width: 24px;
+    height: 24px;
+    border-radius: 0;
+  }
+  :root[data-desktop] .rail__link:hover .rail__pill,
+  :root[data-desktop] .rail__link.is-active .rail__pill {
+    color: inherit;
+    background: none;
+  }
+  :root[data-desktop] .rail__link:hover {
+    background: var(--c-surface-container-high);
+  }
+  :root[data-desktop] .rail__link.is-active {
+    color: var(--c-on-secondary-container);
+    background: var(--c-secondary-container);
+  }
+  :root[data-desktop] .rail__icon {
+    width: 20px;
+    height: 20px;
+  }
+  :root[data-desktop] .rail__label {
+    font: var(--type-label-large);
+  }
+  :root[data-desktop] .rail__dot {
+    top: 0;
+    right: -2px;
+  }
+  /* 연구 하위 메뉴는 펼친 레일의 오른쪽 끝에서 뜬다(위치는 그대로 left: 100%). */
+}
+
+/* 데스크톱 보드(BoardScreen 의 data-desk — useDeskLayout): 왼쪽 칸 = 판 + 그 밑의 독(상태 캡슐 · 이동 바),
+   오른쪽 칸 = 인스펙터(320~400). 판과 독은 한 묶음으로 세로 가운데 — 독은 판(+ 평가 바)과 같은 폭이다. */
+.boardscreen[data-desk] {
+  --dock-h: 64px;
+  --dock-gap: var(--space-l);
+  grid-template-columns: minmax(0, 1fr) clamp(var(--inspector-min), 26vw, var(--inspector-max));
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "board side";
+  gap: var(--space-xxl);
+}
+.boardscreen[data-desk] .boardscreen__board {
+  /* 판 한 변 — 칸 높이에서 독 몫을 뺀 것과 칸 너비에서 평가 바 몫을 뺀 것 중 작은 쪽. 판 줄과 독이 같은 식을
+     쓴다(사용자 속성은 쓰는 요소에서 풀리므로 둘 다 이 칸의 cq 단위로 잰다). */
+  --desk-side: min(100cqh - var(--dock-h) - var(--dock-gap), 100cqw - var(--evalbar-space));
+  display: flex;
+  flex-direction: column;
+  gap: var(--dock-gap);
+  align-items: center;
+  justify-content: center;
+}
+.boardscreen[data-desk] .boardrow {
+  --board-side: var(--desk-side);
+  flex: none;
+  height: var(--board-side);
+}
+.boarddock {
+  display: flex;
+  flex: none;
+  gap: var(--space-l);
+  align-items: center;
+  width: calc(var(--desk-side) + var(--evalbar-space));
+  height: var(--dock-h);
+}
+/* 이동 바는 제 폭으로 키를 잰다(0.7 배까지 줄어듦) — 독에서는 원래 크기(424)를 바라고 남는 폭을 캡슐에 준다. */
+.boarddock > .toolbar {
+  flex: 0 1 424px;
+  min-width: 0;
+  height: var(--dock-h);
+}
+.capsule {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  /* 이만큼은 캡슐 몫 — 모자라면 이동 바가 줄어든다(0.7 배까지). */
+  min-width: 200px;
+  height: var(--capsule-height);
+  padding: 0 var(--space-xl);
+  color: var(--c-on-surface-variant);
+  background: var(--c-card);
+  border-radius: calc(var(--capsule-height) / 2);
+}
+/* 값이 칸을 넘으면 **통째로** 다음 줄로 넘겨 잘라 버린다(높이 한 줄 + 넘침 숨김) — 뒤쪽 값부터 사라지고, 반쯤
+   잘린 숫자(«d14/1»)는 보이지 않는다. 순서가 곧 우선순위다: 최선수 · 승률 · 평가 · 깊이 · 속도. */
+.capsule__line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-l);
+  align-items: center;
+  min-width: 0;
+  height: 24px;
+  overflow: hidden;
+  font: var(--type-body-medium);
+  line-height: 24px;
+  white-space: nowrap;
+}
+.capsule__line > .summary__dot {
+  flex: none;
+}
+.capsule__best {
+  flex: none;
+  font: var(--type-title-medium);
+  font-weight: 700;
+  color: var(--c-on-surface);
+}
+/* 글로 된 머리(대국의 «흑 차례» · 결과)와 안내 한 줄은 넘겨 버리면 안 되므로 첫 줄 안에서 말줄임한다. */
+.capsule__best--text {
+  flex: 0 1 auto;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.capsule__val {
+  flex: none;
+}
+.capsule__hint {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 인스펙터 — 세그먼트(개요 · 로그) + 칸. 개요는 웹 옆 칸의 카드 그대로(.boardscreen__side 의 간격 · 스크롤). */
+.boardscreen[data-desk] > .inspector {
+  grid-area: side;
+}
+.inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  min-width: 0;
+  min-height: 0;
+}
+.inspector__seg {
+  display: flex;
+  flex: none;
+}
+.inspector__seg > .modetabs__tab {
+  display: inline-flex;
+  flex: 1;
+  gap: var(--space-s);
+  align-items: center;
+  justify-content: center;
+}
+.inspector__count {
+  font: var(--type-label-small);
+  color: var(--c-on-surface-variant);
+}
+.inspector__body {
+  flex: 1;
+}
+.inspector__log {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.inspector__log .console {
+  flex: 1;
+  max-height: none;
+  min-height: 0;
+}
+
+/* 데스크톱 Z5 ② — 연구 화면 2열(useDesktopSplit: 데스크톱 배치 + 1280 이상). 웹 · 좁은 창은 한 줄 그대로.
+   리뷰 = 목록 | 리포트(마스터-디테일), 수순 = 판 | 카드. 두 칸은 따로 스크롤한다 — 리포트를 읽는 동안 목록이,
+   후보를 훑는 동안 판이 제자리에 있다. */
+.review[data-split],
+.sequence[data-split] {
+  display: grid;
+  gap: var(--space-xxl);
+  align-items: start;
+  max-width: 1440px;
+  height: 100%;
+  min-height: 0;
+}
+.review[data-split] {
+  grid-template-columns: minmax(360px, 5fr) minmax(0, 7fr);
+}
+.review__main,
+.review__detail,
+.sequence__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-outline-variant) transparent;
+}
+.review__detail .report {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.sequence[data-split] {
+  grid-template-columns: minmax(0, 1fr) clamp(var(--inspector-min), 30vw, 440px);
+  max-width: none;
+}
+.sequence[data-split] > .sequence__board {
+  width: min(100%, 100cqh);
+  height: auto;
+  margin: 0 auto;
+  container-type: normal;
+}
+.shell__content:has(> .review[data-split]),
+.shell__content:has(> .sequence[data-split]),
+.shell__content:has(> .settings[data-split]) {
+  overflow: hidden;
+  container-type: size;
+}
+/* DB(③) — 관리 | 국면. `.database` 는 `.review` 의 몸을 빌려 쓰므로 위의 2열 규칙을 그대로 받고 칸 비율만 바꾼다. */
+.database[data-split] {
+  grid-template-columns: minmax(360px, 1fr) minmax(0, 1fr);
+}
+.database__main,
+.database__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-outline-variant) transparent;
+}
+.database__side .prove__board {
+  max-width: min(100%, 100cqh - 160px);
+  margin-inline: auto;
+}
+/* 정석(④) — 코스 목록은 카드 그리드(Mornye 의 콘텐츠 = 카드 그리드). 레슨 목록 · 내 정석은 차례가 있는 목록이라
+   읽기 폭 한 줄 그대로, 레슨은 이미 판 | 칸 2열이다. */
+@media (min-width: 1280px) {
+  :root[data-desktop] .cur:not(.cur--course) {
+    max-width: 1120px;
+  }
+  :root[data-desktop] .cur:not(.cur--course) .cards:not(.lessonlist) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: var(--space-m);
+  }
+}
+/* 설정(⑤) — 목록 | 하위 화면. 목록의 검색 칸은 제 칸 맨 위에 붙고, 하위 화면의 «뒤로»는 쓰지 않는다. */
+.settings[data-split] {
+  display: grid;
+  grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
+  gap: var(--space-xxl);
+  align-items: start;
+  max-width: 1280px;
+  height: 100%;
+  min-height: 0;
+}
+.settings__nav,
+.settings__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-outline-variant) transparent;
+}
+.settings__nav .settings__head {
+  top: 0;
+}
+.settings[data-split] .settings__back {
+  display: none;
+}
+/* 두 칸의 큰 제목을 한 줄에 — 감춘 «뒤로» 뒤의 제목도 목록의 제목과 같은 위 여백. */
+.settings[data-split] .settings__back + .pagetitle {
+  margin-top: var(--space-xxl);
+}
+.settings__nav .slink[aria-current="page"] {
+  color: var(--c-on-secondary-container);
+  background: var(--c-secondary-container);
 }
 
 /* ── 좌측 레일 ──────────────────────────────────────────────────── */

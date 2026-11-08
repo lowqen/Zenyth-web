@@ -3,6 +3,7 @@ import { RESEARCH_TABS, visibleRail } from "./destinations";
 import { useProMode } from "./proMode";
 import { useEngineStore } from "../engine/engine-state";
 import { msg, t } from "../i18n/i18n";
+import { DESKTOP_LAYOUT } from "./desktop/platform";
 
 /**
  * 좌측 아이콘 레일 여섯 항목(고급 사용자 모드가 아니면 DB 를 뺀 다섯 — `visibleRail`).
@@ -31,6 +32,8 @@ export function NavRail() {
                 to={d.path}
                 className={({ isActive }) => "rail__link" + (isActive ? " is-active" : "")}
                 aria-current={on ? "page" : undefined}
+                // 데스크톱 Z5: 레일 n번째 = Ctrl+n(app/desktop/keys.ts) — 마우스를 올리면 단축키를 알려 준다.
+                title={DESKTOP_LAYOUT && i < 9 ? `${t(d.label)} (Ctrl+${i + 1})` : undefined}
               >
                 {/* 앱 M6: 고른 항목은 채운 아이콘 + 연한 알약 + 굵은 라벨, 나머지는 외곽선 아이콘. */}
                 <span className="rail__pill">

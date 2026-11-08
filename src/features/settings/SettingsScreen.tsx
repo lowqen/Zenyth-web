@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type ComponentType } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, NavLink, useNavigate, useParams } from "react-router-dom";
+import { useDesktopSplit } from "../../app/useDesktopSplit";
 import { useGameStore, type BoardMode } from "../board/gameStore";
 import { useBoardStore } from "../board/boardStore";
 import { useThemeStore, type ThemeMode } from "../../app/theme";
@@ -773,7 +774,9 @@ function LinkRow({
   note: string;
 }) {
   return (
-    <Link to={to} className="srow slink" data-row={`page-${to}`}>
+    // 절대 주소 — 데스크톱 2열에서는 하위 화면(/settings/design) 안에서도 이 줄이 보인다(상대 주소면 그 밑으로 간다).
+    // NavLink 의 aria-current 가 2열의 «지금 고른 하위 화면»을 칠한다(base.css).
+    <NavLink to={`/settings/${to}`} className="srow slink" data-row={`page-${to}`}>
       <span className="slink__icon" aria-hidden="true">
         <Icon d={icon} />
       </span>
@@ -782,7 +785,7 @@ function LinkRow({
         <span className="srow__note">{note}</span>
       </span>
       <Icon d={ICON.chevron} />
-    </Link>
+    </NavLink>
   );
 }
 
@@ -964,7 +967,23 @@ function SubPage({ page }: { page: Page }) {
 
 export function SettingsScreen() {
   const { page } = useParams();
+  // 데스크톱 Z5 ⑤: 넓은 데스크톱 창은 목록 | 하위 화면 2열(Windows 설정 · Mornye 설정처럼). 목록은 늘 왼쪽에
+  // 남고, 하위 화면은 오른쪽 칸에서 바뀐다 — «뒤로»를 거치지 않는다. 목록만 있는 주소는 첫 하위 화면으로.
+  const split = useDesktopSplit();
   if (page && !PAGES.includes(page as Page)) return <Navigate to="/settings" replace />;
+  if (split) {
+    if (!page) return <Navigate to="/settings/design" replace />;
+    return (
+      <div className="settings" data-page={page} data-split>
+        <div className="settings__nav">
+          <RootPage />
+        </div>
+        <div className="settings__detail" key={page}>
+          <SubPage page={page as Page} />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="settings" data-page={page ?? "root"}>
       {page ? <SubPage page={page as Page} /> : <RootPage />}

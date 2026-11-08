@@ -49,15 +49,21 @@ const SCENES: ReadonlyArray<{ name: string; path: string }> = [
 
 interface Variant {
   theme: "light" | "dark";
-  width: "wide" | "narrow";
+  width: "wide" | "narrow" | "desktop";
   viewport: { width: number; height: number };
   /** 검은 배경(AMOLED, 설정 «검은 배경») — 다크 위의 덧씌움. 이름 끝이 `-amoled`. */
   amoled?: boolean;
+  /**
+   * 데스크톱 배치(데스크톱 Z5) — zenyth-desktop 셸이 첫 프레임 전에 붙이는 `:root[data-desktop]` 을 일반 브라우저에서
+   * 붙여 찍는다(`theme-init.js` 끝에 한 줄을 덧대어 내려보낸다). 셸 API(타이틀바 · 파일 · 네이티브 엔진)는 없고 배치만
+   * 같다 — 화면 위쪽 타이틀바 자리(40px)는 비어 있다.
+   */
+  desktop?: boolean;
   /** 이 장면들만 찍는다(덧씌움 변형은 모든 화면을 다시 찍을 만큼 다르지 않다). */
   scenes?: readonly string[];
 }
 
-/** 넓은 폭(레일 · 2단)과 좁은 폭(하단 탭, 640 미만) × 라이트/다크, 그리고 검은 배경 두 장. */
+/** 넓은 폭(레일 · 2단)과 좁은 폭(하단 탭, 640 미만) × 라이트/다크, 검은 배경 두 장, 데스크톱 배치 × 라이트/다크. */
 const VARIANTS: readonly Variant[] = [
   { theme: "light", width: "wide", viewport: { width: 1280, height: 800 } },
   { theme: "dark", width: "wide", viewport: { width: 1280, height: 800 } },
@@ -70,6 +76,9 @@ const VARIANTS: readonly Variant[] = [
     amoled: true,
     scenes: ["board", "settings"],
   },
+  // 데스크톱 Z5 — 펼친 레일 · 인스펙터 · 2열이 모두 켜지는 폭(1280 이상)으로. 설정 첫 화면은 2열에서 «디자인»으로 간다.
+  { theme: "light", width: "desktop", viewport: { width: 1440, height: 900 }, desktop: true },
+  { theme: "dark", width: "desktop", viewport: { width: 1440, height: 900 }, desktop: true },
 ];
 
 const only = (process.env.SHOTS_ONLY ?? "")
@@ -94,6 +103,12 @@ async function shootVariant(browser: Browser, v: Variant) {
     });
     // 저장된 선택은 첫 프레임 전에 읽힌다(theme-init.js) — 그보다 먼저 심는다.
     if (v.amoled) await context.addInitScript(() => localStorage.setItem("rapfi.amoled", "1"));
+    if (v.desktop)
+      await context.route("**/theme-init.js", async (route) => {
+        const res = await route.fetch();
+        const body = `${await res.text()};document.documentElement.dataset.desktop = "";`;
+        await route.fulfill({ response: res, body });
+      });
     // 처음 열 때 한 번 뜨는 것들 — 데이터 시트(Z7) · 새로워진 점(Z8) — 은 본 것으로 두고 화면 자체를 찍는다.
     await context.addInitScript(() => localStorage.setItem("rapfi.dataPrompt.sheet", "1"));
     await context.addInitScript(SEEN_INTRO);
@@ -106,7 +121,8 @@ async function shootVariant(browser: Browser, v: Variant) {
         waitUntil: "networkidle",
       },
     );
-    await page.waitForURL(`**${scene.path}`, { timeout: 5_000 }).catch(() => undefined);
+    if (!(v.desktop && scene.path === "/settings"))
+      await page.waitForURL(`**${scene.path}`, { timeout: 5_000 }).catch(() => undefined);
     await page.evaluate(async () => {
       await document.fonts.ready;
       // 세그먼트의 선택 알약이 자리를 잡을 때까지(useSlidingPill — 한 프레임 뒤 data-pill="ready").

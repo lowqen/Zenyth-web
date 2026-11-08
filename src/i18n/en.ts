@@ -1188,6 +1188,12 @@ export const EN: Readonly<Record<string, string>> = {
   // ── UI 개편(calm-design) — 한 줄 안내 · 펼침 머리 · 엔진 수치 ──
   "▶ 를 누르면 엔진이 최선수를 찾습니다": "Press ▶ and the engine looks for the best move",
   "카드 펼치기": "Show cards",
+  // ── 데스크톱 Z5 — 보드 인스펙터 · 상태 캡슐 ──
+  "▶ 로 분석 시작": "Press ▶ to analyze",
+  "리뷰한 대국의 리포트가 여기에 펼쳐집니다.": "Reports of reviewed games open here.",
+  "왼쪽 목록에서 리포트를 고르세요.": "Pick a report from the list on the left.",
+  로그: "Log",
+  인스펙터: "Inspector",
   "카드 접기": "Hide cards",
   노드: "Nodes",
   속도: "Speed",

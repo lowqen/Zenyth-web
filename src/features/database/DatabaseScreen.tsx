@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NumberField, Segmented, Switch } from "../../components/controls";
 import { ConfirmBox } from "../../components/ConfirmBox";
+import { useDesktopSplit } from "../../app/useDesktopSplit";
 import { Disclosure } from "../../components/Disclosure";
 import { downloadBlob, stamp } from "../../app/download";
 import { BoardCanvas } from "../../core/board/BoardCanvas";
@@ -132,8 +133,282 @@ export function DatabaseScreen() {
     else void run().then((m) => tell(m, t("지웠습니다")));
   };
 
-  return (
-    <div className="review database">
+  // 데스크톱 Z5 ③: 넓은 데스크톱 창은 관리 | 국면 2열 — 판과 기록 고치기가 오른쪽 칸에 서서, DB 를 켜고 끄고
+  // 파일을 다루는 동안에도 판이 스크롤 밖으로 밀려나지 않는다.
+  const split = useDesktopSplit();
+  const position = (
+    <section className="panel db__position" aria-label={t("이 국면")}>
+      <h2 className="panel__title">
+        {t("이 국면")}{" "}
+        <span className="panel__status tnum">
+          {t("{n}수", { n: stones.length })} ·{" "}
+          {stones.length % 2 === 0 ? t("흑 차례") : t("백 차례")}
+        </span>
+      </h2>
+      {!on ? (
+        <p className="panel__hint">{t("DB 가 붙으면 이 판의 기록을 읽습니다.")}</p>
+      ) : (
+        <>
+          <p className="panel__hint tnum" data-k="db-value">
+            {snap
+              ? t("기록된 자식 {n}개", { n: snap.cells.size }) +
+                (value ? ` · ${t("DB 값: {v} (둘 차례)", { v: dbValueText(value) })}` : "")
+              : t("읽는 중…")}
+          </p>
+          {snap?.entry && (
+            <p className="panel__hint tnum" data-k="db-entry">
+              {t("이 국면의 기록: {e}", { e: entrySummary(snap.entry) })}
+            </p>
+          )}
+        </>
+      )}
+      <div className="prove__board">
+        <BoardCanvas
+          render={render}
+          zoomable={false}
+          keyboard
+          onTap={(m) => {
+            if (occupied.has(moveKey(m, board.size))) return;
+            setPicked((p) => (p && sameMove(p, m) ? null : m));
+          }}
+        />
+      </div>
+      {picked && (
+        <div className="db__picked">
+          <p className="panel__hint tnum">
+            {t("고른 칸 {m}", { m: moveLabel(picked, board.size) })}:{" "}
+            {pickedCell
+              ? t("태그 {tag}, 값 {v}, 깊이 {d}", {
+                  tag: pickedCell.tag || t("없음"),
+                  v: pickedCell.value,
+                  d: pickedCell.depth,
+                })
+              : t("기록 없음")}
+          </p>
+          <div className="panel__actions">
+            <button
+              type="button"
+              className="button--tonal"
+              onClick={() => {
+                useBoardStore.getState().place(picked);
+                setPicked(null);
+              }}
+            >
+              {t("이 수 두기")}
+            </button>
+            <input
+              className="db__label"
+              aria-label={t("칸 글자")}
+              maxLength={LABEL_MAX}
+              value={labelText}
+              placeholder={t("칸 글자")}
+              disabled={!on || ro}
+              onChange={(e) => setLabelText(e.currentTarget.value)}
+            />
+            <button
+              type="button"
+              disabled={!on || ro}
+              onClick={() =>
+                void s
+                  .setLabel(stones, picked, labelText)
+                  .then((m) => tell(m, t("칸 글자를 적었습니다")))
+              }
+            >
+              {t("칸 글자 적기")}
+            </button>
+            <button
+              type="button"
+              disabled={!on || ro || !pickedCell?.text}
+              onClick={() =>
+                void s.setLabel(stones, picked, "").then((m) => tell(m, t("칸 글자를 지웠습니다")))
+              }
+            >
+              {t("지우기")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {on && (
+        <>
+          <label className="db__comment">
+            <span className="review__label">{t("국면 주석")}</span>
+            <textarea
+              rows={3}
+              value={comment}
+              disabled={ro}
+              onChange={(e) => setComment(e.currentTarget.value)}
+            />
+          </label>
+          <div className="panel__actions">
+            <button
+              type="button"
+              disabled={ro || comment === (snap?.comment ?? "")}
+              onClick={() =>
+                void s.setComment(stones, comment).then((m) => tell(m, t("주석을 적었습니다")))
+              }
+            >
+              {t("주석 적기")}
+            </button>
+          </div>
+
+          <h3 className="db__sub">{t("이 국면의 기록 고치기")}</h3>
+          <p className="panel__hint">
+            {t(
+              "라벨은 이 국면으로 둔 쪽의 관점입니다. 둘 차례가 이기는 국면은 L 입니다(데스크톱과 같음).",
+            )}
+          </p>
+          <div className="review__row">
+            <span className="review__label">{t("라벨")}</span>
+            <Segmented
+              label={t("라벨")}
+              value={rec.tag}
+              options={TAGS.map((g) => ({ value: g.value, label: t(g.label) }))}
+              onChange={(tag) => setRec((r) => ({ ...r, tag }))}
+              disabled={ro}
+            />
+          </div>
+          <div className="review__row">
+            <span className="review__label">{t("값")}</span>
+            <NumberField
+              label={t("값")}
+              value={rec.value}
+              min={-30000}
+              max={30000}
+              onCommit={(v) => setRec((r) => ({ ...r, value: v }))}
+              disabled={ro}
+            />
+          </div>
+          <div className="review__row">
+            <span className="review__label">{t("깊이")}</span>
+            <NumberField
+              label={t("깊이")}
+              value={rec.depth}
+              min={0}
+              max={255}
+              onCommit={(depth) => setRec((r) => ({ ...r, depth }))}
+              disabled={ro}
+            />
+          </div>
+          <div className="panel__actions">
+            <button
+              type="button"
+              disabled={ro || stones.length === 0}
+              onClick={() =>
+                void s
+                  .setRecord(stones, MASK_TAG | MASK_VALUE | MASK_DEPTH, {
+                    tag: rec.tag === "-" ? null : rec.tag,
+                    value: rec.value,
+                    depth: rec.depth,
+                  })
+                  .then((m) => tell(m, t("기록을 적었습니다")))
+              }
+            >
+              {t("셋 다 적기")}
+            </button>
+            <button
+              type="button"
+              disabled={ro || stones.length === 0}
+              onClick={() =>
+                void s
+                  .setRecord(stones, MASK_TAG, { tag: rec.tag === "-" ? null : rec.tag })
+                  .then((m) => tell(m, t("라벨을 적었습니다")))
+              }
+            >
+              {t("라벨만")}
+            </button>
+            <button
+              type="button"
+              className="btn--danger"
+              disabled={ro || stones.length === 0}
+              onClick={() =>
+                setConfirm({
+                  text: t("이 국면({n}수)의 기록을 지웁니다.", { n: stones.length }),
+                  run: () => s.deleteHere(stones),
+                })
+              }
+            >
+              {t("이 국면 기록 지우기")}
+            </button>
+          </div>
+
+          <div className="panel__fold">
+            <Disclosure id="db-bulk" level={3} title={t("아래 분기 일괄 삭제")}>
+              <div className="review__row">
+                <span className="review__label">{t("대상")}</span>
+                <select
+                  aria-label={t("일괄 삭제 대상")}
+                  value={scope.filter}
+                  disabled={ro}
+                  onChange={(e) => {
+                    const filter = e.currentTarget.value as DbDeleteScope["filter"];
+                    setScope((x) => ({ ...x, filter }));
+                  }}
+                >
+                  {DELETE_FILTERS.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {t(f.title)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {scope.filter !== "all" && (
+                <div className="review__row">
+                  <span className="review__label">{t("하위 분기까지")}</span>
+                  <Switch
+                    label={t("하위 분기까지")}
+                    on={scope.recursive}
+                    onChange={(recursive) => setScope((x) => ({ ...x, recursive }))}
+                    disabled={ro}
+                  />
+                </div>
+              )}
+              {scope.filter === "wlinstep" && (
+                <div className="review__row">
+                  <span className="review__label">{t("수")}</span>
+                  <NumberField
+                    label={t("N수 이내")}
+                    value={scope.step}
+                    min={1}
+                    max={225}
+                    onCommit={(step) => setScope((x) => ({ ...x, step }))}
+                    disabled={ro}
+                  />
+                </div>
+              )}
+              <div className="panel__actions">
+                <button
+                  type="button"
+                  className="btn--danger"
+                  disabled={ro || s.busy}
+                  onClick={() =>
+                    ask(
+                      t("이 국면 아래의 «{scope}»를 지웁니다. 되돌릴 수 없습니다.", {
+                        scope: deleteScopeTitle(scope),
+                      }),
+                      () => s.deleteAll(stones, scope),
+                    )
+                  }
+                >
+                  {t("일괄 삭제")}
+                </button>
+              </div>
+            </Disclosure>
+          </div>
+        </>
+      )}
+      {owner && on && (
+        <p className="panel__hint">
+          {owner === "prove"
+            ? t("증명이 엔진을 쓰는 동안은 고칠 수 없습니다(읽기는 됩니다).")
+            : t("리뷰가 엔진을 쓰는 동안은 고칠 수 없습니다(읽기는 됩니다).")}
+        </p>
+      )}
+    </section>
+  );
+
+  const body = (
+    <>
       <PageTitle>DB</PageTitle>
       <section className="panel" aria-label={t("데이터베이스")} aria-busy={s.busy}>
         <h2 className="panel__title">
@@ -280,276 +555,7 @@ export function DatabaseScreen() {
         </div>
       </section>
 
-      <section className="panel" aria-label={t("이 국면")}>
-        <h2 className="panel__title">
-          {t("이 국면")}{" "}
-          <span className="panel__status tnum">
-            {t("{n}수", { n: stones.length })} ·{" "}
-            {stones.length % 2 === 0 ? t("흑 차례") : t("백 차례")}
-          </span>
-        </h2>
-        {!on ? (
-          <p className="panel__hint">{t("DB 가 붙으면 이 판의 기록을 읽습니다.")}</p>
-        ) : (
-          <>
-            <p className="panel__hint tnum" data-k="db-value">
-              {snap
-                ? t("기록된 자식 {n}개", { n: snap.cells.size }) +
-                  (value ? ` · ${t("DB 값: {v} (둘 차례)", { v: dbValueText(value) })}` : "")
-                : t("읽는 중…")}
-            </p>
-            {snap?.entry && (
-              <p className="panel__hint tnum" data-k="db-entry">
-                {t("이 국면의 기록: {e}", { e: entrySummary(snap.entry) })}
-              </p>
-            )}
-          </>
-        )}
-        <div className="prove__board">
-          <BoardCanvas
-            render={render}
-            zoomable={false}
-            keyboard
-            onTap={(m) => {
-              if (occupied.has(moveKey(m, board.size))) return;
-              setPicked((p) => (p && sameMove(p, m) ? null : m));
-            }}
-          />
-        </div>
-        {picked && (
-          <div className="db__picked">
-            <p className="panel__hint tnum">
-              {t("고른 칸 {m}", { m: moveLabel(picked, board.size) })}:{" "}
-              {pickedCell
-                ? t("태그 {tag}, 값 {v}, 깊이 {d}", {
-                    tag: pickedCell.tag || t("없음"),
-                    v: pickedCell.value,
-                    d: pickedCell.depth,
-                  })
-                : t("기록 없음")}
-            </p>
-            <div className="panel__actions">
-              <button
-                type="button"
-                className="button--tonal"
-                onClick={() => {
-                  useBoardStore.getState().place(picked);
-                  setPicked(null);
-                }}
-              >
-                {t("이 수 두기")}
-              </button>
-              <input
-                className="db__label"
-                aria-label={t("칸 글자")}
-                maxLength={LABEL_MAX}
-                value={labelText}
-                placeholder={t("칸 글자")}
-                disabled={!on || ro}
-                onChange={(e) => setLabelText(e.currentTarget.value)}
-              />
-              <button
-                type="button"
-                disabled={!on || ro}
-                onClick={() =>
-                  void s
-                    .setLabel(stones, picked, labelText)
-                    .then((m) => tell(m, t("칸 글자를 적었습니다")))
-                }
-              >
-                {t("칸 글자 적기")}
-              </button>
-              <button
-                type="button"
-                disabled={!on || ro || !pickedCell?.text}
-                onClick={() =>
-                  void s
-                    .setLabel(stones, picked, "")
-                    .then((m) => tell(m, t("칸 글자를 지웠습니다")))
-                }
-              >
-                {t("지우기")}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {on && (
-          <>
-            <label className="db__comment">
-              <span className="review__label">{t("국면 주석")}</span>
-              <textarea
-                rows={3}
-                value={comment}
-                disabled={ro}
-                onChange={(e) => setComment(e.currentTarget.value)}
-              />
-            </label>
-            <div className="panel__actions">
-              <button
-                type="button"
-                disabled={ro || comment === (snap?.comment ?? "")}
-                onClick={() =>
-                  void s.setComment(stones, comment).then((m) => tell(m, t("주석을 적었습니다")))
-                }
-              >
-                {t("주석 적기")}
-              </button>
-            </div>
-
-            <h3 className="db__sub">{t("이 국면의 기록 고치기")}</h3>
-            <p className="panel__hint">
-              {t(
-                "라벨은 이 국면으로 둔 쪽의 관점입니다. 둘 차례가 이기는 국면은 L 입니다(데스크톱과 같음).",
-              )}
-            </p>
-            <div className="review__row">
-              <span className="review__label">{t("라벨")}</span>
-              <Segmented
-                label={t("라벨")}
-                value={rec.tag}
-                options={TAGS.map((g) => ({ value: g.value, label: t(g.label) }))}
-                onChange={(tag) => setRec((r) => ({ ...r, tag }))}
-                disabled={ro}
-              />
-            </div>
-            <div className="review__row">
-              <span className="review__label">{t("값")}</span>
-              <NumberField
-                label={t("값")}
-                value={rec.value}
-                min={-30000}
-                max={30000}
-                onCommit={(v) => setRec((r) => ({ ...r, value: v }))}
-                disabled={ro}
-              />
-            </div>
-            <div className="review__row">
-              <span className="review__label">{t("깊이")}</span>
-              <NumberField
-                label={t("깊이")}
-                value={rec.depth}
-                min={0}
-                max={255}
-                onCommit={(depth) => setRec((r) => ({ ...r, depth }))}
-                disabled={ro}
-              />
-            </div>
-            <div className="panel__actions">
-              <button
-                type="button"
-                disabled={ro || stones.length === 0}
-                onClick={() =>
-                  void s
-                    .setRecord(stones, MASK_TAG | MASK_VALUE | MASK_DEPTH, {
-                      tag: rec.tag === "-" ? null : rec.tag,
-                      value: rec.value,
-                      depth: rec.depth,
-                    })
-                    .then((m) => tell(m, t("기록을 적었습니다")))
-                }
-              >
-                {t("셋 다 적기")}
-              </button>
-              <button
-                type="button"
-                disabled={ro || stones.length === 0}
-                onClick={() =>
-                  void s
-                    .setRecord(stones, MASK_TAG, { tag: rec.tag === "-" ? null : rec.tag })
-                    .then((m) => tell(m, t("라벨을 적었습니다")))
-                }
-              >
-                {t("라벨만")}
-              </button>
-              <button
-                type="button"
-                className="btn--danger"
-                disabled={ro || stones.length === 0}
-                onClick={() =>
-                  setConfirm({
-                    text: t("이 국면({n}수)의 기록을 지웁니다.", { n: stones.length }),
-                    run: () => s.deleteHere(stones),
-                  })
-                }
-              >
-                {t("이 국면 기록 지우기")}
-              </button>
-            </div>
-
-            <div className="panel__fold">
-              <Disclosure id="db-bulk" level={3} title={t("아래 분기 일괄 삭제")}>
-                <div className="review__row">
-                  <span className="review__label">{t("대상")}</span>
-                  <select
-                    aria-label={t("일괄 삭제 대상")}
-                    value={scope.filter}
-                    disabled={ro}
-                    onChange={(e) => {
-                      const filter = e.currentTarget.value as DbDeleteScope["filter"];
-                      setScope((x) => ({ ...x, filter }));
-                    }}
-                  >
-                    {DELETE_FILTERS.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {t(f.title)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {scope.filter !== "all" && (
-                  <div className="review__row">
-                    <span className="review__label">{t("하위 분기까지")}</span>
-                    <Switch
-                      label={t("하위 분기까지")}
-                      on={scope.recursive}
-                      onChange={(recursive) => setScope((x) => ({ ...x, recursive }))}
-                      disabled={ro}
-                    />
-                  </div>
-                )}
-                {scope.filter === "wlinstep" && (
-                  <div className="review__row">
-                    <span className="review__label">{t("수")}</span>
-                    <NumberField
-                      label={t("N수 이내")}
-                      value={scope.step}
-                      min={1}
-                      max={225}
-                      onCommit={(step) => setScope((x) => ({ ...x, step }))}
-                      disabled={ro}
-                    />
-                  </div>
-                )}
-                <div className="panel__actions">
-                  <button
-                    type="button"
-                    className="btn--danger"
-                    disabled={ro || s.busy}
-                    onClick={() =>
-                      ask(
-                        t("이 국면 아래의 «{scope}»를 지웁니다. 되돌릴 수 없습니다.", {
-                          scope: deleteScopeTitle(scope),
-                        }),
-                        () => s.deleteAll(stones, scope),
-                      )
-                    }
-                  >
-                    {t("일괄 삭제")}
-                  </button>
-                </div>
-              </Disclosure>
-            </div>
-          </>
-        )}
-        {owner && on && (
-          <p className="panel__hint">
-            {owner === "prove"
-              ? t("증명이 엔진을 쓰는 동안은 고칠 수 없습니다(읽기는 됩니다).")
-              : t("리뷰가 엔진을 쓰는 동안은 고칠 수 없습니다(읽기는 됩니다).")}
-          </p>
-        )}
-      </section>
+      {!split && position}
 
       <section className="panel" aria-label={t("DB 파일")}>
         <h2
@@ -664,6 +670,14 @@ export function DatabaseScreen() {
           <pre>{s.log.join("\n")}</pre>
         </details>
       )}
+    </>
+  );
+
+  if (!split) return <div className="review database">{body}</div>;
+  return (
+    <div className="review database" data-split>
+      <div className="database__main">{body}</div>
+      <div className="database__side">{position}</div>
     </div>
   );
 }

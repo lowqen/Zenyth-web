@@ -4,7 +4,7 @@ import { useBoardStore } from "./boardStore";
 import { useGameStore } from "./gameStore";
 import { AnalysisOptions, AnalysisPanel } from "./AnalysisPanel";
 import { EngineLogPanel } from "../engine/EngineConsole";
-import { IS_DESKTOP } from "../../app/desktop/platform";
+import { DESKTOP_LAYOUT } from "../../app/desktop/platform";
 import { EvalBar } from "./EvalBar";
 import { EvalGraph } from "./EvalGraph";
 import { GamePanel } from "./GamePanel";
@@ -19,7 +19,9 @@ import { MoveToolbar } from "./MoveToolbar";
 import { SummaryLine } from "./SummaryLine";
 import { RunLine } from "./RunLine";
 import { BoardSheet } from "./BoardSheet";
-import { useSheetLayout } from "./useSheetLayout";
+import { useDeskLayout, useSheetLayout } from "./useSheetLayout";
+import { StatusCapsule } from "./StatusCapsule";
+import { Inspector } from "./Inspector";
 import { useBoardNotice } from "./boardNotice";
 import { useCurrentAnalysis } from "./currentAnalysis";
 import { openGameFile } from "./gameFileActions";
@@ -129,14 +131,12 @@ export function BoardScreen() {
   }, [overlay, applyAnalysis]);
 
   const sheet = useSheetLayout();
+  const desk = useDeskLayout();
   const toolbarRef = useRef<HTMLElement>(null);
-  const side = (
-    <aside
-      id={MODE_PANEL_ID}
-      className="boardscreen__side"
-      role="tabpanel"
-      aria-label={mode === "game" ? t("대국") : t("분석")}
-    >
+  const modeLabel = mode === "game" ? t("대국") : t("분석");
+  // 옆 칸의 카드들 — 웹 옆 칸과 데스크톱 인스펙터 «개요»가 같은 것을 쓴다(화면을 두 벌로 만들지 않는다).
+  const cards = (
+    <>
       {/* 물음은 맨 위 — 답하기 전까지 판이 잠기므로 가장 먼저 보여야 한다. 두 탭 모두. */}
       <PromptPanel />
       <LinkBackupBanner />
@@ -149,9 +149,54 @@ export function BoardScreen() {
           <AnalysisPanel />
           <EvalGraph />
           <AnalysisOptions />
-          {IS_DESKTOP && <EngineLogPanel />}
+          {/* 데스크톱 보드에서는 로그가 인스펙터의 제 칸이다(Inspector). 좁은 데스크톱 창은 접이식 그대로. */}
+          {DESKTOP_LAYOUT && !desk && <EngineLogPanel />}
         </>
       )}
+    </>
+  );
+
+  // 데스크톱 Z5: 넓은 데스크톱 창 — 판 밑에 상태 캡슐 · 이동 바(독), 오른쪽은 인스펙터. 요약 줄은 캡슐이 맡는다.
+  if (desk) {
+    return (
+      <div
+        className="boardscreen"
+        data-evalbar={showEvalBar || undefined}
+        data-mode={mode}
+        data-desk
+      >
+        <div
+          className="boardscreen__board"
+          data-drop={dropping || undefined}
+          onDragOver={onDragOver}
+          onDragLeave={() => setDropping(false)}
+          onDrop={onDrop}
+        >
+          <div className="boardrow">
+            {showEvalBar && <EvalBar empty={render.stones.length === 0} />}
+            <BoardCanvas render={render} onTap={onTap} onLongPress={markBlocked} keyboard />
+          </div>
+          <div className="boarddock">
+            <StatusCapsule />
+            <MoveToolbar navRef={toolbarRef} />
+          </div>
+          {notice && (
+            <p className="board-notice" role="status">
+              {notice}
+            </p>
+          )}
+        </div>
+        <Inspector id={MODE_PANEL_ID} label={modeLabel}>
+          <RunLine />
+          {cards}
+        </Inspector>
+      </div>
+    );
+  }
+
+  const side = (
+    <aside id={MODE_PANEL_ID} className="boardscreen__side" role="tabpanel" aria-label={modeLabel}>
+      {cards}
     </aside>
   );
 
