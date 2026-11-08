@@ -1,0 +1,1357 @@
+{"t":668,"dir":"gui>eng","line":"info show_detail 3"}
+{"t":668,"dir":"gui>eng","line":"yxshowinfo"}
+{"t":668,"dir":"gui>eng","line":"info database_readonly 0"}
+{"t":668,"dir":"gui>eng","line":"START 15"}
+{"t":668,"dir":"gui>eng","line":"INFO max_node -1"}
+{"t":668,"dir":"gui>eng","line":"INFO timeout_match 100000000"}
+{"t":669,"dir":"gui>eng","line":"INFO time_left 100000000"}
+{"t":669,"dir":"gui>eng","line":"INFO timeout_turn 2000000"}
+{"t":669,"dir":"gui>eng","line":"INFO max_depth 225"}
+{"t":669,"dir":"gui>eng","line":"INFO time_increment 0"}
+{"t":691,"dir":"gui>eng","line":"INFO caution_factor 3"}
+{"t":691,"dir":"gui>eng","line":"INFO thread_num 4"}
+{"t":691,"dir":"gui>eng","line":"INFO hash_size 1048576"}
+{"t":691,"dir":"gui>eng","line":"INFO pondering 0"}
+{"t":691,"dir":"gui>eng","line":"INFO vcthread 0"}
+{"t":691,"dir":"gui>eng","line":"INFO rule 2"}
+{"t":691,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":691,"dir":"gui>eng","line":"done"}
+{"t":691,"dir":"gui>eng","line":"info usedatabase 1"}
+{"t":691,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":691,"dir":"gui>eng","line":"done"}
+{"t":1414,"dir":"eng>gui","line":"MESSAGE Load config from \"config.toml\""}
+{"t":1415,"dir":"eng>gui","line":"MESSAGE Setting default thread num to 2."}
+{"t":1418,"dir":"eng>gui","line":"ERROR Failed to allocate 8388608 KB for transposition table."}
+{"t":1418,"dir":"eng>gui","line":"MESSAGE Allocated 2097152 KB for transposition table."}
+{"t":7952,"dir":"eng>gui","line":"MESSAGE Evaluator set to mix9svq."}
+{"t":7981,"dir":"eng>gui","line":"MESSAGE Rapfi 0.43.01 (clang++ 19.1.5 on Windows SSE41)"}
+{"t":7981,"dir":"eng>gui","line":"MESSAGE INFO MAX_THREAD_NUM 256"}
+{"t":7981,"dir":"eng>gui","line":"MESSAGE INFO MAX_HASH_SIZE 30"}
+{"t":8019,"dir":"eng>gui","line":"OK"}
+{"t":13619,"dir":"eng>gui","line":"MESSAGE Opening yixin database at rapfi.db ..."}
+{"t":13631,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":13633,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":13633,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":14132,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":14141,"dir":"gui>eng","line":"done"}
+{"t":14142,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":14142,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":14142,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":21380,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":21380,"dir":"gui>eng","line":"7,7"}
+{"t":21380,"dir":"gui>eng","line":"done"}
+{"t":21381,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":21381,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":21382,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":22307,"dir":"gui>eng","line":"start 15"}
+{"t":22308,"dir":"gui>eng","line":"yxboard"}
+{"t":22308,"dir":"gui>eng","line":"7,7,1"}
+{"t":22308,"dir":"gui>eng","line":"6,8,2"}
+{"t":22308,"dir":"gui>eng","line":"done"}
+{"t":22308,"dir":"gui>eng","line":"yxshowforbid"}
+{"t":22308,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":22308,"dir":"gui>eng","line":"7,7"}
+{"t":22308,"dir":"gui>eng","line":"6,8"}
+{"t":22308,"dir":"gui>eng","line":"done"}
+{"t":22308,"dir":"eng>gui","line":"OK"}
+{"t":22333,"dir":"eng>gui","line":"FORBID ."}
+{"t":22349,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":22349,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":22349,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":22790,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":22791,"dir":"gui>eng","line":"7,7"}
+{"t":22791,"dir":"gui>eng","line":"6,8"}
+{"t":22791,"dir":"gui>eng","line":"5,8"}
+{"t":22791,"dir":"gui>eng","line":"done"}
+{"t":22791,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":22792,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":22792,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":23368,"dir":"gui>eng","line":"start 15"}
+{"t":23368,"dir":"gui>eng","line":"yxboard"}
+{"t":23368,"dir":"gui>eng","line":"7,7,1"}
+{"t":23368,"dir":"gui>eng","line":"6,8,2"}
+{"t":23372,"dir":"eng>gui","line":"OK"}
+{"t":23442,"dir":"gui>eng","line":"done"}
+{"t":23442,"dir":"gui>eng","line":"yxshowforbid"}
+{"t":23442,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":23442,"dir":"gui>eng","line":"7,7"}
+{"t":23442,"dir":"gui>eng","line":"6,8"}
+{"t":23442,"dir":"gui>eng","line":"done"}
+{"t":23452,"dir":"eng>gui","line":"FORBID ."}
+{"t":23467,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":23468,"dir":"eng>gui","line":"MESSAGE DATABASE 5 8 -1 0 0 0 0 "}
+{"t":23468,"dir":"eng>gui","line":"MESSAGE DATABASE 6 9 -1 0 0 0 0 "}
+{"t":23468,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":23468,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":23838,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":23838,"dir":"gui>eng","line":"7,7"}
+{"t":23838,"dir":"gui>eng","line":"6,8"}
+{"t":23838,"dir":"gui>eng","line":"5,9"}
+{"t":23838,"dir":"gui>eng","line":"done"}
+{"t":23839,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":23839,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":23839,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":28124,"dir":"gui>eng","line":"start 15"}
+{"t":28125,"dir":"gui>eng","line":"yxboard"}
+{"t":28125,"dir":"gui>eng","line":"7,7,1"}
+{"t":28125,"dir":"gui>eng","line":"6,8,2"}
+{"t":28125,"dir":"gui>eng","line":"5,9,1"}
+{"t":28125,"dir":"gui>eng","line":"5,8,2"}
+{"t":28125,"dir":"gui>eng","line":"done"}
+{"t":28125,"dir":"gui>eng","line":"yxshowforbid"}
+{"t":28125,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":28125,"dir":"gui>eng","line":"7,7"}
+{"t":28125,"dir":"gui>eng","line":"6,8"}
+{"t":28125,"dir":"gui>eng","line":"5,9"}
+{"t":28125,"dir":"gui>eng","line":"5,8"}
+{"t":28125,"dir":"gui>eng","line":"done"}
+{"t":28125,"dir":"eng>gui","line":"OK"}
+{"t":28157,"dir":"eng>gui","line":"FORBID ."}
+{"t":28173,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":28173,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":28173,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":32152,"dir":"gui>eng","line":"info nbestsym 0"}
+{"t":32152,"dir":"gui>eng","line":"start 15"}
+{"t":32152,"dir":"gui>eng","line":"yxboard"}
+{"t":32152,"dir":"gui>eng","line":"7,7,1"}
+{"t":32152,"dir":"gui>eng","line":"6,8,2"}
+{"t":32152,"dir":"gui>eng","line":"5,9,1"}
+{"t":32152,"dir":"gui>eng","line":"5,8,2"}
+{"t":32152,"dir":"gui>eng","line":"done"}
+{"t":32160,"dir":"eng>gui","line":"OK"}
+{"t":32164,"dir":"gui>eng","line":"yxnbest 3"}
+{"t":32254,"dir":"eng>gui","line":"MESSAGE mix9svq nnue: load weight from mix9svqrenju_bs15_black.bin.lz4"}
+{"t":32398,"dir":"eng>gui","line":"MESSAGE mix9svq nnue: load weight from mix9svqrenju_bs15_white.bin.lz4"}
+{"t":32523,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":32524,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32524,"dir":"eng>gui","line":"INFO DEPTH 2"}
+{"t":32524,"dir":"eng>gui","line":"INFO SELDEPTH 3"}
+{"t":32524,"dir":"eng>gui","line":"INFO NODES 3"}
+{"t":32524,"dir":"eng>gui","line":"INFO TOTALNODES 761"}
+{"t":32524,"dir":"eng>gui","line":"INFO TOTALTIME 14"}
+{"t":32527,"dir":"eng>gui","line":"INFO SPEED 58538"}
+{"t":32527,"dir":"eng>gui","line":"INFO EVAL 55"}
+{"t":32530,"dir":"eng>gui","line":"INFO WINRATE 0.554779"}
+{"t":32530,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10"}
+{"t":32531,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32531,"dir":"eng>gui","line":"MESSAGE (1) 55 | 2-3 | E9 G11"}
+{"t":32531,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":32531,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32531,"dir":"eng>gui","line":"INFO DEPTH 2"}
+{"t":32531,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":32531,"dir":"eng>gui","line":"INFO NODES 10"}
+{"t":32531,"dir":"eng>gui","line":"INFO TOTALNODES 1613"}
+{"t":32531,"dir":"eng>gui","line":"INFO TOTALTIME 21"}
+{"t":32532,"dir":"eng>gui","line":"INFO SPEED 76809"}
+{"t":32532,"dir":"eng>gui","line":"INFO EVAL 29"}
+{"t":32532,"dir":"eng>gui","line":"INFO WINRATE 0.528967"}
+{"t":32532,"dir":"eng>gui","line":"INFO BESTLINE 6,6 8,8 7,8"}
+{"t":32532,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32532,"dir":"eng>gui","line":"MESSAGE (2) 29 | 2-4 | G7 I9 H9"}
+{"t":32532,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":32532,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32533,"dir":"eng>gui","line":"INFO DEPTH 2"}
+{"t":32533,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":32533,"dir":"eng>gui","line":"INFO NODES 161"}
+{"t":32533,"dir":"eng>gui","line":"INFO TOTALNODES 1842"}
+{"t":32533,"dir":"eng>gui","line":"INFO TOTALTIME 23"}
+{"t":32533,"dir":"eng>gui","line":"INFO SPEED 83727"}
+{"t":32533,"dir":"eng>gui","line":"INFO EVAL -14"}
+{"t":32533,"dir":"eng>gui","line":"INFO WINRATE 0.486004"}
+{"t":32533,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10"}
+{"t":32533,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32543,"dir":"eng>gui","line":"MESSAGE (3) -14 | 2-4 | H9 H10 I11"}
+{"t":32543,"dir":"eng>gui","line":"MESSAGE Depth 2-3 | Eval 55 | Time 33ms | E9 G11"}
+{"t":32544,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":32544,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32544,"dir":"eng>gui","line":"INFO DEPTH 3"}
+{"t":32544,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":32544,"dir":"eng>gui","line":"INFO NODES 89"}
+{"t":32545,"dir":"eng>gui","line":"INFO TOTALNODES 2944"}
+{"t":32545,"dir":"eng>gui","line":"INFO TOTALTIME 35"}
+{"t":32545,"dir":"eng>gui","line":"INFO SPEED 86588"}
+{"t":32545,"dir":"eng>gui","line":"INFO EVAL 47"}
+{"t":32545,"dir":"eng>gui","line":"INFO WINRATE 0.546862"}
+{"t":32545,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7"}
+{"t":32546,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32546,"dir":"eng>gui","line":"MESSAGE (1) 47 | 3-4 | E9 G11 G8"}
+{"t":32547,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":32558,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32558,"dir":"eng>gui","line":"INFO DEPTH 3"}
+{"t":32558,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":32559,"dir":"eng>gui","line":"INFO NODES 177"}
+{"t":32559,"dir":"eng>gui","line":"INFO TOTALNODES 3262"}
+{"t":32559,"dir":"eng>gui","line":"INFO TOTALTIME 48"}
+{"t":32559,"dir":"eng>gui","line":"INFO SPEED 88162"}
+{"t":32559,"dir":"eng>gui","line":"INFO EVAL 29"}
+{"t":32559,"dir":"eng>gui","line":"INFO WINRATE 0.528967"}
+{"t":32559,"dir":"eng>gui","line":"INFO BESTLINE 6,6 8,8"}
+{"t":32559,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32560,"dir":"eng>gui","line":"MESSAGE (2) 29 | 3-4 | G7 I9"}
+{"t":32561,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":32561,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32561,"dir":"eng>gui","line":"INFO DEPTH 3"}
+{"t":32561,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":32561,"dir":"eng>gui","line":"INFO NODES 320"}
+{"t":32561,"dir":"eng>gui","line":"INFO TOTALNODES 5362"}
+{"t":32562,"dir":"eng>gui","line":"INFO TOTALTIME 51"}
+{"t":32562,"dir":"eng>gui","line":"INFO SPEED 107240"}
+{"t":32562,"dir":"eng>gui","line":"INFO EVAL -14"}
+{"t":32562,"dir":"eng>gui","line":"INFO WINRATE 0.486004"}
+{"t":32562,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10"}
+{"t":32562,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32562,"dir":"eng>gui","line":"MESSAGE (3) -14 | 3-4 | H9 H10 I11"}
+{"t":32562,"dir":"eng>gui","line":"MESSAGE Depth 3-4 | Eval 47 | Time 52ms | E9 G11 G8"}
+{"t":32563,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":32563,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32563,"dir":"eng>gui","line":"INFO DEPTH 4"}
+{"t":32563,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":32563,"dir":"eng>gui","line":"INFO NODES 175"}
+{"t":32563,"dir":"eng>gui","line":"INFO TOTALNODES 5565"}
+{"t":32563,"dir":"eng>gui","line":"INFO TOTALTIME 53"}
+{"t":32563,"dir":"eng>gui","line":"INFO SPEED 105000"}
+{"t":32563,"dir":"eng>gui","line":"INFO EVAL 47"}
+{"t":32563,"dir":"eng>gui","line":"INFO WINRATE 0.546862"}
+{"t":32563,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7"}
+{"t":32563,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32567,"dir":"eng>gui","line":"MESSAGE (1) 47 | 4-4 | E9 G11 G8"}
+{"t":32569,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":32569,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32569,"dir":"eng>gui","line":"INFO DEPTH 4"}
+{"t":32569,"dir":"eng>gui","line":"INFO SELDEPTH 5"}
+{"t":32569,"dir":"eng>gui","line":"INFO NODES 268"}
+{"t":32569,"dir":"eng>gui","line":"INFO TOTALNODES 7157"}
+{"t":32569,"dir":"eng>gui","line":"INFO TOTALTIME 59"}
+{"t":32569,"dir":"eng>gui","line":"INFO SPEED 121305"}
+{"t":32570,"dir":"eng>gui","line":"INFO EVAL 29"}
+{"t":32570,"dir":"eng>gui","line":"INFO WINRATE 0.528967"}
+{"t":32570,"dir":"eng>gui","line":"INFO BESTLINE 6,6 8,8 7,8"}
+{"t":32570,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32570,"dir":"eng>gui","line":"MESSAGE (2) 29 | 4-5 | G7 I9 H9"}
+{"t":32580,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":32580,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32580,"dir":"eng>gui","line":"INFO DEPTH 4"}
+{"t":32580,"dir":"eng>gui","line":"INFO SELDEPTH 5"}
+{"t":32581,"dir":"eng>gui","line":"INFO NODES 481"}
+{"t":32581,"dir":"eng>gui","line":"INFO TOTALNODES 8612"}
+{"t":32581,"dir":"eng>gui","line":"INFO TOTALTIME 71"}
+{"t":32582,"dir":"eng>gui","line":"INFO SPEED 123028"}
+{"t":32582,"dir":"eng>gui","line":"INFO EVAL -110"}
+{"t":32582,"dir":"eng>gui","line":"INFO WINRATE 0.391741"}
+{"t":32582,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7"}
+{"t":32582,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32583,"dir":"eng>gui","line":"MESSAGE (3) -110 | 4-5 | H9 H10 I11 G8"}
+{"t":32583,"dir":"eng>gui","line":"MESSAGE Depth 4-4 | Eval 47 | Time 73ms | E9 G11 G8"}
+{"t":32585,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":32585,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32585,"dir":"eng>gui","line":"INFO DEPTH 5"}
+{"t":32585,"dir":"eng>gui","line":"INFO SELDEPTH 6"}
+{"t":32585,"dir":"eng>gui","line":"INFO NODES 270"}
+{"t":32585,"dir":"eng>gui","line":"INFO TOTALNODES 8894"}
+{"t":32585,"dir":"eng>gui","line":"INFO TOTALTIME 75"}
+{"t":32585,"dir":"eng>gui","line":"INFO SPEED 118586"}
+{"t":32585,"dir":"eng>gui","line":"INFO EVAL 28"}
+{"t":32585,"dir":"eng>gui","line":"INFO WINRATE 0.527971"}
+{"t":32585,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 5,7 7,9"}
+{"t":32585,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32585,"dir":"eng>gui","line":"MESSAGE (1) 28 | 5-6 | E9 G11 G8 F8 H10"}
+{"t":32590,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":32590,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32590,"dir":"eng>gui","line":"INFO DEPTH 5"}
+{"t":32590,"dir":"eng>gui","line":"INFO SELDEPTH 6"}
+{"t":32590,"dir":"eng>gui","line":"INFO NODES 574"}
+{"t":32590,"dir":"eng>gui","line":"INFO TOTALNODES 9777"}
+{"t":32590,"dir":"eng>gui","line":"INFO TOTALTIME 80"}
+{"t":32590,"dir":"eng>gui","line":"INFO SPEED 122212"}
+{"t":32590,"dir":"eng>gui","line":"INFO EVAL -59"}
+{"t":32590,"dir":"eng>gui","line":"INFO WINRATE 0.441272"}
+{"t":32590,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 6,6"}
+{"t":32590,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32591,"dir":"eng>gui","line":"MESSAGE (2) -59 | 5-6 | H9 H10 I11 G8 G7"}
+{"t":32610,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":32610,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32610,"dir":"eng>gui","line":"INFO DEPTH 5"}
+{"t":32610,"dir":"eng>gui","line":"INFO SELDEPTH 6"}
+{"t":32610,"dir":"eng>gui","line":"INFO NODES 47"}
+{"t":32610,"dir":"eng>gui","line":"INFO TOTALNODES 10522"}
+{"t":32610,"dir":"eng>gui","line":"INFO TOTALTIME 100"}
+{"t":32610,"dir":"eng>gui","line":"INFO SPEED 105220"}
+{"t":32610,"dir":"eng>gui","line":"INFO EVAL -142"}
+{"t":32614,"dir":"eng>gui","line":"INFO WINRATE 0.361698"}
+{"t":32615,"dir":"eng>gui","line":"INFO BESTLINE 6,9 4,8 7,8 7,9"}
+{"t":32615,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32615,"dir":"eng>gui","line":"MESSAGE (3) -142 | 5-6 | G10 E9 H9 H10"}
+{"t":32615,"dir":"eng>gui","line":"MESSAGE Depth 5-6 | Eval 28 | Time 105ms | E9 G11 G8 F8 H10"}
+{"t":32616,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":32616,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32617,"dir":"eng>gui","line":"INFO DEPTH 6"}
+{"t":32673,"dir":"eng>gui","line":"INFO SELDEPTH 7"}
+{"t":32673,"dir":"eng>gui","line":"INFO NODES 452"}
+{"t":32673,"dir":"eng>gui","line":"INFO TOTALNODES 10780"}
+{"t":32673,"dir":"eng>gui","line":"INFO TOTALTIME 164"}
+{"t":32674,"dir":"eng>gui","line":"INFO SPEED 101698"}
+{"t":32674,"dir":"eng>gui","line":"INFO EVAL 73"}
+{"t":32679,"dir":"eng>gui","line":"INFO WINRATE 0.572486"}
+{"t":32679,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 5,7 7,9 7,10"}
+{"t":32679,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32679,"dir":"eng>gui","line":"MESSAGE (1) 73 | 6-7 | E9 G11 G8 F8 H10 H11"}
+{"t":32679,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":32679,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32679,"dir":"eng>gui","line":"INFO DEPTH 6"}
+{"t":32679,"dir":"eng>gui","line":"INFO SELDEPTH 7"}
+{"t":32679,"dir":"eng>gui","line":"INFO NODES 658"}
+{"t":32679,"dir":"eng>gui","line":"INFO TOTALNODES 11557"}
+{"t":32679,"dir":"eng>gui","line":"INFO TOTALTIME 166"}
+{"t":32680,"dir":"eng>gui","line":"INFO SPEED 69620"}
+{"t":32680,"dir":"eng>gui","line":"INFO EVAL -59"}
+{"t":32680,"dir":"eng>gui","line":"INFO WINRATE 0.441272"}
+{"t":32680,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 6,6"}
+{"t":32680,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32680,"dir":"eng>gui","line":"MESSAGE (2) -59 | 6-7 | H9 H10 I11 G8 G7"}
+{"t":32725,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":32725,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32726,"dir":"eng>gui","line":"INFO DEPTH 6"}
+{"t":32726,"dir":"eng>gui","line":"INFO SELDEPTH 8"}
+{"t":32727,"dir":"eng>gui","line":"INFO NODES 469"}
+{"t":32727,"dir":"eng>gui","line":"INFO TOTALNODES 12624"}
+{"t":32727,"dir":"eng>gui","line":"INFO TOTALTIME 217"}
+{"t":32727,"dir":"eng>gui","line":"INFO SPEED 58716"}
+{"t":32727,"dir":"eng>gui","line":"INFO EVAL 49"}
+{"t":32727,"dir":"eng>gui","line":"INFO WINRATE 0.548844"}
+{"t":32727,"dir":"eng>gui","line":"INFO BESTLINE 6,6 6,9 7,8 7,9 5,7 4,7"}
+{"t":32727,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32727,"dir":"eng>gui","line":"MESSAGE (3) 49 | 6-8 | G7 G10 H9 H10 F8 E8"}
+{"t":32727,"dir":"eng>gui","line":"MESSAGE Depth 6-7 | Eval 73 | Time 217ms | E9 G11 G8 F8 H10 H11"}
+{"t":32745,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":32745,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32745,"dir":"eng>gui","line":"INFO DEPTH 7"}
+{"t":32745,"dir":"eng>gui","line":"INFO SELDEPTH 7"}
+{"t":32745,"dir":"eng>gui","line":"INFO NODES 544"}
+{"t":32745,"dir":"eng>gui","line":"INFO TOTALNODES 14032"}
+{"t":32745,"dir":"eng>gui","line":"INFO TOTALTIME 235"}
+{"t":32746,"dir":"eng>gui","line":"INFO SPEED 59710"}
+{"t":32747,"dir":"eng>gui","line":"INFO EVAL 73"}
+{"t":32748,"dir":"eng>gui","line":"INFO WINRATE 0.572486"}
+{"t":32748,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 5,7 7,9 7,10"}
+{"t":32748,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32748,"dir":"eng>gui","line":"MESSAGE (1) 73 | 7-7 | E9 G11 G8 F8 H10 H11"}
+{"t":32762,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":32763,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32763,"dir":"eng>gui","line":"INFO DEPTH 7"}
+{"t":32763,"dir":"eng>gui","line":"INFO SELDEPTH 7"}
+{"t":32763,"dir":"eng>gui","line":"INFO NODES 662"}
+{"t":32763,"dir":"eng>gui","line":"INFO TOTALNODES 15327"}
+{"t":32763,"dir":"eng>gui","line":"INFO TOTALTIME 253"}
+{"t":32763,"dir":"eng>gui","line":"INFO SPEED 60821"}
+{"t":32763,"dir":"eng>gui","line":"INFO EVAL 49"}
+{"t":32763,"dir":"eng>gui","line":"INFO WINRATE 0.548844"}
+{"t":32763,"dir":"eng>gui","line":"INFO BESTLINE 6,6 6,9 7,8 7,9 5,7 4,7"}
+{"t":32763,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32763,"dir":"eng>gui","line":"MESSAGE (2) 49 | 7-7 | G7 G10 H9 H10 F8 E8"}
+{"t":32767,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":32786,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32791,"dir":"eng>gui","line":"INFO DEPTH 7"}
+{"t":32791,"dir":"eng>gui","line":"INFO SELDEPTH 10"}
+{"t":32791,"dir":"eng>gui","line":"INFO NODES 960"}
+{"t":32792,"dir":"eng>gui","line":"INFO TOTALNODES 15844"}
+{"t":32793,"dir":"eng>gui","line":"INFO TOTALTIME 283"}
+{"t":32793,"dir":"eng>gui","line":"INFO SPEED 61649"}
+{"t":32793,"dir":"eng>gui","line":"INFO EVAL 25"}
+{"t":32793,"dir":"eng>gui","line":"INFO WINRATE 0.524979"}
+{"t":32793,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 6,6 7,6 4,9 8,5 9,4"}
+{"t":32794,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32794,"dir":"eng>gui","line":"MESSAGE (3) 25 | 7-10 | H9 H10 I11 G8 G7 H7 E10 I6 J5"}
+{"t":32794,"dir":"eng>gui","line":"MESSAGE Depth 7-7 | Eval 73 | Time 284ms | E9 G11 G8 F8 H10 H11"}
+{"t":32825,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":32828,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":32828,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32828,"dir":"eng>gui","line":"INFO DEPTH 8"}
+{"t":32828,"dir":"eng>gui","line":"INFO SELDEPTH 11"}
+{"t":32828,"dir":"eng>gui","line":"INFO NODES 862"}
+{"t":32828,"dir":"eng>gui","line":"INFO TOTALNODES 17833"}
+{"t":32828,"dir":"eng>gui","line":"INFO TOTALTIME 319"}
+{"t":32829,"dir":"eng>gui","line":"INFO SPEED 56078"}
+{"t":32829,"dir":"eng>gui","line":"INFO EVAL 60"}
+{"t":32829,"dir":"eng>gui","line":"INFO WINRATE 0.559714"}
+{"t":32829,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 4,7 8,8 8,7 9,9 10,10"}
+{"t":32829,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32829,"dir":"eng>gui","line":"MESSAGE (1) 60 | 8-11 | E9 G11 G8 E8 I9 I8 J10 K11"}
+{"t":32829,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":32829,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":32867,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":32867,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32867,"dir":"eng>gui","line":"INFO DEPTH 8"}
+{"t":32867,"dir":"eng>gui","line":"INFO SELDEPTH 11"}
+{"t":32867,"dir":"eng>gui","line":"INFO NODES 1372"}
+{"t":32867,"dir":"eng>gui","line":"INFO TOTALNODES 21825"}
+{"t":32867,"dir":"eng>gui","line":"INFO TOTALTIME 357"}
+{"t":32867,"dir":"eng>gui","line":"INFO SPEED 61134"}
+{"t":32867,"dir":"eng>gui","line":"INFO EVAL 73"}
+{"t":32867,"dir":"eng>gui","line":"INFO WINRATE 0.572486"}
+{"t":32867,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 6,6 4,7 8,8"}
+{"t":32867,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32867,"dir":"eng>gui","line":"MESSAGE (2) 73 | 8-11 | H9 H10 I11 G8 G7 E8 I9"}
+{"t":32867,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":32867,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":32868,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":32869,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":32869,"dir":"eng>gui","line":"INFO DEPTH 8"}
+{"t":32869,"dir":"eng>gui","line":"INFO SELDEPTH 10"}
+{"t":32869,"dir":"eng>gui","line":"INFO NODES 1120"}
+{"t":32869,"dir":"eng>gui","line":"INFO TOTALNODES 22003"}
+{"t":32869,"dir":"eng>gui","line":"INFO TOTALTIME 359"}
+{"t":32869,"dir":"eng>gui","line":"INFO SPEED 61460"}
+{"t":32869,"dir":"eng>gui","line":"INFO EVAL 50"}
+{"t":32869,"dir":"eng>gui","line":"INFO WINRATE 0.549834"}
+{"t":32869,"dir":"eng>gui","line":"INFO BESTLINE 6,6 5,5 7,8 7,9 5,7 7,5 4,8 4,7 6,10"}
+{"t":32869,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":32869,"dir":"eng>gui","line":"MESSAGE (3) 50 | 8-10 | G7 F6 H9 H10 F8 H6 E9 E8 G11"}
+{"t":32874,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":32874,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 7,8"}
+{"t":32874,"dir":"eng>gui","line":"MESSAGE Depth 8-11 | Eval 73 | Time 364ms | H9 H10 I11 G8 G7 E8 I9"}
+{"t":33069,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 7,8"}
+{"t":33088,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,6"}
+{"t":33096,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":33097,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":33097,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":33097,"dir":"eng>gui","line":"INFO DEPTH 9"}
+{"t":33098,"dir":"eng>gui","line":"INFO SELDEPTH 18"}
+{"t":33098,"dir":"eng>gui","line":"INFO NODES 1342"}
+{"t":33098,"dir":"eng>gui","line":"INFO TOTALNODES 31997"}
+{"t":33098,"dir":"eng>gui","line":"INFO TOTALTIME 588"}
+{"t":33098,"dir":"eng>gui","line":"INFO SPEED 54509"}
+{"t":33098,"dir":"eng>gui","line":"INFO EVAL 147"}
+{"t":33098,"dir":"eng>gui","line":"INFO WINRATE 0.642906"}
+{"t":33098,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 4,7 8,7 9,7 8,8 7,10 6,9"}
+{"t":33098,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":33098,"dir":"eng>gui","line":"MESSAGE (1) 147 | 9-18 | E9 G11 G8 E8 I8 J8 I9 H11 G10"}
+{"t":33098,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":33099,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":33178,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":33178,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":33178,"dir":"eng>gui","line":"INFO DEPTH 9"}
+{"t":33178,"dir":"eng>gui","line":"INFO SELDEPTH 16"}
+{"t":33178,"dir":"eng>gui","line":"INFO NODES 3655"}
+{"t":33178,"dir":"eng>gui","line":"INFO TOTALNODES 37506"}
+{"t":33178,"dir":"eng>gui","line":"INFO TOTALTIME 668"}
+{"t":33178,"dir":"eng>gui","line":"INFO SPEED 56146"}
+{"t":33179,"dir":"eng>gui","line":"INFO EVAL 139"}
+{"t":33179,"dir":"eng>gui","line":"INFO WINRATE 0.635527"}
+{"t":33179,"dir":"eng>gui","line":"INFO BESTLINE 6,6 5,5 7,8 7,6 6,7 5,7 7,9 7,10 6,9 8,9 8,7"}
+{"t":33179,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":33179,"dir":"eng>gui","line":"MESSAGE (2) 139 | 9-16 | G7 F6 H9 H7 G8 F8 H10 H11 G10 I10 I8"}
+{"t":33179,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":33179,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":33261,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":33261,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":33261,"dir":"eng>gui","line":"INFO DEPTH 9"}
+{"t":33261,"dir":"eng>gui","line":"INFO SELDEPTH 12"}
+{"t":33261,"dir":"eng>gui","line":"INFO NODES 2614"}
+{"t":33261,"dir":"eng>gui","line":"INFO TOTALNODES 42349"}
+{"t":33262,"dir":"eng>gui","line":"INFO TOTALTIME 752"}
+{"t":33262,"dir":"eng>gui","line":"INFO SPEED 56390"}
+{"t":33262,"dir":"eng>gui","line":"INFO EVAL -14"}
+{"t":33262,"dir":"eng>gui","line":"INFO WINRATE 0.486004"}
+{"t":33262,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 6,6 4,7 8,8 9,9 8,7 8,9"}
+{"t":33262,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":33262,"dir":"eng>gui","line":"MESSAGE (3) -14 | 9-12 | H9 H10 I11 G8 G7 E8 I9 J10 I8 I10"}
+{"t":33262,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":33262,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":33262,"dir":"eng>gui","line":"MESSAGE Depth 9-18 | Eval 147 | Time 752ms | E9 G11 G8 E8 I8 J8 I9 H11 G10"}
+{"t":33298,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":33302,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":33302,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":33302,"dir":"eng>gui","line":"INFO DEPTH 10"}
+{"t":33302,"dir":"eng>gui","line":"INFO SELDEPTH 14"}
+{"t":33302,"dir":"eng>gui","line":"INFO NODES 1584"}
+{"t":33302,"dir":"eng>gui","line":"INFO TOTALNODES 44361"}
+{"t":33302,"dir":"eng>gui","line":"INFO TOTALTIME 792"}
+{"t":33302,"dir":"eng>gui","line":"INFO SPEED 56011"}
+{"t":33302,"dir":"eng>gui","line":"INFO EVAL 116"}
+{"t":33302,"dir":"eng>gui","line":"INFO WINRATE 0.613963"}
+{"t":33302,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 5,7 7,9 7,8 6,9 8,9 9,8 5,5 4,6"}
+{"t":33302,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":33313,"dir":"eng>gui","line":"MESSAGE (1) 116 | 10-14 | E9 G11 G8 F8 H10 H9 G10 I10 J9 F6 E7"}
+{"t":33314,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":33314,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":33788,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":33789,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":33789,"dir":"eng>gui","line":"INFO DEPTH 10"}
+{"t":33789,"dir":"eng>gui","line":"INFO SELDEPTH 19"}
+{"t":33789,"dir":"eng>gui","line":"INFO NODES 6449"}
+{"t":33789,"dir":"eng>gui","line":"INFO TOTALNODES 72495"}
+{"t":33789,"dir":"eng>gui","line":"INFO TOTALTIME 1279"}
+{"t":33789,"dir":"eng>gui","line":"INFO SPEED 56725"}
+{"t":33789,"dir":"eng>gui","line":"INFO EVAL 147"}
+{"t":33789,"dir":"eng>gui","line":"INFO WINRATE 0.642906"}
+{"t":33789,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 7,6 6,9 6,10 7,10 4,7 8,11 9,12 10,9 8,9"}
+{"t":33790,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":33792,"dir":"eng>gui","line":"MESSAGE (2) 147 | 10-19 | H9 H10 I11 G8 H7 G10 G11 H11 E8 I12 J13 K10 I10"}
+{"t":33792,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":33792,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":34151,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":34151,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":34151,"dir":"eng>gui","line":"INFO DEPTH 10"}
+{"t":34151,"dir":"eng>gui","line":"INFO SELDEPTH 16"}
+{"t":34152,"dir":"eng>gui","line":"INFO NODES 276"}
+{"t":34152,"dir":"eng>gui","line":"INFO TOTALNODES 86580"}
+{"t":34152,"dir":"eng>gui","line":"INFO TOTALTIME 1641"}
+{"t":34152,"dir":"eng>gui","line":"INFO SPEED 52760"}
+{"t":34152,"dir":"eng>gui","line":"INFO EVAL 110"}
+{"t":34152,"dir":"eng>gui","line":"INFO WINRATE 0.608259"}
+{"t":34152,"dir":"eng>gui","line":"INFO BESTLINE 6,9 7,9 4,8 5,7 4,6 8,10 9,11"}
+{"t":34152,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":34152,"dir":"eng>gui","line":"MESSAGE (3) 110 | 10-16 | G10 H10 E9 F8 E7 I11 J12"}
+{"t":34152,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":34152,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 7,8"}
+{"t":34152,"dir":"eng>gui","line":"MESSAGE Depth 10-19 | Eval 147 | Time 1641ms | H9 H10 I11 G8 H7 G10 G11 H11 E8 I12 J13 K10 I10"}
+{"t":34169,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 7,8"}
+{"t":34414,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":34414,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":34414,"dir":"eng>gui","line":"INFO DEPTH 11"}
+{"t":34414,"dir":"eng>gui","line":"INFO SELDEPTH 13"}
+{"t":34414,"dir":"eng>gui","line":"INFO NODES 6603"}
+{"t":34415,"dir":"eng>gui","line":"INFO TOTALNODES 88844"}
+{"t":34415,"dir":"eng>gui","line":"INFO TOTALTIME 1904"}
+{"t":34415,"dir":"eng>gui","line":"INFO SPEED 46661"}
+{"t":34415,"dir":"eng>gui","line":"INFO EVAL 147"}
+{"t":34415,"dir":"eng>gui","line":"INFO WINRATE 0.642906"}
+{"t":34416,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 7,6 6,9 6,10 7,10 4,7 8,11 9,12 10,9"}
+{"t":34416,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":34447,"dir":"eng>gui","line":"MESSAGE (1) 147 | 11-13 | H9 H10 I11 G8 H7 G10 G11 H11 E8 I12 J13 K10"}
+{"t":34447,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":34447,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 7,8"}
+{"t":35582,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":35582,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":35582,"dir":"eng>gui","line":"INFO DEPTH 11"}
+{"t":35582,"dir":"eng>gui","line":"INFO SELDEPTH 19"}
+{"t":35582,"dir":"eng>gui","line":"INFO NODES 10811"}
+{"t":35582,"dir":"eng>gui","line":"INFO TOTALNODES 101059"}
+{"t":35582,"dir":"eng>gui","line":"INFO TOTALTIME 3070"}
+{"t":35583,"dir":"eng>gui","line":"INFO SPEED 32918"}
+{"t":35583,"dir":"eng>gui","line":"INFO EVAL 176"}
+{"t":35583,"dir":"eng>gui","line":"INFO WINRATE 0.669074"}
+{"t":35583,"dir":"eng>gui","line":"INFO BESTLINE 6,6 8,8 4,8 3,7 7,8 7,6 6,7 5,7 8,9 9,10 7,9"}
+{"t":35583,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":35583,"dir":"eng>gui","line":"MESSAGE (2) 176 | 11-19 | G7 I9 E9 D8 H9 H7 G8 F8 I10 J11 H10"}
+{"t":35583,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":35583,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 7,8"}
+{"t":39559,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":39559,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":39559,"dir":"eng>gui","line":"INFO DEPTH 11"}
+{"t":39559,"dir":"eng>gui","line":"INFO SELDEPTH 20"}
+{"t":39559,"dir":"eng>gui","line":"INFO NODES 6213"}
+{"t":39559,"dir":"eng>gui","line":"INFO TOTALNODES 112519"}
+{"t":39559,"dir":"eng>gui","line":"INFO TOTALTIME 7050"}
+{"t":39560,"dir":"eng>gui","line":"INFO SPEED 15962"}
+{"t":39560,"dir":"eng>gui","line":"INFO EVAL 79"}
+{"t":39560,"dir":"eng>gui","line":"INFO WINRATE 0.578349"}
+{"t":39560,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,9 7,9 5,7 8,8 9,7 6,7 3,9 6,6 4,9 2,9 4,10 4,11 5,11"}
+{"t":39560,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":39560,"dir":"eng>gui","line":"MESSAGE (3) 79 | 11-20 | E9 G11 G10 H10 F8 I9 J8 G8 D10 G7 E10 C10 E11 E12 F12"}
+{"t":39560,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":39560,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,6"}
+{"t":39561,"dir":"eng>gui","line":"MESSAGE Depth 11-19 | Eval 176 | Time 7051ms | G7 I9 E9 D8 H9 H7 G8 F8 I10 J11 H10"}
+{"t":42192,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":42194,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":42195,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":42195,"dir":"eng>gui","line":"INFO DEPTH 12"}
+{"t":42202,"dir":"eng>gui","line":"INFO SELDEPTH 24"}
+{"t":42202,"dir":"eng>gui","line":"INFO NODES 7836"}
+{"t":42202,"dir":"eng>gui","line":"INFO TOTALNODES 167286"}
+{"t":42202,"dir":"eng>gui","line":"INFO TOTALTIME 9692"}
+{"t":42202,"dir":"eng>gui","line":"INFO SPEED 17274"}
+{"t":42203,"dir":"eng>gui","line":"INFO EVAL 100"}
+{"t":42203,"dir":"eng>gui","line":"INFO WINRATE 0.598688"}
+{"t":42203,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 4,7 8,8 7,10 6,9 8,10 9,10 7,9 5,7 6,6 5,10 8,7 3,9 2,9 3,8 7,11 7,8"}
+{"t":42203,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":42203,"dir":"eng>gui","line":"MESSAGE (1) 100 | 12-24 | E9 G11 G8 E8 I9 H11 G10 I11 J11 H10 F8 G7 F11 I8 D10 C10 D9 H12 H9"}
+{"t":42203,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":42203,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":42808,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":42810,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":42810,"dir":"eng>gui","line":"INFO DEPTH 12"}
+{"t":42810,"dir":"eng>gui","line":"INFO SELDEPTH 25"}
+{"t":42810,"dir":"eng>gui","line":"INFO NODES 25567"}
+{"t":42810,"dir":"eng>gui","line":"INFO TOTALNODES 212095"}
+{"t":42810,"dir":"eng>gui","line":"INFO TOTALTIME 10300"}
+{"t":42810,"dir":"eng>gui","line":"INFO SPEED 20595"}
+{"t":42811,"dir":"eng>gui","line":"INFO EVAL 74"}
+{"t":42811,"dir":"eng>gui","line":"INFO WINRATE 0.573464"}
+{"t":42811,"dir":"eng>gui","line":"INFO BESTLINE 6,6 4,7 8,8 9,9 4,8 6,9 7,10 6,10 6,7 7,9 5,7 7,5 8,7 9,7 8,9 8,6"}
+{"t":42811,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":42815,"dir":"eng>gui","line":"MESSAGE (2) 74 | 12-25 | G7 E8 I9 J10 E9 G10 H11 G11 G8 H10 F8 H6 I8 J8 I10 I7"}
+{"t":42815,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":42815,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":42827,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":42827,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":42828,"dir":"eng>gui","line":"INFO DEPTH 12"}
+{"t":42828,"dir":"eng>gui","line":"INFO SELDEPTH 14"}
+{"t":42828,"dir":"eng>gui","line":"INFO NODES 10210"}
+{"t":42828,"dir":"eng>gui","line":"INFO TOTALNODES 214625"}
+{"t":42828,"dir":"eng>gui","line":"INFO TOTALTIME 10318"}
+{"t":42828,"dir":"eng>gui","line":"INFO SPEED 20803"}
+{"t":42828,"dir":"eng>gui","line":"INFO EVAL 67"}
+{"t":42828,"dir":"eng>gui","line":"INFO WINRATE 0.566602"}
+{"t":42828,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 7,6 6,10 6,9 5,10 4,9 3,9 4,10 7,5 8,8"}
+{"t":42829,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":42830,"dir":"eng>gui","line":"MESSAGE (3) 67 | 12-14 | H9 H10 I11 G8 H7 G11 G10 F11 E10 D10 E11 H6 I9"}
+{"t":42830,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":42830,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":42830,"dir":"eng>gui","line":"MESSAGE Depth 12-24 | Eval 100 | Time 10s | E9 G11 G8 E8 I9 H11 G10 I11 J11 H10 F8 G7 F11 I8 D10 C10 D9 H12 H9"}
+{"t":42879,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":42887,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":42887,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":42887,"dir":"eng>gui","line":"INFO DEPTH 13"}
+{"t":42887,"dir":"eng>gui","line":"INFO SELDEPTH 22"}
+{"t":42887,"dir":"eng>gui","line":"INFO NODES 8767"}
+{"t":42891,"dir":"eng>gui","line":"INFO TOTALNODES 218197"}
+{"t":42891,"dir":"eng>gui","line":"INFO TOTALTIME 10377"}
+{"t":42891,"dir":"eng>gui","line":"INFO SPEED 21026"}
+{"t":42891,"dir":"eng>gui","line":"INFO EVAL 137"}
+{"t":42891,"dir":"eng>gui","line":"INFO WINRATE 0.633671"}
+{"t":42902,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,9 7,9 5,7 8,8 9,7 6,7 3,9 6,6 4,9 2,9 4,10 4,11 2,10 1,11 5,11 2,8 9,8"}
+{"t":42903,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":42932,"dir":"eng>gui","line":"MESSAGE (1) 137 | 13-22 | E9 G11 G10 H10 F8 I9 J8 G8 D10 G7 E10 C10 E11 E12 C11 B12 F12 C9 J9"}
+{"t":42932,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":42932,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":43279,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":43279,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":43280,"dir":"eng>gui","line":"INFO DEPTH 13"}
+{"t":43280,"dir":"eng>gui","line":"INFO SELDEPTH 25"}
+{"t":43280,"dir":"eng>gui","line":"INFO NODES 26669"}
+{"t":43280,"dir":"eng>gui","line":"INFO TOTALNODES 238664"}
+{"t":43280,"dir":"eng>gui","line":"INFO TOTALTIME 10769"}
+{"t":43280,"dir":"eng>gui","line":"INFO SPEED 22162"}
+{"t":43280,"dir":"eng>gui","line":"INFO EVAL 150"}
+{"t":43280,"dir":"eng>gui","line":"INFO WINRATE 0.645656"}
+{"t":43280,"dir":"eng>gui","line":"INFO BESTLINE 6,6 4,7 4,8 6,9 7,10 6,10 6,11 8,9 5,7 7,5 5,11 7,11 3,9 2,10 4,10 2,8 5,12 2,9 6,12 7,13"}
+{"t":43281,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":43281,"dir":"eng>gui","line":"MESSAGE (2) 150 | 13-25 | G7 E8 E9 G10 H11 G11 G12 I10 F8 H6 F12 H12 D10 C11 E11 C9 F13 C10 G13 H14"}
+{"t":43281,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":43281,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":43570,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":43570,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":43570,"dir":"eng>gui","line":"INFO DEPTH 13"}
+{"t":43570,"dir":"eng>gui","line":"INFO SELDEPTH 21"}
+{"t":43570,"dir":"eng>gui","line":"INFO NODES 19448"}
+{"t":43570,"dir":"eng>gui","line":"INFO TOTALNODES 261334"}
+{"t":43570,"dir":"eng>gui","line":"INFO TOTALTIME 11060"}
+{"t":43570,"dir":"eng>gui","line":"INFO SPEED 23628"}
+{"t":43570,"dir":"eng>gui","line":"INFO EVAL 126"}
+{"t":43570,"dir":"eng>gui","line":"INFO WINRATE 0.623399"}
+{"t":43570,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 7,6 6,10 6,9 5,10 4,9 7,5 8,8 6,6 8,7 8,9 6,5"}
+{"t":43570,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":43571,"dir":"eng>gui","line":"MESSAGE (3) 126 | 13-21 | H9 H10 I11 G8 H7 G11 G10 F11 E10 H6 I9 G7 I8 I10 G6"}
+{"t":43571,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":43571,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,6"}
+{"t":43571,"dir":"eng>gui","line":"MESSAGE Depth 13-25 | Eval 150 | Time 11s | G7 E8 E9 G10 H11 G11 G12 I10 F8 H6 F12 H12 D10 C11 E11 C9 F13 C10 G13 H14"}
+{"t":46281,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":46309,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":46309,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":46309,"dir":"eng>gui","line":"INFO DEPTH 14"}
+{"t":46309,"dir":"eng>gui","line":"INFO SELDEPTH 31"}
+{"t":46309,"dir":"eng>gui","line":"INFO NODES 33279"}
+{"t":46309,"dir":"eng>gui","line":"INFO TOTALNODES 490277"}
+{"t":46309,"dir":"eng>gui","line":"INFO TOTALTIME 13799"}
+{"t":46309,"dir":"eng>gui","line":"INFO SPEED 35529"}
+{"t":46310,"dir":"eng>gui","line":"INFO EVAL 66"}
+{"t":46310,"dir":"eng>gui","line":"INFO WINRATE 0.565619"}
+{"t":46310,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 4,7 8,8 8,7 6,9 7,9 9,9 10,10 8,10 10,8 3,9 5,7 4,11 2,9 5,10"}
+{"t":46310,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":46310,"dir":"eng>gui","line":"MESSAGE (1) 66 | 14-31 | E9 G11 G8 E8 I9 I8 G10 H10 J10 K11 I11 K9 D10 F8 E12 C10 F11"}
+{"t":46310,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":46310,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":48379,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":48379,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":48379,"dir":"eng>gui","line":"INFO DEPTH 14"}
+{"t":48379,"dir":"eng>gui","line":"INFO SELDEPTH 36"}
+{"t":48379,"dir":"eng>gui","line":"INFO NODES 64597"}
+{"t":48379,"dir":"eng>gui","line":"INFO TOTALNODES 617464"}
+{"t":48381,"dir":"eng>gui","line":"INFO TOTALTIME 15869"}
+{"t":48382,"dir":"eng>gui","line":"INFO SPEED 38910"}
+{"t":48382,"dir":"eng>gui","line":"INFO EVAL 15"}
+{"t":48382,"dir":"eng>gui","line":"INFO WINRATE 0.514996"}
+{"t":48382,"dir":"eng>gui","line":"INFO BESTLINE 6,6 5,5 7,8 7,6 8,7 6,9 6,7 5,7 7,10 7,9 4,6 8,9 9,9 10,10 4,5 3,6 4,7"}
+{"t":48382,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":48383,"dir":"eng>gui","line":"MESSAGE (2) 15 | 14-36 | G7 F6 H9 H7 I8 G10 G8 F8 H11 H10 E7 I10 J10 K11 E6 D7 E8"}
+{"t":48384,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":48384,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":48479,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":48504,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":48505,"dir":"eng>gui","line":"INFO DEPTH 14"}
+{"t":48505,"dir":"eng>gui","line":"INFO SELDEPTH 32"}
+{"t":48506,"dir":"eng>gui","line":"INFO NODES 29446"}
+{"t":48506,"dir":"eng>gui","line":"INFO TOTALNODES 621959"}
+{"t":48506,"dir":"eng>gui","line":"INFO TOTALTIME 15996"}
+{"t":48506,"dir":"eng>gui","line":"INFO SPEED 38947"}
+{"t":48506,"dir":"eng>gui","line":"INFO EVAL 103"}
+{"t":48506,"dir":"eng>gui","line":"INFO WINRATE 0.601567"}
+{"t":48506,"dir":"eng>gui","line":"INFO BESTLINE 7,8 7,9 8,10 6,7 7,6 6,6 6,9 8,7 7,11 4,8 9,9 6,12 7,5 7,4 6,4 4,6"}
+{"t":48514,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":48514,"dir":"eng>gui","line":"MESSAGE (3) 103 | 14-32 | H9 H10 I11 G8 H7 G7 G10 I8 H12 E9 J10 G13 H6 H5 G5 E7"}
+{"t":48514,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":48514,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":48514,"dir":"eng>gui","line":"MESSAGE Depth 14-32 | Eval 103 | Time 16s | H9 H10 I11 G8 H7 G7 G10 I8 H12 E9 J10 G13 H6 H5 G5 E7"}
+{"t":49830,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":49830,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":49830,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":49831,"dir":"eng>gui","line":"INFO DEPTH 15"}
+{"t":49831,"dir":"eng>gui","line":"INFO SELDEPTH 30"}
+{"t":49831,"dir":"eng>gui","line":"INFO NODES 48420"}
+{"t":49831,"dir":"eng>gui","line":"INFO TOTALNODES 731780"}
+{"t":49831,"dir":"eng>gui","line":"INFO TOTALTIME 17321"}
+{"t":49831,"dir":"eng>gui","line":"INFO SPEED 42250"}
+{"t":49831,"dir":"eng>gui","line":"INFO EVAL 72"}
+{"t":49831,"dir":"eng>gui","line":"INFO WINRATE 0.571506"}
+{"t":49831,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 5,7 7,9 6,9 7,10 7,8 8,7 9,8 8,8 9,9 9,7 10,7 4,6 10,8 10,6 11,5 8,10 8,9 11,6 5,5"}
+{"t":49831,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":49831,"dir":"eng>gui","line":"MESSAGE (1) 72 | 15-30 | E9 G11 G8 F8 H10 G10 H11 H9 I8 J9 I9 J10 J8 K8 E7 K9 K7 L6 I11 I10 L7 F6"}
+{"t":49831,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":49831,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":51212,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":51212,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":51212,"dir":"eng>gui","line":"INFO DEPTH 15"}
+{"t":51212,"dir":"eng>gui","line":"INFO SELDEPTH 34"}
+{"t":51212,"dir":"eng>gui","line":"INFO NODES 17438"}
+{"t":51212,"dir":"eng>gui","line":"INFO TOTALNODES 821763"}
+{"t":51215,"dir":"eng>gui","line":"INFO TOTALTIME 18702"}
+{"t":51215,"dir":"eng>gui","line":"INFO SPEED 43939"}
+{"t":51215,"dir":"eng>gui","line":"INFO EVAL 13"}
+{"t":51215,"dir":"eng>gui","line":"INFO WINRATE 0.512997"}
+{"t":51215,"dir":"eng>gui","line":"INFO BESTLINE 8,8 6,6 7,9 6,10 6,9 8,9 9,7 7,8 6,7 10,7 9,8 9,6 11,8 10,8 10,9 8,7 9,10"}
+{"t":51215,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":51215,"dir":"eng>gui","line":"MESSAGE (2) 13 | 15-34 | I9 G7 H10 G11 G10 I10 J8 H9 G8 K8 J9 J7 L9 K9 K10 I8 J11"}
+{"t":51215,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":51215,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":51411,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":51412,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":51412,"dir":"eng>gui","line":"INFO DEPTH 15"}
+{"t":51412,"dir":"eng>gui","line":"INFO SELDEPTH 34"}
+{"t":51412,"dir":"eng>gui","line":"INFO NODES 91421"}
+{"t":51412,"dir":"eng>gui","line":"INFO TOTALNODES 834886"}
+{"t":51412,"dir":"eng>gui","line":"INFO TOTALTIME 18902"}
+{"t":51412,"dir":"eng>gui","line":"INFO SPEED 44171"}
+{"t":51412,"dir":"eng>gui","line":"INFO EVAL -11"}
+{"t":51412,"dir":"eng>gui","line":"INFO WINRATE 0.489002"}
+{"t":51415,"dir":"eng>gui","line":"INFO BESTLINE 6,6 5,5 7,8 7,6 8,7 6,9 6,7 5,7 7,10 7,9 4,6 9,7 8,9 9,10 8,8 8,10 9,11 9,8 8,5 8,6 9,6 7,4 10,10 9,9 10,8 11,9 10,9 5,6 5,4 10,7"}
+{"t":51415,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":51415,"dir":"eng>gui","line":"MESSAGE (3) -11 | 15-34 | G7 F6 H9 H7 I8 G10 G8 F8 H11 H10 E7 J8 I10 J11 I9 I11 J12 J9 I6 I7 J7 H5 K11 J10 K9 L10 K10 F7 F5 K8"}
+{"t":51415,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":51415,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":51415,"dir":"eng>gui","line":"MESSAGE Depth 15-30 | Eval 72 | Time 18s | E9 G11 G8 F8 H10 G10 H11 H9 I8 J9 I9 J10 J8 K8 E7 K9 K7 L6 I11 I10 L7 F6"}
+{"t":53540,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 8,8"}
+{"t":53960,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":53960,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":53960,"dir":"eng>gui","line":"INFO DEPTH 16"}
+{"t":53960,"dir":"eng>gui","line":"INFO SELDEPTH 37"}
+{"t":53961,"dir":"eng>gui","line":"INFO NODES 45465"}
+{"t":53961,"dir":"eng>gui","line":"INFO TOTALNODES 1049835"}
+{"t":53961,"dir":"eng>gui","line":"INFO TOTALTIME 21451"}
+{"t":53961,"dir":"eng>gui","line":"INFO SPEED 48943"}
+{"t":53961,"dir":"eng>gui","line":"INFO EVAL 75"}
+{"t":53962,"dir":"eng>gui","line":"INFO WINRATE 0.574443"}
+{"t":53962,"dir":"eng>gui","line":"INFO BESTLINE 8,8 6,6 7,9 6,10 6,9 8,9 9,7 7,8 6,7 8,7 10,6 11,5 9,6 9,5 10,8 10,7 11,9 8,6 9,8 9,9 11,8 12,8 11,10 11,11 11,6 11,7 13,6 12,6 12,7"}
+{"t":53962,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":53962,"dir":"eng>gui","line":"MESSAGE (1) 75 | 16-37 | I9 G7 H10 G11 G10 I10 J8 H9 G8 I8 K7 L6 J7 J6 K9 K8 L10 I7 J9 J10 L9 M9 L11 L12 L7 L8 N7 M7 M8"}
+{"t":53962,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":53962,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 8,8"}
+{"t":54477,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":54477,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":54477,"dir":"eng>gui","line":"INFO DEPTH 16"}
+{"t":54477,"dir":"eng>gui","line":"INFO SELDEPTH 21"}
+{"t":54477,"dir":"eng>gui","line":"INFO NODES 62514"}
+{"t":54477,"dir":"eng>gui","line":"INFO TOTALNODES 1081566"}
+{"t":54477,"dir":"eng>gui","line":"INFO TOTALTIME 21967"}
+{"t":54477,"dir":"eng>gui","line":"INFO SPEED 49235"}
+{"t":54477,"dir":"eng>gui","line":"INFO EVAL 31"}
+{"t":54477,"dir":"eng>gui","line":"INFO WINRATE 0.53096"}
+{"t":54478,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9 2,9 5,6 3,6 2,5 5,7 3,5 4,5 5,4 5,3"}
+{"t":54478,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":54478,"dir":"eng>gui","line":"MESSAGE (2) 31 | 16-21 | E9 G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 C10 F7 D7 C6 F8 D6 E6 F5 F4"}
+{"t":54478,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":54478,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 8,8"}
+{"t":54696,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":54696,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":54696,"dir":"eng>gui","line":"INFO DEPTH 16"}
+{"t":54696,"dir":"eng>gui","line":"INFO SELDEPTH 31"}
+{"t":54696,"dir":"eng>gui","line":"INFO NODES 109341"}
+{"t":54696,"dir":"eng>gui","line":"INFO TOTALNODES 1094556"}
+{"t":54696,"dir":"eng>gui","line":"INFO TOTALTIME 22186"}
+{"t":54697,"dir":"eng>gui","line":"INFO SPEED 49346"}
+{"t":54697,"dir":"eng>gui","line":"INFO EVAL -5"}
+{"t":54697,"dir":"eng>gui","line":"INFO WINRATE 0.495"}
+{"t":54697,"dir":"eng>gui","line":"INFO BESTLINE 6,6 5,5 7,8 7,6 8,7 6,9 6,7 5,7 7,10 7,9 4,6 9,7 8,9 9,10 8,8 8,10 9,11 9,8 8,5 8,6 9,6 7,4 10,10 9,9 10,8 11,9 10,9 10,7"}
+{"t":54697,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":54697,"dir":"eng>gui","line":"MESSAGE (3) -5 | 16-31 | G7 F6 H9 H7 I8 G10 G8 F8 H11 H10 E7 J8 I10 J11 I9 I11 J12 J9 I6 I7 J7 H5 K11 J10 K9 L10 K10 K8"}
+{"t":54697,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":54697,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 8,8"}
+{"t":54697,"dir":"eng>gui","line":"MESSAGE Depth 16-37 | Eval 75 | Time 22s | I9 G7 H10 G11 G10 I10 J8 H9 G8 I8 K7 L6 J7 J6 K9 K8 L10 I7 J9 J10 L9 M9 L11 L12 L7 L8 N7 M7 M8"}
+{"t":54851,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 8,8"}
+{"t":55021,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":55022,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":55023,"dir":"eng>gui","line":"INFO DEPTH 17"}
+{"t":55023,"dir":"eng>gui","line":"INFO SELDEPTH 32"}
+{"t":55023,"dir":"eng>gui","line":"INFO NODES 47414"}
+{"t":55023,"dir":"eng>gui","line":"INFO TOTALNODES 1107147"}
+{"t":55023,"dir":"eng>gui","line":"INFO TOTALTIME 22513"}
+{"t":55023,"dir":"eng>gui","line":"INFO SPEED 49182"}
+{"t":55033,"dir":"eng>gui","line":"INFO EVAL 70"}
+{"t":55034,"dir":"eng>gui","line":"INFO WINRATE 0.569546"}
+{"t":55036,"dir":"eng>gui","line":"INFO BESTLINE 8,8 7,9 6,6 5,5 8,10 9,9 8,9 8,7 8,11 8,12 9,10 7,10 10,9 11,8 7,12 6,13 4,8 5,7 10,11 11,12 6,7 7,8 10,10 4,6 3,5 10,12 3,7"}
+{"t":55036,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":55036,"dir":"eng>gui","line":"MESSAGE (1) 70 | 17-32 | I9 H10 G7 F6 I11 J10 I10 I8 I12 I13 J11 H11 K10 L9 H13 G14 E9 F8 K12 L13 G8 H9 K11 E7 D6 K13 D8"}
+{"t":55036,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":55036,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 8,8"}
+{"t":55502,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":55503,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":55503,"dir":"eng>gui","line":"INFO DEPTH 17"}
+{"t":55503,"dir":"eng>gui","line":"INFO SELDEPTH 22"}
+{"t":55503,"dir":"eng>gui","line":"INFO NODES 65363"}
+{"t":55503,"dir":"eng>gui","line":"INFO TOTALNODES 1126513"}
+{"t":55503,"dir":"eng>gui","line":"INFO TOTALTIME 22993"}
+{"t":55503,"dir":"eng>gui","line":"INFO SPEED 48993"}
+{"t":55503,"dir":"eng>gui","line":"INFO EVAL 31"}
+{"t":55503,"dir":"eng>gui","line":"INFO WINRATE 0.53096"}
+{"t":55503,"dir":"eng>gui","line":"INFO BESTLINE 4,8 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9 2,9 5,6 3,6 2,5 5,7 3,5 4,5 5,4 5,3 4,3"}
+{"t":55503,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":55503,"dir":"eng>gui","line":"MESSAGE (2) 31 | 17-22 | E9 G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 C10 F7 D7 C6 F8 D6 E6 F5 F4 E4"}
+{"t":55503,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":55503,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 8,8"}
+{"t":55947,"dir":"eng>gui","line":"INFO PV 2"}
+{"t":55948,"dir":"eng>gui","line":"INFO NUMPV 3"}
+{"t":55948,"dir":"eng>gui","line":"INFO DEPTH 17"}
+{"t":55948,"dir":"eng>gui","line":"INFO SELDEPTH 19"}
+{"t":55948,"dir":"eng>gui","line":"INFO NODES 112387"}
+{"t":55948,"dir":"eng>gui","line":"INFO TOTALNODES 1144700"}
+{"t":55948,"dir":"eng>gui","line":"INFO TOTALTIME 23438"}
+{"t":55948,"dir":"eng>gui","line":"INFO SPEED 48841"}
+{"t":55948,"dir":"eng>gui","line":"INFO EVAL -15"}
+{"t":55948,"dir":"eng>gui","line":"INFO WINRATE 0.485004"}
+{"t":55948,"dir":"eng>gui","line":"INFO BESTLINE 6,6 5,5 4,8 5,7 7,9 6,10 6,9 4,9 6,7 8,9 9,8 5,10 7,10 7,8 9,7 3,8 2,7 6,5"}
+{"t":55949,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":55949,"dir":"eng>gui","line":"MESSAGE (3) -15 | 17-19 | G7 F6 E9 F8 H10 G11 G10 E10 G8 I10 J9 F11 H11 H9 J8 D9 C8 G6"}
+{"t":55949,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":55949,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 8,8"}
+{"t":55949,"dir":"eng>gui","line":"MESSAGE Depth 17-32 | Eval 70 | Time 23s | I9 H10 G7 F6 I11 J10 I10 I8 I12 I13 J11 H11 K10 L9 H13 G14 E9 F8 K12 L13 G8 H9 K11 E7 D6 K13 D8"}
+{"t":64668,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":64881,"dir":"gui>eng","line":"yxstop"}
+{"t":64895,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":64895,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 4,8"}
+{"t":64896,"dir":"eng>gui","line":"MESSAGE Depth 17-40 | Eval 33 | Time 32s | E9 G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6 D6 D7 F5 C8 E5 F4 B8 G5 C7 A9 E11 F12 C10 E10 C9 A7"}
+{"t":64907,"dir":"eng>gui","line":"MESSAGE Speed 58019 | Depth 17-40 | Eval 33 | Node 1879K | Time 32s"}
+{"t":64907,"dir":"eng>gui","line":"4,8"}
+{"t":64911,"dir":"gui>eng","line":"yxblockreset"}
+{"t":64937,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":64937,"dir":"gui>eng","line":"7,7"}
+{"t":64938,"dir":"gui>eng","line":"6,8"}
+{"t":64938,"dir":"gui>eng","line":"5,9"}
+{"t":64938,"dir":"gui>eng","line":"5,8"}
+{"t":64938,"dir":"gui>eng","line":"4,8"}
+{"t":64938,"dir":"gui>eng","line":"done"}
+{"t":64938,"dir":"gui>eng","line":"yxshowforbid"}
+{"t":64939,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":64939,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":64939,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":64950,"dir":"eng>gui","line":"FORBID ."}
+{"t":83805,"dir":"gui>eng","line":"info nbestsym 0"}
+{"t":83806,"dir":"gui>eng","line":"start 15"}
+{"t":83806,"dir":"gui>eng","line":"yxboard"}
+{"t":83806,"dir":"gui>eng","line":"7,7,2"}
+{"t":83807,"dir":"gui>eng","line":"6,8,1"}
+{"t":83807,"dir":"gui>eng","line":"5,9,2"}
+{"t":83807,"dir":"gui>eng","line":"5,8,1"}
+{"t":83807,"dir":"gui>eng","line":"4,8,2"}
+{"t":83807,"dir":"gui>eng","line":"done"}
+{"t":83823,"dir":"eng>gui","line":"OK"}
+{"t":83828,"dir":"gui>eng","line":"yxnbest 2"}
+{"t":83860,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":83867,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":83868,"dir":"eng>gui","line":"INFO DEPTH 2"}
+{"t":83868,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":83868,"dir":"eng>gui","line":"INFO NODES 4"}
+{"t":83868,"dir":"eng>gui","line":"INFO TOTALNODES 87"}
+{"t":83868,"dir":"eng>gui","line":"INFO TOTALTIME 10"}
+{"t":83868,"dir":"eng>gui","line":"INFO SPEED 43500"}
+{"t":83868,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":83868,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":83868,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7"}
+{"t":83868,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":83868,"dir":"eng>gui","line":"MESSAGE (1) -33 | 2-4 | G11 G8 E8"}
+{"t":83869,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":83869,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":83869,"dir":"eng>gui","line":"INFO DEPTH 2"}
+{"t":83869,"dir":"eng>gui","line":"INFO SELDEPTH 3"}
+{"t":83869,"dir":"eng>gui","line":"INFO NODES 8"}
+{"t":83869,"dir":"eng>gui","line":"INFO TOTALNODES 827"}
+{"t":83873,"dir":"eng>gui","line":"INFO TOTALTIME 11"}
+{"t":83880,"dir":"eng>gui","line":"INFO SPEED 75181"}
+{"t":83880,"dir":"eng>gui","line":"INFO EVAL -190"}
+{"t":83881,"dir":"eng>gui","line":"INFO WINRATE 0.318646"}
+{"t":83881,"dir":"eng>gui","line":"INFO BESTLINE 3,7 8,8"}
+{"t":83881,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":83881,"dir":"eng>gui","line":"MESSAGE (2) -190 | 2-3 | D8 I9"}
+{"t":83881,"dir":"eng>gui","line":"MESSAGE Depth 2-4 | Eval -33 | Time 23ms | G11 G8 E8"}
+{"t":83881,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":83882,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":83882,"dir":"eng>gui","line":"INFO DEPTH 3"}
+{"t":83882,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":83882,"dir":"eng>gui","line":"INFO NODES 97"}
+{"t":83882,"dir":"eng>gui","line":"INFO TOTALNODES 1340"}
+{"t":83882,"dir":"eng>gui","line":"INFO TOTALTIME 24"}
+{"t":83882,"dir":"eng>gui","line":"INFO SPEED 58260"}
+{"t":83882,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":83882,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":83882,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7"}
+{"t":83884,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":83884,"dir":"eng>gui","line":"MESSAGE (1) -33 | 3-4 | G11 G8 E8"}
+{"t":83918,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":83923,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":83923,"dir":"eng>gui","line":"INFO DEPTH 3"}
+{"t":83923,"dir":"eng>gui","line":"INFO SELDEPTH 4"}
+{"t":83923,"dir":"eng>gui","line":"INFO NODES 8"}
+{"t":83924,"dir":"eng>gui","line":"INFO TOTALNODES 2314"}
+{"t":83924,"dir":"eng>gui","line":"INFO TOTALTIME 66"}
+{"t":83924,"dir":"eng>gui","line":"INFO SPEED 38566"}
+{"t":83924,"dir":"eng>gui","line":"INFO EVAL -142"}
+{"t":83924,"dir":"eng>gui","line":"INFO WINRATE 0.361698"}
+{"t":83924,"dir":"eng>gui","line":"INFO BESTLINE 7,9 4,7"}
+{"t":83925,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":83925,"dir":"eng>gui","line":"MESSAGE (2) -142 | 3-4 | H10 E8"}
+{"t":83925,"dir":"eng>gui","line":"MESSAGE Depth 3-4 | Eval -33 | Time 67ms | G11 G8 E8"}
+{"t":83934,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":83935,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":83935,"dir":"eng>gui","line":"INFO DEPTH 4"}
+{"t":83935,"dir":"eng>gui","line":"INFO SELDEPTH 5"}
+{"t":83935,"dir":"eng>gui","line":"INFO NODES 192"}
+{"t":83935,"dir":"eng>gui","line":"INFO TOTALNODES 3096"}
+{"t":83935,"dir":"eng>gui","line":"INFO TOTALTIME 77"}
+{"t":83935,"dir":"eng>gui","line":"INFO SPEED 40736"}
+{"t":83935,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":83935,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":83935,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8"}
+{"t":83935,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":83935,"dir":"eng>gui","line":"MESSAGE (1) -33 | 4-5 | G11 G8 E8 I9"}
+{"t":83952,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":83952,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":83952,"dir":"eng>gui","line":"INFO DEPTH 4"}
+{"t":83952,"dir":"eng>gui","line":"INFO SELDEPTH 6"}
+{"t":83952,"dir":"eng>gui","line":"INFO NODES 106"}
+{"t":83952,"dir":"eng>gui","line":"INFO TOTALNODES 4401"}
+{"t":83955,"dir":"eng>gui","line":"INFO TOTALTIME 97"}
+{"t":83955,"dir":"eng>gui","line":"INFO SPEED 46819"}
+{"t":83955,"dir":"eng>gui","line":"INFO EVAL -193"}
+{"t":83956,"dir":"eng>gui","line":"INFO WINRATE 0.316047"}
+{"t":83956,"dir":"eng>gui","line":"INFO BESTLINE 7,9 6,10 7,11"}
+{"t":83956,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":83956,"dir":"eng>gui","line":"MESSAGE (2) -193 | 4-6 | H10 G11 H12"}
+{"t":83956,"dir":"eng>gui","line":"MESSAGE Depth 4-5 | Eval -33 | Time 98ms | G11 G8 E8 I9"}
+{"t":83957,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":83957,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":83958,"dir":"eng>gui","line":"INFO DEPTH 5"}
+{"t":83958,"dir":"eng>gui","line":"INFO SELDEPTH 6"}
+{"t":83958,"dir":"eng>gui","line":"INFO NODES 289"}
+{"t":83958,"dir":"eng>gui","line":"INFO TOTALNODES 4763"}
+{"t":83958,"dir":"eng>gui","line":"INFO TOTALTIME 100"}
+{"t":83958,"dir":"eng>gui","line":"INFO SPEED 48111"}
+{"t":83958,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":83958,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":83958,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7"}
+{"t":83958,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":83958,"dir":"eng>gui","line":"MESSAGE (1) -33 | 5-6 | G11 G8 E8 I9 I8"}
+{"t":84001,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":84012,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84012,"dir":"eng>gui","line":"INFO DEPTH 5"}
+{"t":84012,"dir":"eng>gui","line":"INFO SELDEPTH 10"}
+{"t":84013,"dir":"eng>gui","line":"INFO NODES 338"}
+{"t":84013,"dir":"eng>gui","line":"INFO TOTALNODES 10046"}
+{"t":84013,"dir":"eng>gui","line":"INFO TOTALTIME 155"}
+{"t":84013,"dir":"eng>gui","line":"INFO SPEED 70251"}
+{"t":84013,"dir":"eng>gui","line":"INFO EVAL -231"}
+{"t":84014,"dir":"eng>gui","line":"INFO WINRATE 0.284144"}
+{"t":84014,"dir":"eng>gui","line":"INFO BESTLINE 4,7 8,8 6,6"}
+{"t":84014,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84014,"dir":"eng>gui","line":"MESSAGE (2) -231 | 5-10 | E8 I9 G7"}
+{"t":84017,"dir":"eng>gui","line":"MESSAGE Depth 5-6 | Eval -33 | Time 159ms | G11 G8 E8 I9 I8"}
+{"t":84018,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":84018,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84024,"dir":"eng>gui","line":"INFO DEPTH 6"}
+{"t":84024,"dir":"eng>gui","line":"INFO SELDEPTH 7"}
+{"t":84024,"dir":"eng>gui","line":"INFO NODES 390"}
+{"t":84024,"dir":"eng>gui","line":"INFO TOTALNODES 11512"}
+{"t":84024,"dir":"eng>gui","line":"INFO TOTALTIME 167"}
+{"t":84025,"dir":"eng>gui","line":"INFO SPEED 71950"}
+{"t":84025,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":84032,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":84036,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9"}
+{"t":84036,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84040,"dir":"eng>gui","line":"MESSAGE (1) -33 | 6-7 | G11 G8 E8 I9 I8 G10"}
+{"t":84043,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":84050,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84050,"dir":"eng>gui","line":"INFO DEPTH 6"}
+{"t":84050,"dir":"eng>gui","line":"INFO SELDEPTH 8"}
+{"t":84050,"dir":"eng>gui","line":"INFO NODES 525"}
+{"t":84050,"dir":"eng>gui","line":"INFO TOTALNODES 13453"}
+{"t":84050,"dir":"eng>gui","line":"INFO TOTALTIME 192"}
+{"t":84050,"dir":"eng>gui","line":"INFO SPEED 73114"}
+{"t":84051,"dir":"eng>gui","line":"INFO EVAL -230"}
+{"t":84051,"dir":"eng>gui","line":"INFO WINRATE 0.284958"}
+{"t":84051,"dir":"eng>gui","line":"INFO BESTLINE 4,7 8,8 6,9 7,10 6,10 6,7 9,9"}
+{"t":84061,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84061,"dir":"eng>gui","line":"MESSAGE (2) -230 | 6-8 | E8 I9 G10 H11 G11 G8 J10"}
+{"t":84062,"dir":"eng>gui","line":"MESSAGE Depth 6-7 | Eval -33 | Time 204ms | G11 G8 E8 I9 I8 G10"}
+{"t":84063,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":84063,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84063,"dir":"eng>gui","line":"INFO DEPTH 7"}
+{"t":84063,"dir":"eng>gui","line":"INFO SELDEPTH 8"}
+{"t":84063,"dir":"eng>gui","line":"INFO NODES 494"}
+{"t":84063,"dir":"eng>gui","line":"INFO TOTALNODES 15792"}
+{"t":84063,"dir":"eng>gui","line":"INFO TOTALTIME 205"}
+{"t":84063,"dir":"eng>gui","line":"INFO SPEED 77034"}
+{"t":84064,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":84064,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":84064,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9"}
+{"t":84064,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84064,"dir":"eng>gui","line":"MESSAGE (1) -33 | 7-8 | G11 G8 E8 I9 I8 G10 H10"}
+{"t":84080,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":84081,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84081,"dir":"eng>gui","line":"INFO DEPTH 7"}
+{"t":84081,"dir":"eng>gui","line":"INFO SELDEPTH 9"}
+{"t":84081,"dir":"eng>gui","line":"INFO NODES 712"}
+{"t":84081,"dir":"eng>gui","line":"INFO TOTALNODES 17257"}
+{"t":84081,"dir":"eng>gui","line":"INFO TOTALTIME 223"}
+{"t":84081,"dir":"eng>gui","line":"INFO SPEED 77734"}
+{"t":84081,"dir":"eng>gui","line":"INFO EVAL -231"}
+{"t":84082,"dir":"eng>gui","line":"INFO WINRATE 0.284144"}
+{"t":84082,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,9 7,9 5,7 6,6 3,9 6,10 3,10"}
+{"t":84083,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84083,"dir":"eng>gui","line":"MESSAGE (2) -231 | 7-9 | E8 G10 H10 F8 G7 D10 G11 D11"}
+{"t":84083,"dir":"eng>gui","line":"MESSAGE Depth 7-8 | Eval -33 | Time 225ms | G11 G8 E8 I9 I8 G10 H10"}
+{"t":84094,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84095,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":84095,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84095,"dir":"eng>gui","line":"INFO DEPTH 8"}
+{"t":84095,"dir":"eng>gui","line":"INFO SELDEPTH 9"}
+{"t":84096,"dir":"eng>gui","line":"INFO NODES 604"}
+{"t":84096,"dir":"eng>gui","line":"INFO TOTALNODES 18303"}
+{"t":84096,"dir":"eng>gui","line":"INFO TOTALTIME 238"}
+{"t":84096,"dir":"eng>gui","line":"INFO SPEED 77227"}
+{"t":84096,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":84096,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":84096,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10"}
+{"t":84096,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84096,"dir":"eng>gui","line":"MESSAGE (1) -33 | 8-9 | G11 G8 E8 I9 I8 G10 H10 I11"}
+{"t":84096,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84096,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84134,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":84134,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84134,"dir":"eng>gui","line":"INFO DEPTH 8"}
+{"t":84134,"dir":"eng>gui","line":"INFO SELDEPTH 12"}
+{"t":84134,"dir":"eng>gui","line":"INFO NODES 1028"}
+{"t":84135,"dir":"eng>gui","line":"INFO TOTALNODES 20269"}
+{"t":84135,"dir":"eng>gui","line":"INFO TOTALTIME 276"}
+{"t":84135,"dir":"eng>gui","line":"INFO SPEED 73438"}
+{"t":84135,"dir":"eng>gui","line":"INFO EVAL -179"}
+{"t":84135,"dir":"eng>gui","line":"INFO WINRATE 0.328274"}
+{"t":84135,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,9 7,9 5,7 6,6 3,9 6,10 3,10 2,9"}
+{"t":84135,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84135,"dir":"eng>gui","line":"MESSAGE (2) -179 | 8-12 | E8 G10 H10 F8 G7 D10 G11 D11 C10"}
+{"t":84135,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84135,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84135,"dir":"eng>gui","line":"MESSAGE Depth 8-9 | Eval -33 | Time 276ms | G11 G8 E8 I9 I8 G10 H10 I11"}
+{"t":84139,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84140,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":84147,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84147,"dir":"eng>gui","line":"INFO DEPTH 9"}
+{"t":84147,"dir":"eng>gui","line":"INFO SELDEPTH 10"}
+{"t":84147,"dir":"eng>gui","line":"INFO NODES 722"}
+{"t":84147,"dir":"eng>gui","line":"INFO TOTALNODES 20476"}
+{"t":84147,"dir":"eng>gui","line":"INFO TOTALTIME 289"}
+{"t":84147,"dir":"eng>gui","line":"INFO SPEED 72609"}
+{"t":84147,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":84147,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":84148,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9"}
+{"t":84152,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84152,"dir":"eng>gui","line":"MESSAGE (1) -33 | 9-10 | G11 G8 E8 I9 I8 G10 H10 I11 J10"}
+{"t":84152,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84152,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84301,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":84301,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84301,"dir":"eng>gui","line":"INFO DEPTH 9"}
+{"t":84301,"dir":"eng>gui","line":"INFO SELDEPTH 16"}
+{"t":84301,"dir":"eng>gui","line":"INFO NODES 1914"}
+{"t":84301,"dir":"eng>gui","line":"INFO TOTALNODES 28188"}
+{"t":84301,"dir":"eng>gui","line":"INFO TOTALTIME 443"}
+{"t":84301,"dir":"eng>gui","line":"INFO SPEED 63629"}
+{"t":84301,"dir":"eng>gui","line":"INFO EVAL -271"}
+{"t":84301,"dir":"eng>gui","line":"INFO WINRATE 0.25275"}
+{"t":84301,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,6 6,9 7,10 6,10 6,11 8,9 5,7 7,5 5,11 7,11"}
+{"t":84301,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84301,"dir":"eng>gui","line":"MESSAGE (2) -271 | 9-16 | E8 G7 G10 H11 G11 G12 I10 F8 H6 F12 H12"}
+{"t":84301,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84301,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84302,"dir":"eng>gui","line":"MESSAGE Depth 9-10 | Eval -33 | Time 443ms | G11 G8 E8 I9 I8 G10 H10 I11 J10"}
+{"t":84306,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84307,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":84316,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84316,"dir":"eng>gui","line":"INFO DEPTH 10"}
+{"t":84316,"dir":"eng>gui","line":"INFO SELDEPTH 10"}
+{"t":84316,"dir":"eng>gui","line":"INFO NODES 863"}
+{"t":84316,"dir":"eng>gui","line":"INFO TOTALNODES 28430"}
+{"t":84316,"dir":"eng>gui","line":"INFO TOTALTIME 458"}
+{"t":84316,"dir":"eng>gui","line":"INFO SPEED 63318"}
+{"t":84316,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":84316,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":84317,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9"}
+{"t":84317,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84317,"dir":"eng>gui","line":"MESSAGE (1) -33 | 10-10 | G11 G8 E8 I9 I8 G10 H10 I11 J10"}
+{"t":84319,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84319,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84345,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":84345,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84345,"dir":"eng>gui","line":"INFO DEPTH 10"}
+{"t":84345,"dir":"eng>gui","line":"INFO SELDEPTH 18"}
+{"t":84345,"dir":"eng>gui","line":"INFO NODES 679"}
+{"t":84345,"dir":"eng>gui","line":"INFO TOTALNODES 30205"}
+{"t":84345,"dir":"eng>gui","line":"INFO TOTALTIME 487"}
+{"t":84345,"dir":"eng>gui","line":"INFO SPEED 62022"}
+{"t":84345,"dir":"eng>gui","line":"INFO EVAL -259"}
+{"t":84345,"dir":"eng>gui","line":"INFO WINRATE 0.261923"}
+{"t":84345,"dir":"eng>gui","line":"INFO BESTLINE 7,9 4,7 3,7 6,6 5,7 4,6 4,5 5,6 7,6 8,8"}
+{"t":84345,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84345,"dir":"eng>gui","line":"MESSAGE (2) -259 | 10-18 | H10 E8 D8 G7 F8 E7 E6 F7 H7 I9"}
+{"t":84345,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84346,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84346,"dir":"eng>gui","line":"MESSAGE Depth 10-10 | Eval -33 | Time 488ms | G11 G8 E8 I9 I8 G10 H10 I11 J10"}
+{"t":84348,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84353,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":84356,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84356,"dir":"eng>gui","line":"INFO DEPTH 11"}
+{"t":84356,"dir":"eng>gui","line":"INFO SELDEPTH 11"}
+{"t":84357,"dir":"eng>gui","line":"INFO NODES 1006"}
+{"t":84357,"dir":"eng>gui","line":"INFO TOTALNODES 30843"}
+{"t":84357,"dir":"eng>gui","line":"INFO TOTALTIME 499"}
+{"t":84357,"dir":"eng>gui","line":"INFO SPEED 62435"}
+{"t":84357,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":84357,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":84357,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9"}
+{"t":84357,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84358,"dir":"eng>gui","line":"MESSAGE (1) -33 | 11-11 | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10"}
+{"t":84358,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84358,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84408,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":84409,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84416,"dir":"eng>gui","line":"INFO DEPTH 11"}
+{"t":84416,"dir":"eng>gui","line":"INFO SELDEPTH 19"}
+{"t":84416,"dir":"eng>gui","line":"INFO NODES 2475"}
+{"t":84416,"dir":"eng>gui","line":"INFO TOTALNODES 32882"}
+{"t":84416,"dir":"eng>gui","line":"INFO TOTALTIME 558"}
+{"t":84416,"dir":"eng>gui","line":"INFO SPEED 59785"}
+{"t":84416,"dir":"eng>gui","line":"INFO EVAL -271"}
+{"t":84416,"dir":"eng>gui","line":"INFO WINRATE 0.25275"}
+{"t":84416,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,6 6,9 7,10 6,10 6,11 8,9 5,7 7,5 5,11 7,11 3,9 2,10 4,10 2,8 5,12"}
+{"t":84416,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84417,"dir":"eng>gui","line":"MESSAGE (2) -271 | 11-19 | E8 G7 G10 H11 G11 G12 I10 F8 H6 F12 H12 D10 C11 E11 C9 F13"}
+{"t":84417,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84417,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84417,"dir":"eng>gui","line":"MESSAGE Depth 11-11 | Eval -33 | Time 559ms | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10"}
+{"t":84418,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":84418,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":84418,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":84419,"dir":"eng>gui","line":"INFO DEPTH 12"}
+{"t":84422,"dir":"eng>gui","line":"INFO SELDEPTH 11"}
+{"t":84423,"dir":"eng>gui","line":"INFO NODES 1157"}
+{"t":84423,"dir":"eng>gui","line":"INFO TOTALNODES 33961"}
+{"t":84423,"dir":"eng>gui","line":"INFO TOTALTIME 565"}
+{"t":84423,"dir":"eng>gui","line":"INFO SPEED 60644"}
+{"t":84423,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":84423,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":84424,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9"}
+{"t":84441,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":84441,"dir":"eng>gui","line":"MESSAGE (1) -33 | 12-11 | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10"}
+{"t":84441,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":84441,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":85119,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":85119,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":85119,"dir":"eng>gui","line":"INFO DEPTH 12"}
+{"t":85119,"dir":"eng>gui","line":"INFO SELDEPTH 36"}
+{"t":85119,"dir":"eng>gui","line":"INFO NODES 11406"}
+{"t":85119,"dir":"eng>gui","line":"INFO TOTALNODES 82880"}
+{"t":85119,"dir":"eng>gui","line":"INFO TOTALTIME 1261"}
+{"t":85119,"dir":"eng>gui","line":"INFO SPEED 65725"}
+{"t":85119,"dir":"eng>gui","line":"INFO EVAL -325"}
+{"t":85119,"dir":"eng>gui","line":"INFO WINRATE 0.214165"}
+{"t":85120,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,10 7,11 7,10 8,10 7,9 8,8 8,9 9,9 6,12 7,8 9,8 6,11 5,11 4,10 4,12 3,13 2,10"}
+{"t":85120,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":85120,"dir":"eng>gui","line":"MESSAGE (2) -325 | 12-36 | E8 G11 H12 H11 I11 H10 I9 I10 J10 G13 H9 J9 G12 F12 E11 E13 D14 C11"}
+{"t":85120,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":85120,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":85120,"dir":"eng>gui","line":"MESSAGE Depth 12-11 | Eval -33 | Time 1261ms | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10"}
+{"t":85124,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":85125,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":85125,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":85125,"dir":"eng>gui","line":"INFO DEPTH 13"}
+{"t":85125,"dir":"eng>gui","line":"INFO SELDEPTH 15"}
+{"t":85125,"dir":"eng>gui","line":"INFO NODES 1336"}
+{"t":85125,"dir":"eng>gui","line":"INFO TOTALNODES 83528"}
+{"t":85125,"dir":"eng>gui","line":"INFO TOTALTIME 1267"}
+{"t":85125,"dir":"eng>gui","line":"INFO SPEED 65925"}
+{"t":85125,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":85125,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":85125,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9 5,7 5,6"}
+{"t":85125,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":85125,"dir":"eng>gui","line":"MESSAGE (1) -33 | 13-15 | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7"}
+{"t":85125,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":85125,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":85397,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":85397,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":85397,"dir":"eng>gui","line":"INFO DEPTH 13"}
+{"t":85397,"dir":"eng>gui","line":"INFO SELDEPTH 31"}
+{"t":85397,"dir":"eng>gui","line":"INFO NODES 14631"}
+{"t":85397,"dir":"eng>gui","line":"INFO TOTALNODES 99861"}
+{"t":85398,"dir":"eng>gui","line":"INFO TOTALTIME 1539"}
+{"t":85398,"dir":"eng>gui","line":"INFO SPEED 64886"}
+{"t":85398,"dir":"eng>gui","line":"INFO EVAL -325"}
+{"t":85398,"dir":"eng>gui","line":"INFO WINRATE 0.214165"}
+{"t":85398,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,9 7,9 5,7 6,6 5,10 4,11 6,10 7,11 6,11 7,12 7,10 4,10 8,7 8,9 9,7 6,7 9,6 7,8 9,10 8,10"}
+{"t":85398,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":85398,"dir":"eng>gui","line":"MESSAGE (2) -325 | 13-31 | E8 G10 H10 F8 G7 F11 E12 G11 H12 G12 H13 H11 E11 I8 I10 J8 G8 J7 H9 J11 I11"}
+{"t":85398,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":85398,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":85403,"dir":"eng>gui","line":"MESSAGE Depth 13-15 | Eval -33 | Time 1545ms | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7"}
+{"t":85408,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":85418,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":85419,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":85420,"dir":"eng>gui","line":"INFO DEPTH 14"}
+{"t":85423,"dir":"eng>gui","line":"INFO SELDEPTH 16"}
+{"t":85423,"dir":"eng>gui","line":"INFO NODES 1560"}
+{"t":85423,"dir":"eng>gui","line":"INFO TOTALNODES 101287"}
+{"t":85423,"dir":"eng>gui","line":"INFO TOTALTIME 1565"}
+{"t":85424,"dir":"eng>gui","line":"INFO SPEED 64927"}
+{"t":85424,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":85424,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":85424,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9 5,7 5,6 4,5"}
+{"t":85424,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":85424,"dir":"eng>gui","line":"MESSAGE (1) -33 | 14-16 | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6"}
+{"t":85424,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":85424,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":88587,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":88588,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":88588,"dir":"eng>gui","line":"INFO DEPTH 14"}
+{"t":88588,"dir":"eng>gui","line":"INFO SELDEPTH 39"}
+{"t":88588,"dir":"eng>gui","line":"INFO NODES 52905"}
+{"t":88589,"dir":"eng>gui","line":"INFO TOTALNODES 360542"}
+{"t":88589,"dir":"eng>gui","line":"INFO TOTALTIME 4730"}
+{"t":88589,"dir":"eng>gui","line":"INFO SPEED 76240"}
+{"t":88589,"dir":"eng>gui","line":"INFO EVAL -393"}
+{"t":88589,"dir":"eng>gui","line":"INFO WINRATE 0.171931"}
+{"t":88589,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,10 7,11 7,10 8,8 8,10 5,10 9,8 9,10 7,6 7,8 8,9 10,7 6,9 7,9 6,11 5,12 6,13 6,12"}
+{"t":88589,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":88589,"dir":"eng>gui","line":"MESSAGE (2) -393 | 14-39 | E8 G11 H12 H11 I9 I11 F11 J9 J11 H7 H9 I10 K8 G10 H10 G12 F13 G14 G13"}
+{"t":88589,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":88589,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":88589,"dir":"eng>gui","line":"MESSAGE Depth 14-16 | Eval -33 | Time 4731ms | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6"}
+{"t":88594,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":88595,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":88595,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":88595,"dir":"eng>gui","line":"INFO DEPTH 15"}
+{"t":88595,"dir":"eng>gui","line":"INFO SELDEPTH 16"}
+{"t":88595,"dir":"eng>gui","line":"INFO NODES 1846"}
+{"t":88595,"dir":"eng>gui","line":"INFO TOTALNODES 361436"}
+{"t":88595,"dir":"eng>gui","line":"INFO TOTALTIME 4737"}
+{"t":88596,"dir":"eng>gui","line":"INFO SPEED 76300"}
+{"t":88596,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":88596,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":88596,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9 5,7 5,6 4,5 3,5 3,6"}
+{"t":88596,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":88599,"dir":"eng>gui","line":"MESSAGE (1) -33 | 15-16 | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6 D6 D7"}
+{"t":88599,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":88599,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":88779,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":88779,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":88779,"dir":"eng>gui","line":"INFO DEPTH 15"}
+{"t":88779,"dir":"eng>gui","line":"INFO SELDEPTH 26"}
+{"t":88779,"dir":"eng>gui","line":"INFO NODES 57433"}
+{"t":88780,"dir":"eng>gui","line":"INFO TOTALNODES 379899"}
+{"t":88782,"dir":"eng>gui","line":"INFO TOTALTIME 4924"}
+{"t":88782,"dir":"eng>gui","line":"INFO SPEED 77199"}
+{"t":88782,"dir":"eng>gui","line":"INFO EVAL -396"}
+{"t":88782,"dir":"eng>gui","line":"INFO WINRATE 0.17023"}
+{"t":88782,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,10 7,11 7,10 7,9 8,10 9,10 3,9 4,10 2,10 5,7 2,9 4,9 3,7 2,6 2,11 2,12 3,6 3,10 3,5 3,8"}
+{"t":88783,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":88783,"dir":"eng>gui","line":"MESSAGE (2) -396 | 15-26 | E8 G11 H12 H11 H10 I11 J11 D10 E11 C11 F8 C10 E10 D8 C7 C12 C13 D7 D11 D6 D9"}
+{"t":88783,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":88783,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":88783,"dir":"eng>gui","line":"MESSAGE Depth 15-16 | Eval -33 | Time 4925ms | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6 D6 D7"}
+{"t":88788,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":88790,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":88790,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":88791,"dir":"eng>gui","line":"INFO DEPTH 16"}
+{"t":88791,"dir":"eng>gui","line":"INFO SELDEPTH 16"}
+{"t":88791,"dir":"eng>gui","line":"INFO NODES 2142"}
+{"t":88791,"dir":"eng>gui","line":"INFO TOTALNODES 381690"}
+{"t":88799,"dir":"eng>gui","line":"INFO TOTALTIME 4941"}
+{"t":88799,"dir":"eng>gui","line":"INFO SPEED 77390"}
+{"t":88799,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":88799,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":88799,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9 5,7 5,6 4,5 3,5 3,6"}
+{"t":88799,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":88802,"dir":"eng>gui","line":"MESSAGE (1) -33 | 16-16 | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6 D6 D7"}
+{"t":88802,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":88802,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":89378,"dir":"eng>gui","line":"INFO PV 1"}
+{"t":89379,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":89379,"dir":"eng>gui","line":"INFO DEPTH 16"}
+{"t":89379,"dir":"eng>gui","line":"INFO SELDEPTH 29"}
+{"t":89379,"dir":"eng>gui","line":"INFO NODES 65095"}
+{"t":89379,"dir":"eng>gui","line":"INFO TOTALNODES 416055"}
+{"t":89379,"dir":"eng>gui","line":"INFO TOTALTIME 5521"}
+{"t":89379,"dir":"eng>gui","line":"INFO SPEED 75372"}
+{"t":89379,"dir":"eng>gui","line":"INFO EVAL -396"}
+{"t":89379,"dir":"eng>gui","line":"INFO WINRATE 0.17023"}
+{"t":89379,"dir":"eng>gui","line":"INFO BESTLINE 4,7 6,10 7,11 7,10 7,9 8,10 9,10 3,9 4,10 2,10 5,7 2,9 4,9 3,7 2,6 2,11 2,12 3,6 3,10 3,5 3,8 2,7 2,8 4,5 6,7 7,6 5,4 5,5"}
+{"t":89379,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":89379,"dir":"eng>gui","line":"MESSAGE (2) -396 | 16-29 | E8 G11 H12 H11 H10 I11 J11 D10 E11 C11 F8 C10 E10 D8 C7 C12 C13 D7 D11 D6 D9 C8 C9 E6 G8 H7 F5 F6"}
+{"t":89379,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":89379,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":89379,"dir":"eng>gui","line":"MESSAGE Depth 16-16 | Eval -33 | Time 5521ms | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6 D6 D7"}
+{"t":89399,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":89409,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":89409,"dir":"eng>gui","line":"INFO NUMPV 2"}
+{"t":89409,"dir":"eng>gui","line":"INFO DEPTH 17"}
+{"t":89409,"dir":"eng>gui","line":"INFO SELDEPTH 18"}
+{"t":89409,"dir":"eng>gui","line":"INFO NODES 2599"}
+{"t":89409,"dir":"eng>gui","line":"INFO TOTALNODES 419632"}
+{"t":89409,"dir":"eng>gui","line":"INFO TOTALTIME 5552"}
+{"t":89410,"dir":"eng>gui","line":"INFO SPEED 75595"}
+{"t":89410,"dir":"eng>gui","line":"INFO EVAL -33"}
+{"t":89410,"dir":"eng>gui","line":"INFO WINRATE 0.467048"}
+{"t":89410,"dir":"eng>gui","line":"INFO BESTLINE 6,10 6,7 4,7 8,8 8,7 6,9 7,9 8,10 9,9 3,9 5,7 5,6 4,5 3,5 3,6 5,4 2,7"}
+{"t":89410,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":89410,"dir":"eng>gui","line":"MESSAGE (1) -33 | 17-18 | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6 D6 D7 F5 C8"}
+{"t":89410,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":89410,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":93600,"dir":"gui>eng","line":"yxstop"}
+{"t":93611,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":93611,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,10"}
+{"t":93612,"dir":"eng>gui","line":"MESSAGE Depth 16-18 | Eval -33 | Time 9754ms | G11 G8 E8 I9 I8 G10 H10 I11 J10 D10 F8 F7 E6 D6 D7 F5 C8"}
+{"t":93618,"dir":"eng>gui","line":"MESSAGE Speed 66626 | Depth 16-18 | Eval -33 | Node 650K | Time 9760ms"}
+{"t":93618,"dir":"eng>gui","line":"6,10"}
+{"t":93618,"dir":"gui>eng","line":"yxblockreset"}
+{"t":93688,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":93688,"dir":"gui>eng","line":"7,7"}
+{"t":93688,"dir":"gui>eng","line":"6,8"}
+{"t":93688,"dir":"gui>eng","line":"5,9"}
+{"t":93688,"dir":"gui>eng","line":"5,8"}
+{"t":93688,"dir":"gui>eng","line":"4,8"}
+{"t":93688,"dir":"gui>eng","line":"6,10"}
+{"t":93688,"dir":"gui>eng","line":"done"}
+{"t":93688,"dir":"gui>eng","line":"yxshowforbid"}
+{"t":93689,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":93689,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":93689,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":93705,"dir":"eng>gui","line":"FORBID ."}
+{"t":95122,"dir":"gui>eng","line":"end"}
+{"t":95169,"dir":"eng>gui","line":"MESSAGE DATABASE SAVE START rapfi.db"}
+{"t":95170,"dir":"eng>gui","line":"MESSAGE DATABASE SAVE DONE"}
+{"t":95562,"dir":"exit","line":"0"}

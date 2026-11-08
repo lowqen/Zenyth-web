@@ -1,0 +1,324 @@
+{"t":563,"dir":"gui>eng","line":"info show_detail 3"}
+{"t":563,"dir":"gui>eng","line":"yxshowinfo"}
+{"t":563,"dir":"gui>eng","line":"info database_readonly 0"}
+{"t":563,"dir":"gui>eng","line":"START 15"}
+{"t":563,"dir":"gui>eng","line":"INFO max_node -1"}
+{"t":563,"dir":"gui>eng","line":"INFO timeout_match 100000000"}
+{"t":563,"dir":"gui>eng","line":"INFO time_left 100000000"}
+{"t":563,"dir":"gui>eng","line":"INFO timeout_turn 2000000"}
+{"t":563,"dir":"gui>eng","line":"INFO max_depth 225"}
+{"t":563,"dir":"gui>eng","line":"INFO time_increment 0"}
+{"t":564,"dir":"gui>eng","line":"INFO caution_factor 3"}
+{"t":564,"dir":"gui>eng","line":"INFO thread_num 4"}
+{"t":564,"dir":"gui>eng","line":"INFO hash_size 1048576"}
+{"t":564,"dir":"gui>eng","line":"INFO pondering 0"}
+{"t":564,"dir":"gui>eng","line":"INFO vcthread 0"}
+{"t":564,"dir":"gui>eng","line":"INFO rule 2"}
+{"t":564,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":564,"dir":"gui>eng","line":"done"}
+{"t":564,"dir":"gui>eng","line":"info usedatabase 1"}
+{"t":564,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":564,"dir":"gui>eng","line":"done"}
+{"t":981,"dir":"eng>gui","line":"MESSAGE Load config from \"config.toml\""}
+{"t":986,"dir":"eng>gui","line":"MESSAGE Setting default thread num to 2."}
+{"t":990,"dir":"eng>gui","line":"ERROR Failed to allocate 8388608 KB for transposition table."}
+{"t":990,"dir":"eng>gui","line":"MESSAGE Allocated 2097152 KB for transposition table."}
+{"t":7061,"dir":"eng>gui","line":"MESSAGE Evaluator set to mix9svq."}
+{"t":7079,"dir":"eng>gui","line":"MESSAGE Rapfi 0.43.01 (clang++ 19.1.5 on Windows SSE41)"}
+{"t":7087,"dir":"eng>gui","line":"MESSAGE INFO MAX_THREAD_NUM 256"}
+{"t":7087,"dir":"eng>gui","line":"MESSAGE INFO MAX_HASH_SIZE 30"}
+{"t":7118,"dir":"eng>gui","line":"OK"}
+{"t":10419,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":10420,"dir":"gui>eng","line":"done"}
+{"t":10992,"dir":"eng>gui","line":"MESSAGE Opening yixin database at rapfi.db ..."}
+{"t":10997,"dir":"eng>gui","line":"MESSAGE DATABASE LOAD START rapfi.db"}
+{"t":10998,"dir":"eng>gui","line":"MESSAGE DATABASE LOAD DONE"}
+{"t":10999,"dir":"eng>gui","line":"MESSAGE Loaded Yixin database (1 records) using 7 ms."}
+{"t":11006,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":11009,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":11009,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":11022,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":11022,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":11022,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":28307,"dir":"gui>eng","line":"INFO time_left 100000000"}
+{"t":28336,"dir":"gui>eng","line":"start 15"}
+{"t":28336,"dir":"gui>eng","line":"board"}
+{"t":28336,"dir":"gui>eng","line":"done"}
+{"t":28336,"dir":"gui>eng","line":"INFO time_left 100000000"}
+{"t":28336,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":28336,"dir":"gui>eng","line":"done"}
+{"t":28336,"dir":"eng>gui","line":"OK"}
+{"t":28455,"dir":"eng>gui","line":"MESSAGE mix9svq nnue: load weight from mix9svqrenju_bs15_black.bin.lz4"}
+{"t":28616,"dir":"eng>gui","line":"MESSAGE mix9svq nnue: load weight from mix9svqrenju_bs15_white.bin.lz4"}
+{"t":28747,"dir":"eng>gui","line":"7,7"}
+{"t":28748,"dir":"gui>eng","line":"yxblockreset"}
+{"t":28780,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":28780,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":28780,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":28785,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":28785,"dir":"gui>eng","line":"7,7"}
+{"t":28785,"dir":"gui>eng","line":"done"}
+{"t":28811,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":28812,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":28813,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":29477,"dir":"gui>eng","line":"INFO time_left 99999843"}
+{"t":29478,"dir":"gui>eng","line":"turn 7,8"}
+{"t":29478,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":29478,"dir":"gui>eng","line":"7,7"}
+{"t":29479,"dir":"gui>eng","line":"7,8"}
+{"t":29479,"dir":"gui>eng","line":"done"}
+{"t":29488,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29492,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29494,"dir":"eng>gui","line":"INFO DEPTH 2"}
+{"t":29494,"dir":"eng>gui","line":"INFO SELDEPTH 3"}
+{"t":29494,"dir":"eng>gui","line":"INFO NODES 3"}
+{"t":29495,"dir":"eng>gui","line":"INFO TOTALNODES 36"}
+{"t":29495,"dir":"eng>gui","line":"INFO TOTALTIME 11"}
+{"t":29495,"dir":"eng>gui","line":"INFO SPEED 9000"}
+{"t":29495,"dir":"eng>gui","line":"INFO EVAL 805"}
+{"t":29497,"dir":"eng>gui","line":"INFO WINRATE 0.96158"}
+{"t":29497,"dir":"eng>gui","line":"INFO BESTLINE 6,9 6,8"}
+{"t":29497,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29497,"dir":"eng>gui","line":"MESSAGE Depth 2-3 | Eval 805 | Time 13ms | G10 G9"}
+{"t":29497,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29498,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29498,"dir":"eng>gui","line":"INFO DEPTH 3"}
+{"t":29498,"dir":"eng>gui","line":"INFO SELDEPTH 5"}
+{"t":29498,"dir":"eng>gui","line":"INFO NODES 5"}
+{"t":29498,"dir":"eng>gui","line":"INFO TOTALNODES 833"}
+{"t":29498,"dir":"eng>gui","line":"INFO TOTALTIME 14"}
+{"t":29498,"dir":"eng>gui","line":"INFO SPEED 64076"}
+{"t":29498,"dir":"eng>gui","line":"INFO EVAL 375"}
+{"t":29498,"dir":"eng>gui","line":"INFO WINRATE 0.817574"}
+{"t":29498,"dir":"eng>gui","line":"INFO BESTLINE 6,6 8,8"}
+{"t":29498,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29498,"dir":"eng>gui","line":"MESSAGE Depth 3-5 | Eval 375 | Time 14ms | G7 I9"}
+{"t":29499,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29499,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29499,"dir":"eng>gui","line":"INFO DEPTH 4"}
+{"t":29499,"dir":"eng>gui","line":"INFO SELDEPTH 5"}
+{"t":29499,"dir":"eng>gui","line":"INFO NODES 15"}
+{"t":29499,"dir":"eng>gui","line":"INFO TOTALNODES 878"}
+{"t":29499,"dir":"eng>gui","line":"INFO TOTALTIME 15"}
+{"t":29499,"dir":"eng>gui","line":"INFO SPEED 58533"}
+{"t":29499,"dir":"eng>gui","line":"INFO EVAL 320"}
+{"t":29499,"dir":"eng>gui","line":"INFO WINRATE 0.78245"}
+{"t":29500,"dir":"eng>gui","line":"INFO BESTLINE 5,6 8,8 9,8"}
+{"t":29500,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29501,"dir":"eng>gui","line":"MESSAGE Depth 4-5 | Eval 320 | Time 16ms | F7 I9 J9"}
+{"t":29501,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29501,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29501,"dir":"eng>gui","line":"INFO DEPTH 5"}
+{"t":29501,"dir":"eng>gui","line":"INFO SELDEPTH 5"}
+{"t":29501,"dir":"eng>gui","line":"INFO NODES 22"}
+{"t":29501,"dir":"eng>gui","line":"INFO TOTALNODES 915"}
+{"t":29501,"dir":"eng>gui","line":"INFO TOTALTIME 16"}
+{"t":29501,"dir":"eng>gui","line":"INFO SPEED 57187"}
+{"t":29501,"dir":"eng>gui","line":"INFO EVAL 320"}
+{"t":29501,"dir":"eng>gui","line":"INFO WINRATE 0.78245"}
+{"t":29501,"dir":"eng>gui","line":"INFO BESTLINE 5,6 8,8 9,8 6,9"}
+{"t":29501,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29501,"dir":"eng>gui","line":"MESSAGE Depth 5-5 | Eval 320 | Time 16ms | F7 I9 J9 G10"}
+{"t":29501,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29501,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29505,"dir":"eng>gui","line":"INFO DEPTH 6"}
+{"t":29505,"dir":"eng>gui","line":"INFO SELDEPTH 5"}
+{"t":29505,"dir":"eng>gui","line":"INFO NODES 32"}
+{"t":29505,"dir":"eng>gui","line":"INFO TOTALNODES 958"}
+{"t":29505,"dir":"eng>gui","line":"INFO TOTALTIME 16"}
+{"t":29527,"dir":"eng>gui","line":"INFO SPEED 59875"}
+{"t":29527,"dir":"eng>gui","line":"INFO EVAL 320"}
+{"t":29527,"dir":"eng>gui","line":"INFO WINRATE 0.78245"}
+{"t":29527,"dir":"eng>gui","line":"INFO BESTLINE 5,6 8,8 9,8 6,9"}
+{"t":29527,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29527,"dir":"eng>gui","line":"MESSAGE Depth 6-5 | Eval 320 | Time 16ms | F7 I9 J9 G10"}
+{"t":29663,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29663,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29676,"dir":"eng>gui","line":"INFO DEPTH 7"}
+{"t":29676,"dir":"eng>gui","line":"INFO SELDEPTH 10"}
+{"t":29676,"dir":"eng>gui","line":"INFO NODES 35"}
+{"t":29676,"dir":"eng>gui","line":"INFO TOTALNODES 3755"}
+{"t":29677,"dir":"eng>gui","line":"INFO TOTALTIME 193"}
+{"t":29677,"dir":"eng>gui","line":"INFO SPEED 20977"}
+{"t":29677,"dir":"eng>gui","line":"INFO EVAL 433"}
+{"t":29677,"dir":"eng>gui","line":"INFO WINRATE 0.849668"}
+{"t":29677,"dir":"eng>gui","line":"INFO BESTLINE 6,8 5,9 8,7 6,7 8,9 8,8 9,8 10,7"}
+{"t":29677,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29677,"dir":"eng>gui","line":"MESSAGE Depth 7-10 | Eval 433 | Time 193ms | G9 F10 I8 G8 I10 I9 J9 K8"}
+{"t":29694,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":29695,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29695,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29695,"dir":"eng>gui","line":"INFO DEPTH 8"}
+{"t":29696,"dir":"eng>gui","line":"INFO SELDEPTH 10"}
+{"t":29696,"dir":"eng>gui","line":"INFO NODES 321"}
+{"t":29696,"dir":"eng>gui","line":"INFO TOTALNODES 4236"}
+{"t":29697,"dir":"eng>gui","line":"INFO TOTALTIME 213"}
+{"t":29697,"dir":"eng>gui","line":"INFO SPEED 20075"}
+{"t":29697,"dir":"eng>gui","line":"INFO EVAL 498"}
+{"t":29697,"dir":"eng>gui","line":"INFO WINRATE 0.879955"}
+{"t":29698,"dir":"eng>gui","line":"INFO BESTLINE 6,9 6,8 5,8 4,7 8,9 9,9 9,8 7,10 8,7"}
+{"t":29698,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29698,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":29698,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":29698,"dir":"eng>gui","line":"MESSAGE Depth 8-10 | Eval 498 | Time 214ms | G10 G9 F9 E8 I10 J10 J9 H11 I8"}
+{"t":29939,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":29940,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29940,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29940,"dir":"eng>gui","line":"INFO DEPTH 9"}
+{"t":29940,"dir":"eng>gui","line":"INFO SELDEPTH 15"}
+{"t":29940,"dir":"eng>gui","line":"INFO NODES 976"}
+{"t":29951,"dir":"eng>gui","line":"INFO TOTALNODES 10356"}
+{"t":29951,"dir":"eng>gui","line":"INFO TOTALTIME 467"}
+{"t":29951,"dir":"eng>gui","line":"INFO SPEED 22760"}
+{"t":29951,"dir":"eng>gui","line":"INFO EVAL 434"}
+{"t":29955,"dir":"eng>gui","line":"INFO WINRATE 0.850178"}
+{"t":29955,"dir":"eng>gui","line":"INFO BESTLINE 6,9 6,7 8,9 7,9 7,10 9,8 6,8 5,9 8,11 9,12 8,10 8,8"}
+{"t":29955,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29955,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":29955,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":29955,"dir":"eng>gui","line":"MESSAGE Depth 9-15 | Eval 434 | Time 471ms | G10 G8 I10 H10 H11 J9 G9 F10 I12 J13 I11 I9"}
+{"t":29967,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":29977,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":29979,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":29979,"dir":"eng>gui","line":"INFO DEPTH 10"}
+{"t":29979,"dir":"eng>gui","line":"INFO SELDEPTH 17"}
+{"t":29980,"dir":"eng>gui","line":"INFO NODES 1029"}
+{"t":29980,"dir":"eng>gui","line":"INFO TOTALNODES 10951"}
+{"t":29980,"dir":"eng>gui","line":"INFO TOTALTIME 496"}
+{"t":29989,"dir":"eng>gui","line":"INFO SPEED 22212"}
+{"t":29994,"dir":"eng>gui","line":"INFO EVAL 434"}
+{"t":29994,"dir":"eng>gui","line":"INFO WINRATE 0.850178"}
+{"t":29994,"dir":"eng>gui","line":"INFO BESTLINE 6,9 6,7 8,9 7,9 7,10 9,8 6,8 5,9 8,11 9,12 8,10"}
+{"t":29994,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":29994,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":29994,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":29994,"dir":"eng>gui","line":"MESSAGE Depth 10-17 | Eval 434 | Time 510ms | G10 G8 I10 H10 H11 J9 G9 F10 I12 J13 I11"}
+{"t":29995,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":30017,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":30017,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":30017,"dir":"eng>gui","line":"INFO DEPTH 11"}
+{"t":30017,"dir":"eng>gui","line":"INFO SELDEPTH 13"}
+{"t":30017,"dir":"eng>gui","line":"INFO NODES 1081"}
+{"t":30017,"dir":"eng>gui","line":"INFO TOTALNODES 11302"}
+{"t":30021,"dir":"eng>gui","line":"INFO TOTALTIME 533"}
+{"t":30021,"dir":"eng>gui","line":"INFO SPEED 21204"}
+{"t":30023,"dir":"eng>gui","line":"INFO EVAL 434"}
+{"t":30023,"dir":"eng>gui","line":"INFO WINRATE 0.850178"}
+{"t":30024,"dir":"eng>gui","line":"INFO BESTLINE 6,9 6,7 8,9 7,9 7,10 9,8 6,8 5,9 8,11 9,12"}
+{"t":30024,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":30024,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":30024,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":30024,"dir":"eng>gui","line":"MESSAGE Depth 11-13 | Eval 434 | Time 540ms | G10 G8 I10 H10 H11 J9 G9 F10 I12 J13"}
+{"t":30025,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":30027,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":30027,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":30027,"dir":"eng>gui","line":"INFO DEPTH 12"}
+{"t":30027,"dir":"eng>gui","line":"INFO SELDEPTH 13"}
+{"t":30027,"dir":"eng>gui","line":"INFO NODES 1140"}
+{"t":30027,"dir":"eng>gui","line":"INFO TOTALNODES 11406"}
+{"t":30027,"dir":"eng>gui","line":"INFO TOTALTIME 543"}
+{"t":30027,"dir":"eng>gui","line":"INFO SPEED 21005"}
+{"t":30027,"dir":"eng>gui","line":"INFO EVAL 434"}
+{"t":30027,"dir":"eng>gui","line":"INFO WINRATE 0.850178"}
+{"t":30027,"dir":"eng>gui","line":"INFO BESTLINE 6,9 6,7 8,9 7,9 7,10 9,8 6,8 5,9 8,11 9,12"}
+{"t":30027,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":30027,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":30046,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":30046,"dir":"eng>gui","line":"MESSAGE Depth 12-13 | Eval 434 | Time 562ms | G10 G8 I10 H10 H11 J9 G9 F10 I12 J13"}
+{"t":30047,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":30324,"dir":"eng>gui","line":"INFO PV 0"}
+{"t":30324,"dir":"eng>gui","line":"INFO NUMPV 1"}
+{"t":30324,"dir":"eng>gui","line":"INFO DEPTH 13"}
+{"t":30324,"dir":"eng>gui","line":"INFO SELDEPTH 13"}
+{"t":30324,"dir":"eng>gui","line":"INFO NODES 1194"}
+{"t":30324,"dir":"eng>gui","line":"INFO TOTALNODES 14594"}
+{"t":30324,"dir":"eng>gui","line":"INFO TOTALTIME 840"}
+{"t":30324,"dir":"eng>gui","line":"INFO SPEED 17373"}
+{"t":30324,"dir":"eng>gui","line":"INFO EVAL 434"}
+{"t":30325,"dir":"eng>gui","line":"INFO WINRATE 0.850178"}
+{"t":30325,"dir":"eng>gui","line":"INFO BESTLINE 6,9 6,7 8,9 7,9 7,10 9,8 6,8 5,9 8,11 9,12"}
+{"t":30325,"dir":"eng>gui","line":"INFO PV DONE"}
+{"t":30325,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":30325,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":30326,"dir":"eng>gui","line":"MESSAGE Depth 13-13 | Eval 434 | Time 841ms | G10 G8 I10 H10 H11 J9 G9 F10 I12 J13"}
+{"t":30995,"dir":"gui>eng","line":"yxstop"}
+{"t":30998,"dir":"eng>gui","line":"MESSAGE REALTIME REFRESH"}
+{"t":30998,"dir":"eng>gui","line":"MESSAGE REALTIME BEST 6,9"}
+{"t":30998,"dir":"eng>gui","line":"MESSAGE Depth 13-16 | Eval 402 | Time 1514ms | G10 G8"}
+{"t":30999,"dir":"eng>gui","line":"MESSAGE Speed 18988 | Depth 13-16 | Eval 402 | Node 28K | Time 1515ms"}
+{"t":30999,"dir":"eng>gui","line":"6,9"}
+{"t":30999,"dir":"gui>eng","line":"yxblockreset"}
+{"t":31022,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":31022,"dir":"gui>eng","line":"7,7"}
+{"t":31022,"dir":"gui>eng","line":"7,8"}
+{"t":31022,"dir":"gui>eng","line":"6,9"}
+{"t":31022,"dir":"gui>eng","line":"done"}
+{"t":31023,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":31023,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":31023,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":31949,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":31949,"dir":"gui>eng","line":"7,7"}
+{"t":31949,"dir":"gui>eng","line":"7,8"}
+{"t":31949,"dir":"gui>eng","line":"done"}
+{"t":31950,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":31950,"dir":"eng>gui","line":"MESSAGE DATABASE 6 9 -1 0 0 0 0 "}
+{"t":31950,"dir":"eng>gui","line":"MESSAGE DATABASE 8 9 -1 0 0 0 0 "}
+{"t":31950,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":31950,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":34143,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":34143,"dir":"gui>eng","line":"7,7"}
+{"t":34143,"dir":"gui>eng","line":"7,8"}
+{"t":34143,"dir":"gui>eng","line":"6,9"}
+{"t":34143,"dir":"gui>eng","line":"done"}
+{"t":34144,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":34144,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":34144,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":47317,"dir":"gui>eng","line":"yxedittextdatabase \"녹취테스트"}
+{"t":47318,"dir":"gui>eng","line":"\"7,7"}
+{"t":47318,"dir":"gui>eng","line":"7,8"}
+{"t":47318,"dir":"gui>eng","line":"6,9"}
+{"t":47318,"dir":"gui>eng","line":"done"}
+{"t":47318,"dir":"gui>eng","line":"yxquerydatabasetext"}
+{"t":47318,"dir":"gui>eng","line":"7,7"}
+{"t":47318,"dir":"gui>eng","line":"7,8"}
+{"t":47318,"dir":"gui>eng","line":"6,9"}
+{"t":47318,"dir":"gui>eng","line":"done"}
+{"t":47384,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"녹취테스트"}
+{"t":47384,"dir":"eng>gui","line":"\u0000\""}
+{"t":54082,"dir":"gui>eng","line":"start 15"}
+{"t":54082,"dir":"gui>eng","line":"yxboard"}
+{"t":54082,"dir":"gui>eng","line":"7,7,1"}
+{"t":54082,"dir":"gui>eng","line":"7,8,2"}
+{"t":54082,"dir":"gui>eng","line":"done"}
+{"t":54082,"dir":"gui>eng","line":"yxshowforbid"}
+{"t":54082,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":54082,"dir":"gui>eng","line":"7,7"}
+{"t":54082,"dir":"gui>eng","line":"7,8"}
+{"t":54082,"dir":"gui>eng","line":"done"}
+{"t":54082,"dir":"eng>gui","line":"OK"}
+{"t":54114,"dir":"eng>gui","line":"FORBID ."}
+{"t":54130,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":54130,"dir":"eng>gui","line":"MESSAGE DATABASE 6 9 -1 0 0 0 1 "}
+{"t":54130,"dir":"eng>gui","line":"MESSAGE DATABASE 8 9 -1 0 0 0 1 "}
+{"t":54130,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":54130,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"\""}
+{"t":55199,"dir":"gui>eng","line":"yxquerydatabaseallt"}
+{"t":55200,"dir":"gui>eng","line":"7,7"}
+{"t":55200,"dir":"gui>eng","line":"7,8"}
+{"t":55200,"dir":"gui>eng","line":"6,9"}
+{"t":55200,"dir":"gui>eng","line":"done"}
+{"t":55200,"dir":"eng>gui","line":"MESSAGE DATABASE REFRESH"}
+{"t":55200,"dir":"eng>gui","line":"MESSAGE DATABASE DONE"}
+{"t":55207,"dir":"eng>gui","line":"MESSAGE DATABASE TEXT \"녹취테스트"}
+{"t":55207,"dir":"eng>gui","line":"\u0000\""}
+{"t":63821,"dir":"gui>eng","line":"yxdeletedatabaseone"}
+{"t":63821,"dir":"gui>eng","line":"7,7"}
+{"t":63821,"dir":"gui>eng","line":"7,8"}
+{"t":63821,"dir":"gui>eng","line":"6,9"}
+{"t":63821,"dir":"gui>eng","line":"done"}
+{"t":70566,"dir":"gui>eng","line":"yxsavedatabase"}
+{"t":70572,"dir":"eng>gui","line":"MESSAGE DATABASE SAVE START rapfi.db"}
+{"t":70572,"dir":"eng>gui","line":"MESSAGE DATABASE SAVE DONE"}
+{"t":70574,"dir":"eng>gui","line":"MESSAGE Saved database file using 7 ms."}
+{"t":73338,"dir":"gui>eng","line":"end"}
+{"t":73431,"dir":"exit","line":"0"}
