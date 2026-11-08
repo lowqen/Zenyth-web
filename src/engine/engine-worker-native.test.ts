@@ -16,6 +16,8 @@ import type { FromWorker, ToWorker } from "./engine-types";
 type Handler = (ev: { data: ToWorker }) => void;
 const g = globalThis as unknown as Record<string, unknown>;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** 워커의 콘솔 배치 간격(100ms)보다 조금 길게. */
+const CONSOLE_FLUSH_GAP_MS = 120;
 async function until(cond: () => boolean, timeoutMs = 5000) {
   const t0 = Date.now();
   while (!cond()) {
@@ -115,6 +117,10 @@ async function run(mode: "wasm" | "native", lines: readonly string[], seed: numb
     feed(lines.slice(i, i + n));
     i += n;
     if (i % 400 < n) await sleep(2);
+    // 콘솔 배치는 100ms 마다 비워지고 그 사이 5000줄을 넘으면 오래된 줄부터 버린다(링버퍼와 같은 설계).
+    // 실제 엔진은 100ms 에 5000줄을 내지 못하지만 빠른 CI 러너의 재생은 낸다 — 2000줄마다 배치 한 번이
+    // 비워질 틈을 준다(Z3 이후 CI 에서 review.jsonl 5218줄이 5000줄로 잘리던 것).
+    if (i % 2000 < n) await sleep(CONSOLE_FLUSH_GAP_MS);
   }
   await sleep(150);
   // 마지막 스냅샷이 줄 전부를 담게 — 스로틀(100ms)이 지난 뒤 상태를 건드리는 줄 하나.
