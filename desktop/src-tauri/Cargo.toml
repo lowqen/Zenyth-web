@@ -21,6 +21,8 @@ tauri-plugin-single-instance = "2.5"
 tauri-plugin-window-state = "2.5"
 tauri-plugin-updater = "2.14"
 serde = { version = "1", features = ["derive"] }
+# generate_context! 가 tauri.conf.json 의 plugins 칸(업데이터)을 serde_json::Value 로 펼친다.
+serde_json = "1"
 
 [profile.release]
 # 셸은 작게(계획 §6 «배포 크기»). 무거운 일은 웹뷰 · 엔진이 한다.

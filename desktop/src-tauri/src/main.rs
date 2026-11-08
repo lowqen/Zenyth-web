@@ -155,6 +155,7 @@ fn main() {
             engine::engine_open,
             engine::engine_write,
             engine::engine_close,
+            engine::engines_shutdown,
             settings::settings_read,
             settings::settings_write
         ])
@@ -167,14 +168,9 @@ fn main() {
         })
         .setup(|app| {
             mark(app.handle(), "setup");
-            // 업데이터는 앱 핸들이 생긴 뒤에 단다 — 설치판을 띄우기 직전(Windows 는 곧바로 프로세스를 끝낸다,
-            // RunEvent::Exit 가 오지 않는다) 엔진 프로세스를 닫아야 하기 때문이다.
-            let for_update = app.handle().clone();
-            app.handle().plugin(
-                tauri_plugin_updater::Builder::new()
-                    .on_before_exit(move || for_update.state::<engine::Engines>().close_all())
-                    .build(),
-            )?;
+            // 업데이터 플러그인 Builder 에는 «끝나기 전» 갈고리가 없다(UpdaterBuilder 에만 있고 JS 경로는 그것을
+            // 쓰지 않는다) — 설치 직전 엔진 닫기는 웹이 `engines_shutdown` 으로 부른다(updater.ts).
+            app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
             let cwd = std::env::current_dir().unwrap_or_default();
             let files = read_game_files(std::env::args().skip(1), &cwd);
             *app.state::<Pending>().0.lock().unwrap_or_else(|e| e.into_inner()) = files;

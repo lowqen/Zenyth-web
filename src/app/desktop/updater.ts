@@ -78,7 +78,9 @@ export async function installUpdate(): Promise<void> {
       setPhase({ kind: "downloading", done, total });
     });
     setPhase({ kind: "installing" });
-    // 엔진은 웹에서 죽이지 않는다 — 셸이 설치판을 띄우기 직전(`on_before_exit`)에 DB 를 저장시키고 닫는다.
+    // 설치판이 뜨면 업데이터가 곧바로 프로세스를 끝낸다(Exit 갈고리 없음) — 그 전에 셸이 로컬 엔진에
+    // DB 를 저장시키고 닫는다. 남은 엔진은 설치판이 덮어쓸 exe 를 잠근다.
+    await invoke("engines_shutdown");
     await update.install();
   } catch (e) {
     setPhase({ kind: "error", message: errorText(e) });

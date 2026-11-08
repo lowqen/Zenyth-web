@@ -590,6 +590,15 @@ pub async fn engine_write(engines: State<'_, Engines>, id: u32, text: String) ->
         .map_err(|e| e.to_string())
 }
 
+/// 업데이트 설치 직전 — 웹이 받기를 마치고 `install()` 바로 앞에서 부른다. Windows 에서 설치판을 띄우면
+/// 업데이터가 곧바로 프로세스를 끝내 `RunEvent::Exit` 가 오지 않으므로, 여기서 DB 를 저장시키고 닫아 둔다
+/// (남은 엔진은 설치판이 덮어쓸 exe 를 잠근다). 기다림은 셸의 비동기 풀에서 — 창은 멈추지 않는다.
+#[tauri::command]
+pub async fn engines_shutdown(engines: State<'_, Engines>) -> Result<(), String> {
+    engines.close_all();
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn engine_close(engines: State<'_, Engines>, id: u32) -> Result<(), String> {
     // 지도에서는 끝(`pump`)이 치운다 — 여기서는 죽이기만 해서 남은 줄과 끝이 웹에 닿게 한다.

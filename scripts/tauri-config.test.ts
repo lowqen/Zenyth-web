@@ -104,6 +104,16 @@ describe("배포 구성 (데스크톱 Z7)", () => {
     expect(desktopYml).toContain("gh release upload desktop-latest latest.json --clobber");
     expect(capability.permissions).toContain("updater:default");
     expect(mainRs).toContain("tauri_plugin_updater::Builder");
+    // generate_context! 가 plugins 칸을 serde_json 으로 펼친다 — 빠지면 셸이 컴파일되지 않는다.
+    expect(cargoToml).toMatch(/^serde_json = /m);
+  });
+
+  it("설치 직전 엔진 닫기: 웹이 부르는 명령 = 셸이 등록한 명령", () => {
+    expect(read("../src/app/desktop/updater.ts")).toMatch(
+      /invoke\("engines_shutdown"\);\s*await update\.install\(\)/,
+    );
+    expect(mainRs).toContain("engine::engines_shutdown");
+    expect(engineRs).toContain("pub async fn engines_shutdown");
   });
 
   it("동봉 엔진: CI 가 싣는 변형 = 셸이 고르는 변형, 설치 폴더 engine/", () => {
