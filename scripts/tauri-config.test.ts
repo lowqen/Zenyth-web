@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { siteHeaders } from "./headers.ts";
 import { GAME_FILE_FORMATS } from "../src/core/model/game-file.ts";
+import { NATIVE_BUILDS } from "../src/engine/engine-client.ts";
 
 /**
  * 데스크톱 셸(desktop/src-tauri) 설정이 웹의 원본과 어긋나지 않는가 — 데스크톱 Z2.
@@ -133,6 +134,9 @@ describe("배포 구성 (데스크톱 Z7)", () => {
     );
     const variants = [...new Set(shell)].map((f) => /windows-([a-z0-9]+)\.exe/.exec(f!)![1]);
     expect(variants).toEqual(["avx512vnni", "avx512", "avxvnni", "avx2", "sse"]);
+    // 엔진 선택창의 빌드 id = 셸 BUILDS 의 id(같은 순서). 웹이 보낸 id 를 셸이 모르면 기동이 거절된다.
+    const shellIds = [...engineRs.matchAll(/Build \{ id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+    expect(shellIds).toEqual([...NATIVE_BUILDS]);
     expect(desktopYml).toContain(`pbrain-rapfi-windows-{${variants.join(",")}}.exe`);
   });
 

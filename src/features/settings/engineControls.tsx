@@ -4,11 +4,15 @@ import {
   DEFAULT_REMOTE_HOST,
   DEFAULT_REMOTE_PORT,
   ENGINE_PREFERENCES,
-  isMultiVariant,
   isNativePreference,
+  isThreadedVariant,
+  nativeBuildOf,
+  nativeVariantOf,
   planOrder,
   preferenceBlocker,
+  type Capabilities,
   type EnginePreference,
+  type NativeBuilds,
 } from "../../engine/engine-client";
 import {
   AUTO_THREADS,
@@ -20,7 +24,7 @@ import {
   useSettingsStore,
 } from "./settingsStore";
 import { Segmented } from "../../components/controls";
-import { PREFERENCE_LABEL, VARIANT_LABEL } from "./engineLabels";
+import { BUILD_LABEL, PREFERENCE_LABEL, VARIANT_LABEL } from "./engineLabels";
 import { t } from "../../i18n/i18n";
 
 /**
@@ -36,9 +40,33 @@ import { t } from "../../i18n/i18n";
  * 네이티브 `<select>` 다 — 펼친 목록은 운영체제의 것이라야 키보드·스크린 리더·휴대폰
  * 휠이 그대로 돈다. 겉모양만 토큰으로 칠한다(`.select`, `color-scheme`).
  */
+/**
+ * 이 환경에서 그 항목을 못 고르는 까닭. 데스크톱은 동봉 빌드마다 셸이 알려 준 대로 — 이 CPU 가 못 돌리거나
+ * 파일이 없으면 꺼 둔다(못 도는 빌드를 띄우면 «잘못된 명령어»로 말없이 죽는다).
+ */
+function choiceBlocker(
+  caps: Capabilities,
+  builds: NativeBuilds | null,
+  p: EnginePreference,
+): string | null {
+  const base = preferenceBlocker(caps, p);
+  if (base) return base;
+  const build = nativeBuildOf(p);
+  const info = build ? builds?.builds.find((b) => b.id === build) : undefined;
+  if (!info) return null;
+  if (!info.supported) return t("이 CPU 가 지원하지 않는 명령어 집합입니다");
+  if (!info.present) return t("설치 폴더에 이 빌드가 없습니다");
+  return null;
+}
+
+/** 드롭다운 항목 — 웹은 WASM 넷, 데스크톱은 네이티브(자동 · 빌드 다섯) · 원격. */
+const choicesFor = (caps: Capabilities): EnginePreference[] =>
+  ENGINE_PREFERENCES.filter((p) => isNativePreference(p) === caps.native);
+
 export function EngineSelect() {
   const id = useId();
   const caps = useEngineStore((s) => s.capabilities);
+  const builds = useEngineStore((s) => s.nativeBuilds);
   const pref = useSettingsStore((s) => s.enginePreference);
   const update = useSettingsStore((s) => s.update);
   return (
@@ -54,10 +82,11 @@ export function EngineSelect() {
         disabled={!caps.variant && !caps.native}
         onChange={(e) => update({ enginePreference: e.target.value as EnginePreference })}
       >
-        {/* 네이티브 · 원격은 데스크톱(Z3)에서만 — 웹에서는 항목 자체를 보이지 않는다. */}
-        {ENGINE_PREFERENCES.filter((p) => caps.native || !isNativePreference(p)).map((p) => {
-          const why = preferenceBlocker(caps, p);
-          const name = t(PREFERENCE_LABEL[p]);
+        {/* 네이티브 · 원격은 데스크톱(Z3)에서만, WASM 은 웹에서만 — 서로 항목 자체를 보이지 않는다. */}
+        {choicesFor(caps).map((p) => {
+          const why = choiceBlocker(caps, builds, p);
+          const auto = p === "native" && builds?.auto ? ` → ${BUILD_LABEL[builds.auto]}` : "";
+          const name = t(PREFERENCE_LABEL[p]) + auto;
           return (
             <option key={p} value={p} disabled={why !== null && p !== pref} title={why ?? ""}>
               {why ? t("{name} (사용 불가)", { name }) : name}
@@ -72,22 +101,29 @@ export function EngineSelect() {
 /** 설정 화면의 「엔진」 줄 — 드롭다운과, 지금 무엇이 왜 떠 있는지. */
 export function EngineChoiceControl() {
   const caps = useEngineStore((s) => s.capabilities);
+  const builds = useEngineStore((s) => s.nativeBuilds);
   const status = useEngineStore((s) => s.status);
   const engine = useEngineStore((s) => s.engine);
   const pref = useSettingsStore((s) => s.enginePreference);
+  const path = useSettingsStore((s) => s.enginePath);
   const planned = planOrder(caps.variants, pref).order[0] ?? caps.variant;
-  const blocker = preferenceBlocker(caps, pref);
+  const blocker = choiceBlocker(caps, builds, pref);
   const shown = engine.variant ?? planned;
+  const target = nativeVariantOf(pref);
+  // 앱에 든 엔진이면 어느 빌드인지 — 고정한 것, 아니면 셸이 고를 것. 경로를 적었으면 그 파일이다.
+  const build =
+    shown === "native" && !path.trim() ? (nativeBuildOf(pref) ?? builds?.auto ?? null) : null;
   // 까닭(물러선 이유 · 못 쓰는 이유)은 툴팁으로 — 화면에는 무엇이 떴는지 한 줄만.
   const why =
     engine.fallbackReason ?? blocker ?? (pref === "auto" ? caps.threadsNote : null) ?? undefined;
   return (
     <div className="stack">
       <EngineSelect />
-      {caps.native && isNativePreference(pref) ? <NativeTargetField kind={pref} /> : null}
+      {caps.native && target ? <NativeTargetField kind={target} /> : null}
       <p className="srow__hint tnum" data-k="engine-variant" title={why}>
         {shown ?? t("실행 불가")}
         {shown ? ` · ${VARIANT_LABEL[shown]}` : ""}
+        {build ? ` · ${BUILD_LABEL[build]}` : ""}
         {engine.variant
           ? ` · ${t("실행 중")}`
           : status === "starting"
@@ -221,8 +257,9 @@ export function ThreadControl() {
     setDraft(null);
   };
   const cap = threadCap(cores, engine.maxThreads);
-  const single = engine.variant !== null && !isMultiVariant(engine.variant);
-  const wantsMulti = pref === "auto" || pref === "multi";
+  const single = engine.variant !== null && !isThreadedVariant(engine.variant);
+  // 네이티브는 제 스레드로 돈다 — 원격은 서버의 엔진이라 여기서 정하지만 서버 CPU 만큼만 쓴다.
+  const wantsMulti = pref === "auto" || pref === "multi" || isNativePreference(pref);
   const usable = caps.threads && wantsMulti && !single;
   const wanted = resolveThreads(v, cores);
   const options = [

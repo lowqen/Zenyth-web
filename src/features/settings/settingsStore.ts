@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { useEngineStore, MULTI_PV, threadCap, type EngineConfig } from "../../engine/engine-state";
-import { isEnginePreference, type EnginePreference } from "../../engine/engine-client";
+import {
+  isEnginePreference,
+  isNativePreference,
+  type EnginePreference,
+} from "../../engine/engine-client";
 import type { EngineCommand } from "../../engine/engine-types";
 import { DEFAULT_SIZE } from "../../core/model/move";
 import { msg } from "../../i18n/i18n";
@@ -136,7 +140,7 @@ export interface Settings {
 /**
  * 데스크톱의 기본 엔진은 **네이티브 Rapfi**(데스크톱 Z7 결정) — 셸 옆 `engine/` 에 CPU 별 변형을 동봉하고 셸이
  * 맞는 것을 고른다. WASM 은 웹뷰 안에 해시 · 가중치를 들고 있어 웹뷰가 451MB 까지 커지고(Z6 실측), 렌주 가중치만
- * 있다. 네이티브가 못 뜨면 WASM 으로 물러선다(`planOrder`).
+ * 있다. 2026-11-09 부터 데스크톱은 WASM 을 아예 싣지 않는다 — 선택은 네이티브 자동 · 빌드 고정 · 원격뿐이다.
  */
 export const DEFAULT_ENGINE_PREFERENCE = (desktop: boolean): EnginePreference =>
   desktop ? "native" : "auto";
@@ -194,6 +198,19 @@ const MAX_PATH_CHARS = 1024;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(v)));
 
+/**
+ * 저장된 엔진 선택. 데스크톱에는 WASM 이 없으므로 WASM 선택(옛 설정 · 웹에서 들여온 설정)은 네이티브 자동으로
+ * 읽는다. 웹의 네이티브 선택은 그대로 둔다 — 기동이 WASM 자동으로 물러서며 까닭을 남긴다(`EngineClient.start`).
+ */
+function enginePreferenceFor(
+  v: unknown,
+  fallback: EnginePreference,
+  desktop: boolean = IS_DESKTOP,
+): EnginePreference {
+  if (!isEnginePreference(v)) return fallback;
+  return desktop && !isNativePreference(v) ? "native" : v;
+}
+
 /** 저장된 값을 믿지 않는다 — 손으로 고친 값·옛 판의 값이 범위를 벗어날 수 있다. */
 export function sanitize(raw: Partial<Settings>): Settings {
   const d = DEFAULT_SETTINGS;
@@ -213,9 +230,7 @@ export function sanitize(raw: Partial<Settings>): Settings {
     vcThread: (vct === 1 || vct === 2 ? vct : 0) as VcThread,
     hashAutoClear: typeof raw.hashAutoClear === "boolean" ? raw.hashAutoClear : d.hashAutoClear,
     threads: clamp(num(raw.threads, d.threads), 0, 16),
-    enginePreference: isEnginePreference(raw.enginePreference)
-      ? raw.enginePreference
-      : d.enginePreference,
+    enginePreference: enginePreferenceFor(raw.enginePreference, d.enginePreference),
     enginePath: text(raw.enginePath, d.enginePath),
     engineRemote: text(raw.engineRemote, d.engineRemote),
     autoBoot: typeof raw.autoBoot === "boolean" ? raw.autoBoot : d.autoBoot,

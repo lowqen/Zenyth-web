@@ -6,8 +6,10 @@ import {
   detectCapabilities,
   isNativeVariant,
   isThreadedVariant,
+  nativeBuildOf,
   nativeSpecFor,
   type Capabilities,
+  type NativeBuilds,
   type EnginePreference,
   type EngineVariant,
   type FsResult,
@@ -24,6 +26,7 @@ import {
   type Placement,
 } from "./engine-types";
 import { toEvalView, type EvalView } from "./eval-view";
+import { nativeBuilds } from "./engine-transport";
 import { t } from "../i18n/i18n";
 
 /**
@@ -108,6 +111,11 @@ interface EngineState {
    */
   nativeTarget: NativeTarget;
   setNativeTarget: (t: NativeTarget) => void;
+  /**
+   * 데스크톱이 동봉한 네이티브 빌드와 이 CPU 가 돌릴 수 있는지(셸 `engine_builds`). 엔진 선택창이 빌드마다
+   * 쓸 수 있는지 보인다. 웹이거나 아직 모르면 null.
+   */
+  nativeBuilds: NativeBuilds | null;
   /**
    * 엔진이 둘 규칙(`INFO RULE` 번호: 프리스타일 0 · 스탠다드 1 · 렌주 4). 렌주 밖의 둘은 네이티브 · 원격
    * 엔진만 받는다 — WASM 은 언제나 렌주로 뜬다(데스크톱 Z4). 떠 있는 네이티브 엔진에는 곧바로 보낸다
@@ -477,7 +485,8 @@ export const useEngineStore = create<EngineState>((set, get) => {
       // 띄울 변형마다 — 멀티에서 단일로 물러서면 thread_num 은 1 이 된다.
       bootSettings: (variant) =>
         bootCommands(config, isThreadedVariant(variant), get().capabilities.hardwareConcurrency),
-      nativeSpec: (variant) => nativeSpecFor(variant, get().nativeTarget),
+      nativeSpec: (variant) =>
+        nativeSpecFor(variant, get().nativeTarget, nativeBuildOf(get().enginePreference)),
       rule: () => (bootRule = get().ruleId),
       onBooted: (info) => {
         if (client !== c) return;
@@ -582,6 +591,7 @@ export const useEngineStore = create<EngineState>((set, get) => {
         client!.send({ kind: "rule", id });
     },
 
+    nativeBuilds: null,
     nativeTarget: { path: "", remote: "" },
     setNativeTarget: (next) => {
       const cur = get().nativeTarget;
@@ -771,4 +781,11 @@ if (typeof window !== "undefined") {
 if (typeof window !== "undefined") {
   (window as unknown as { __rapfiConsole: () => readonly string[] }).__rapfiConsole = () =>
     useEngineStore.getState().console;
+}
+
+// 데스크톱: 동봉 빌드 목록을 한 번 받아 둔다(엔진 선택창이 빌드마다 쓸 수 있는지 보인다).
+if (useEngineStore.getState().capabilities.native) {
+  void nativeBuilds().then((b) => {
+    if (b) useEngineStore.setState({ nativeBuilds: b });
+  });
 }

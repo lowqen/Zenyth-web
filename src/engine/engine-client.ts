@@ -126,11 +126,37 @@ export function planVariants(o: {
  * 고른 것이 기동에 실패하면 **더 낮은 쪽으로** 물러선다(멀티 → 단일, relaxed → 일반).
  * 고른 것을 이 환경에서 아예 못 쓰면 쓸 수 있는 가장 가까운 것으로 띄우고 까닭을 남긴다.
  */
-export type EnginePreference = "auto" | "multi" | "relaxed" | "simd" | "native" | "remote";
+export type EnginePreference =
+  "auto" | "multi" | "relaxed" | "simd" | "native" | `native-${NativeBuild}` | "remote";
 
 /**
- * `native` · `remote` 는 데스크톱(Z3)에서만 고를 수 있다. 실패하면(실행 파일이 없거나 서버가 꺼져 있으면) 이
- * 환경의 WASM 순서로 물러서고 까닭을 남긴다 — 엔진 없이 멈춰 있는 것보다 낫다.
+ * 데스크톱이 동봉한 공식 Rapfi 의 Windows 빌드 — 빠른 순. 셸 `BUILDS`(`desktop/src-tauri/src/engine.rs`)와 같은
+ * id · 같은 순서다(tauri-config.test.ts 가 대조). SSE 는 하한선이라 어느 x64 CPU 에서나 돈다.
+ */
+export const NATIVE_BUILDS = ["avx512vnni", "avx512", "avxvnni", "avx2", "sse"] as const;
+export type NativeBuild = (typeof NATIVE_BUILDS)[number];
+
+/** 셸이 알려 주는 동봉 빌드 하나(`engine.rs` `BuildInfo`). */
+export interface NativeBuildInfo {
+  id: NativeBuild;
+  file: string;
+  /** 이 CPU 가 돌릴 수 있는가. */
+  supported: boolean;
+  /** 설치 폴더 `engine/` 에 파일이 있는가. */
+  present: boolean;
+}
+
+/** `engine.rs` `BuildsReport` — 동봉 빌드 전부(빠른 순)와 «자동»이 고를 빌드. */
+export interface NativeBuilds {
+  builds: NativeBuildInfo[];
+  auto: NativeBuild | null;
+  engineDir: string;
+}
+
+/**
+ * 네이티브 · 원격은 데스크톱(Z3)에서만 고를 수 있다. **데스크톱에는 WASM 이 없다** — 셸이 띄우는 네이티브
+ * Rapfi 가 엔진의 전부이고, `native` 는 이 CPU 가 돌리는 가장 빠른 빌드, `native-<빌드>` 는 그 빌드를 고정한다.
+ * 원격이 실패하면(서버가 꺼져 있으면) 로컬 네이티브(자동)로 물러선다. 웹은 거꾸로 WASM 넷만 보인다.
  */
 export const ENGINE_PREFERENCES: readonly EnginePreference[] = [
   "auto",
@@ -138,11 +164,20 @@ export const ENGINE_PREFERENCES: readonly EnginePreference[] = [
   "relaxed",
   "simd",
   "native",
+  ...NATIVE_BUILDS.map((b) => `native-${b}` as const),
   "remote",
 ];
 
-export const isNativePreference = (p: EnginePreference): p is NativeVariant =>
-  p === "native" || p === "remote";
+export const isNativePreference = (p: EnginePreference): boolean =>
+  p === "native" || p === "remote" || p.startsWith("native-");
+
+/** 고른 엔진이 띄울 셸 변형 — WASM 선택이면 null. */
+export const nativeVariantOf = (p: EnginePreference): NativeVariant | null =>
+  p === "remote" ? "remote" : isNativePreference(p) ? "native" : null;
+
+/** 고른 엔진이 고정한 동봉 빌드 — `native`(자동) · 원격 · WASM 이면 null. */
+export const nativeBuildOf = (p: EnginePreference): NativeBuild | null =>
+  p.startsWith("native-") ? (p.slice("native-".length) as NativeBuild) : null;
 
 export const isEnginePreference = (v: unknown): v is EnginePreference =>
   typeof v === "string" && (ENGINE_PREFERENCES as readonly string[]).includes(v);
@@ -158,10 +193,11 @@ export function planOrder(
   const wasm = variants.filter((v) => !isNativeVariant(v));
   const multis = wasm.filter((v) => isMultiVariant(v));
   const singles = wasm.filter((v) => !isMultiVariant(v));
+  const native = nativeVariantOf(pref);
+  // 원격이 안 되면 이 컴퓨터의 엔진(자동 빌드)으로 — 고정 빌드가 안 되면 까닭을 그대로 보인다(고른 것이 따로 있다).
+  if (native === "remote") return { order: ["remote", "native", ...wasm], note: null };
+  if (native) return { order: ["native", ...wasm], note: null };
   switch (pref) {
-    case "native":
-    case "remote":
-      return { order: [pref, ...wasm], note: null };
     case "auto":
       return { order: [...wasm], note: null };
     case "multi":
@@ -178,7 +214,7 @@ export function planOrder(
             order: singles,
             note: t("이 브라우저에서는 relaxed SIMD 를 쓸 수 없어 Standard SIMD 로 띄웠습니다"),
           };
-    case "simd":
+    default:
       return { order: singles.filter((v) => v === "single-simd128"), note: null };
   }
 }
@@ -186,11 +222,9 @@ export function planOrder(
 /** 드롭다운의 각 항목을 이 환경에서 고를 수 있는가 — 못 고르면 그 까닭. */
 export function preferenceBlocker(caps: Capabilities, pref: EnginePreference): string | null {
   if (isNativePreference(pref)) return caps.native ? null : t("데스크톱 앱에서만 쓸 수 있습니다");
+  if (caps.native) return t("데스크톱 앱은 네이티브 엔진만 씁니다");
   if (!caps.simd) return caps.note;
   switch (pref) {
-    case "auto":
-    case "simd":
-      return null;
     case "multi":
       return caps.threads ? null : caps.threadsNote;
     case "relaxed":
@@ -198,6 +232,8 @@ export function preferenceBlocker(caps: Capabilities, pref: EnginePreference): s
       return caps.relaxedSimd
         ? t("주소의 ?relaxed=0 으로 relaxed SIMD 를 꺼 두었습니다")
         : t("이 브라우저는 WebAssembly relaxed SIMD 를 지원하지 않습니다");
+    default:
+      return null;
   }
 }
 
@@ -220,8 +256,29 @@ export interface Capabilities {
   /** 멀티를 못 쓰는 까닭(화면이 그대로 말한다). 쓸 수 있으면 null. */
   threadsNote: string | null;
   note: string | null;
-  /** 셸 너머의 엔진(`native` · `remote`)을 고를 수 있는가 — 데스크톱 Z3. */
+  /** 셸 너머의 엔진(`native` · `remote`)을 고를 수 있는가 — 데스크톱 Z3. 참이면 WASM 은 없다(`variants` 가 빈다). */
   native: boolean;
+}
+
+/**
+ * 데스크톱의 능력표 — WASM 을 아예 싣지 않는다(셸 CI 가 `dist/engine` 을 뺀다). 엔진은 셸이 띄우는 네이티브
+ * Rapfi 하나이고 제 스레드로 돈다. `note` 는 WASM 선택(옛 설정)을 왜 못 쓰는지다.
+ */
+export function desktopCapabilities(): Capabilities {
+  return {
+    simd: false,
+    relaxedSimd: false,
+    crossOriginIsolated: typeof crossOriginIsolated === "boolean" ? crossOriginIsolated : false,
+    sharedArrayBuffer: typeof SharedArrayBuffer === "function",
+    hardwareConcurrency:
+      typeof navigator === "undefined" ? null : (navigator.hardwareConcurrency ?? null),
+    variant: null,
+    variants: [],
+    threads: true,
+    threadsNote: null,
+    native: true,
+    note: t("데스크톱 앱은 네이티브 엔진만 씁니다"),
+  };
 }
 
 /**
@@ -235,6 +292,7 @@ export interface Capabilities {
  * 기동 핸드셰이크가 실패해 단일로 물러선다.
  */
 export function detectCapabilities(): Capabilities {
+  if (nativeAvailable()) return desktopCapabilities();
   let simd: boolean;
   try {
     simd = WebAssembly.validate(SIMD_PROBE);
@@ -277,7 +335,7 @@ export function detectCapabilities(): Capabilities {
     variants,
     threads,
     threadsNote: threads ? null : threadsNote,
-    native: nativeAvailable(),
+    native: false,
     note: simd
       ? null
       : t(
@@ -500,6 +558,8 @@ export class EngineClient {
    * 오류·상태 이벤트를 내지 않고 다음 변형도 띄우지 않는다.
    */
   async start(preference: EnginePreference = "auto"): Promise<void> {
+    // 데스크톱에는 WASM 이 없다 — 옛 설정의 WASM 선택은 네이티브 자동으로 읽는다.
+    if (this.capabilities.native && !isNativePreference(preference)) preference = "native";
     const wantNative = isNativePreference(preference);
     const native = wantNative && this.capabilities.native;
     const best = this.capabilities.variant;
@@ -999,8 +1059,13 @@ export interface NativeTarget {
 export function nativeSpecFor(
   variant: NativeVariant,
   target: NativeTarget,
+  build: NativeBuild | null = null,
 ): NativeEngineSpec | string {
-  if (variant === "native") return { kind: "local", path: target.path.trim() };
+  if (variant === "native") {
+    const path = target.path.trim();
+    // 경로를 적었으면 그 파일이 이긴다 — 빌드 고정은 앱에 든 엔진에만 뜻이 있다.
+    return build && !path ? { kind: "local", path, build } : { kind: "local", path };
+  }
   if (!target.remote.trim()) return defaultNativeSpec("remote");
   const addr = parseRemoteAddress(target.remote, DEFAULT_REMOTE_PORT);
   return addr

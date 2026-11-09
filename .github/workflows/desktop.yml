@@ -1,7 +1,8 @@
 # zenyth-desktop(Tauri 셸) 빌드 · 배포 — 데스크톱 Z2 · Z7.
 #
 # 개발 기기에는 Rust · MSVC 를 깔지 않고 이 잡이 Windows 러너에서 셸을 빌드한다(2026-11-08 사용자 결정).
-# 웹 번들 · WASM 엔진 조립은 deploy.yml 과 같은 단계를 그대로 쓴다 — 셸은 dist/ 를 실을 뿐이다.
+# 웹 번들은 deploy.yml 과 같은 `pnpm build` 이되 **WASM 엔진은 싣지 않는다**(2026-11-09 결정) — 데스크톱의 엔진은
+# 동봉한 네이티브 Rapfi(빌드 다섯 · 엔진 선택창에서 고정 가능)와 원격 TCP 뿐이다.
 #
 # 산출물(아티팩트):
 #   - Zenyth_<ver>_x64-setup.exe (+ .sig)   설치판(NSIS, 사용자 단위) · 자동 업데이트 서명
@@ -9,7 +10,7 @@
 #   - zenyth-desktop.exe · Cargo.lock       실기 스모크 · perf-shell 용, 잠금 파일 회수용
 #
 # 기본 엔진은 네이티브 Rapfi(데스크톱 Z7 결정): 공식 릴리스(dhbloo/rapfi, 가중치 CC0)를 sha256 으로 고정해 받아
-# engine/ 에 Windows 변형 5개 · 가중치 · config 를 싣고, 셸(engine.rs `variant_order`)이 CPU 를 보고 고른다.
+# engine/ 에 Windows 변형 5개 · 가중치 · config 를 싣고, 셸(engine.rs `BUILDS`)이 CPU 를 보고 고른다(«자동»).
 # RenjuNet 파생 데이터 · rapfi.db 는 싣지 않는다(사용자 반입).
 #
 # 릴리스: `desktop-v<버전>` 태그를 올리면 «release» 잡이 GitHub 릴리스를 만들고, 자동 업데이트가 읽는
@@ -35,8 +36,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # deploy.yml 과 같은 엔진 릴리스(src/engine/engine-manifest.json 의 tag) — WASM 폴백.
-  ENGINE_TAG: engine-3c94c2a9-a6
   # 동봉 네이티브 엔진 — 공식 Rapfi 릴리스와 그 압축 파일의 sha256(GitHub 자산 digest).
   # 바꾸면 src/features/settings/AboutPanel.tsx 의 RAPFI_NATIVE_TAG 도 같이(tauri-config.test.ts 가 대조).
   RAPFI_NATIVE_TAG: "250615"
@@ -66,16 +65,12 @@ jobs:
       - shell: bash
         run: pnpm build
 
-      - name: WASM 엔진 조립(폴백)
+      # public/engine 의 WASM 글루 · .wasm 이 dist/ 로 복사돼 온다 — 데스크톱은 쓰지 않으므로 셸에 싣지 않는다.
+      - name: WASM 엔진 빼기
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p dist/engine
-          node tools/ci/release-download.mjs "$ENGINE_TAG" dist/engine 'rapfi-*.js' 'rapfi-*.wasm' 'rapfi.data' 'engine-manifest.json' \
-            || { echo "::error::엔진 릴리스 $ENGINE_TAG 를 받지 못했습니다."; exit 1; }
-          echo '{ "type": "commonjs" }' > dist/engine/package.json
-          pnpm exec tsx scripts/verify-engine.ts
+          rm -rf dist/engine
+          if find dist -name '*.wasm' | grep -q .; then echo "::error::dist 에 .wasm 이 남았습니다"; exit 1; fi
 
       # 소스맵은 셸 exe 에 싣지 않는다(배포와 같다 — 원본 TS 가 드러나지 않게, 크기도 준다).
       - name: 소스맵 빼기

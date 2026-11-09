@@ -1,6 +1,6 @@
 # zenyth-desktop — Zenyth Web 을 감싸는 Tauri 2 셸.
 # 설계 · 결정 기록: gomoku-dev test-yixin/docs/개발_핸드북.md §14 (데스크톱 계획 Z0~Z7 을 병합한 절).
-# 웹 빌드(`pnpm build` → dist/)를 그대로 싣고, 기본 엔진은 셸 옆 engine/ 에 동봉한 네이티브 Rapfi 다(WASM 은 폴백).
+# 웹 빌드(`pnpm build` → dist/, WASM 엔진은 뺀다)를 싣고, 엔진은 셸 옆 engine/ 에 동봉한 네이티브 Rapfi 다.
 # 버전은 tauri.conf.json 과 같아야 한다(scripts/tauri-config.test.ts) — 릴리스 태그 desktop-v<버전>.
 [package]
 name = "zenyth-desktop"

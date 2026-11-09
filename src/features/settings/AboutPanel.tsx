@@ -44,14 +44,16 @@ const NATIVE_RAPFI: Component = {
   license: "GPL-3.0-or-later",
 };
 
+const WASM_RAPFI: Component = {
+  name: "Rapfi",
+  href: "https://github.com/dhbloo/rapfi",
+  role: msg("탐색 엔진(WebAssembly 빌드)"),
+  license: "GPL-3.0-or-later",
+};
+
 const COMPONENTS: readonly Component[] = [
-  {
-    name: "Rapfi",
-    href: "https://github.com/dhbloo/rapfi",
-    role: msg("탐색 엔진(WebAssembly 빌드)"),
-    license: "GPL-3.0-or-later",
-  },
-  ...(IS_DESKTOP ? [NATIVE_RAPFI] : []),
+  // 데스크톱은 WASM 을 싣지 않는다(desktop.yml «WASM 엔진 빼기»).
+  IS_DESKTOP ? NATIVE_RAPFI : WASM_RAPFI,
   {
     name: "rapfi-networks",
     href: "https://github.com/dhbloo/rapfi-networks",

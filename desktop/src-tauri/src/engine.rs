@@ -52,8 +52,14 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum EngineSpec {
-    /// `path` 가 비면 셸 옆 `engine/` 의 동봉 변형(CPU 에 맞는 것) → `engine/rapfi.exe` → `rapfi.exe` 순으로 찾는다.
-    Local { path: String },
+    /// `path` 가 있으면 그 파일(폴더면 그 안에서 고른다). 비었으면 셸 옆 `engine/` 의 동봉 빌드 —
+    /// `build` 를 주면 그 빌드(`BUILDS` 의 id, 이 CPU 가 못 돌리면 거절), 없으면 이 CPU 에 맞는 가장 빠른 것
+    /// → `engine/rapfi.exe` → `rapfi.exe` 순.
+    Local {
+        path: String,
+        #[serde(default)]
+        build: Option<String>,
+    },
     Remote { host: String, port: u16 },
 }
 
@@ -350,33 +356,40 @@ impl CpuIsa {
     }
 }
 
-/// 이 CPU 가 돌릴 수 있는 동봉 변형(공식 Rapfi 릴리스 250615 의 Windows 파일 이름) — 빠른 순.
-/// SSE 변형은 하한선으로 언제나 끝에 둔다.
+/// 동봉 빌드 한 벌 — 웹이 쓰는 id, 공식 Rapfi 릴리스 250615 의 Windows 파일 이름, 이 CPU 가 돌릴 수 있는가.
+pub struct Build {
+    pub id: &'static str,
+    pub file: &'static str,
+    runs: fn(CpuIsa) -> bool,
+}
+
+/// 동봉 빌드 — 빠른 순. SSE 는 하한선이라 언제나 돈다. 웹 `NATIVE_BUILDS`(`engine-client.ts`)와 같은 순서 ·
+/// 같은 id 다(tauri-config.test.ts 가 대조한다).
+pub const BUILDS: [Build; 5] = [
+    Build { id: "avx512vnni", file: "pbrain-rapfi-windows-avx512vnni.exe", runs: |i| i.avx512vnni },
+    Build { id: "avx512", file: "pbrain-rapfi-windows-avx512.exe", runs: |i| i.avx512 },
+    Build { id: "avxvnni", file: "pbrain-rapfi-windows-avxvnni.exe", runs: |i| i.avxvnni },
+    Build { id: "avx2", file: "pbrain-rapfi-windows-avx2.exe", runs: |i| i.avx2 },
+    Build { id: "sse", file: "pbrain-rapfi-windows-sse.exe", runs: |_| true },
+];
+
+/// 이 CPU 가 돌릴 수 있는 동봉 빌드의 파일 이름 — 빠른 순, SSE 가 끝.
 pub fn variant_order(isa: CpuIsa) -> Vec<&'static str> {
-    let mut v = Vec::with_capacity(5);
-    if isa.avx512vnni {
-        v.push("pbrain-rapfi-windows-avx512vnni.exe");
-    }
-    if isa.avx512 {
-        v.push("pbrain-rapfi-windows-avx512.exe");
-    }
-    if isa.avxvnni {
-        v.push("pbrain-rapfi-windows-avxvnni.exe");
-    }
-    if isa.avx2 {
-        v.push("pbrain-rapfi-windows-avx2.exe");
-    }
-    v.push("pbrain-rapfi-windows-sse.exe");
-    v
+    BUILDS.iter().filter(|b| (b.runs)(isa)).map(|b| b.file).collect()
+}
+
+/// 셸 옆 `engine/` — 설치판 · 포터블 모두 셸 exe 옆이다.
+fn exe_dir() -> PathBuf {
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
+        .unwrap_or_default()
 }
 
 /// 로컬 엔진 실행 파일 — 지정한 경로, 아니면 셸 옆 `engine/` 에 동봉한 변형 중 이 CPU 에 맞는 가장 빠른 것
 /// (`variant_order`), 그다음 예전 자리 `engine/rapfi.exe` → `rapfi.exe`.
-fn resolve_local(path: &str) -> Result<PathBuf, String> {
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
-        .unwrap_or_default();
+fn resolve_local(path: &str, build: Option<&str>) -> Result<PathBuf, String> {
+    let exe_dir = exe_dir();
     let given = clean_path(path);
     if !given.is_empty() {
         let p = PathBuf::from(given);
@@ -396,6 +409,9 @@ fn resolve_local(path: &str) -> Result<PathBuf, String> {
         return Err(format!("파일이 없습니다: {}", p.display()));
     }
     let engine_dir = exe_dir.join("engine");
+    if let Some(id) = build.filter(|b| !b.is_empty()) {
+        return pick_build(&engine_dir, id, CpuIsa::detect());
+    }
     find_in(&engine_dir, &[])
         .or_else(|| Some(exe_dir.join("rapfi.exe")).filter(|p| p.is_file()))
         .ok_or_else(|| {
@@ -404,6 +420,65 @@ fn resolve_local(path: &str) -> Result<PathBuf, String> {
                 engine_dir.display()
             )
         })
+}
+
+/// 사용자가 고른 동봉 빌드. 이 CPU 가 못 돌리는 빌드는 띄우지 않는다 — «잘못된 명령어»로 죽은 엔진은
+/// 까닭을 말하지 못한다.
+fn pick_build(dir: &Path, id: &str, isa: CpuIsa) -> Result<PathBuf, String> {
+    let b = BUILDS
+        .iter()
+        .find(|b| b.id == id)
+        .ok_or_else(|| format!("알 수 없는 엔진 빌드입니다: {id}"))?;
+    if !(b.runs)(isa) {
+        return Err(format!("이 CPU 는 {} 빌드를 돌릴 수 없습니다 (명령어 집합 미지원)", b.id));
+    }
+    let p = dir.join(b.file);
+    if p.is_file() {
+        Ok(p)
+    } else {
+        Err(format!("동봉 엔진 파일이 없습니다: {}", p.display()))
+    }
+}
+
+/// 엔진 선택창이 보여 줄 동봉 빌드 하나(웹 `NativeBuildInfo`).
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BuildInfo {
+    id: &'static str,
+    file: &'static str,
+    /// 이 CPU 가 돌릴 수 있는가.
+    supported: bool,
+    /// `engine/` 에 파일이 있는가.
+    present: bool,
+}
+
+/// 웹 `NativeBuilds` — 동봉 빌드 전부(빠른 순)와, 자동이 고를 빌드.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BuildsReport {
+    builds: Vec<BuildInfo>,
+    auto: Option<&'static str>,
+    engine_dir: String,
+}
+
+fn builds_report(dir: &Path, isa: CpuIsa) -> BuildsReport {
+    let builds: Vec<BuildInfo> = BUILDS
+        .iter()
+        .map(|b| BuildInfo {
+            id: b.id,
+            file: b.file,
+            supported: (b.runs)(isa),
+            present: dir.join(b.file).is_file(),
+        })
+        .collect();
+    let auto = builds.iter().find(|b| b.supported && b.present).map(|b| b.id);
+    BuildsReport { builds, auto, engine_dir: dir.display().to_string() }
+}
+
+/// 엔진 선택창 — 동봉 빌드마다 이 CPU 가 돌릴 수 있는지 · 파일이 있는지.
+#[tauri::command]
+pub fn engine_builds() -> BuildsReport {
+    builds_report(&exe_dir().join("engine"), CpuIsa::detect())
 }
 
 /// 설정 칸에 붙여 넣은 경로 다듬기 — 탐색기 «경로로 복사»가 붙이는 큰따옴표와 앞뒤 공백을 뗀다.
@@ -470,6 +545,31 @@ mod tests {
                 SSE,
             ]
         );
+    }
+
+    #[test]
+    fn chosen_build_must_run_on_this_cpu() {
+        let dir = std::env::temp_dir();
+        let err = pick_build(&dir, "avx512", CpuIsa::default()).unwrap_err();
+        assert!(err.contains("avx512"), "{err}");
+        assert!(pick_build(&dir, "nope", CpuIsa::default()).unwrap_err().contains("nope"));
+    }
+
+    #[test]
+    fn report_lists_every_build_and_auto_is_fastest_present() {
+        let dir = std::env::temp_dir().join(format!("zenyth-builds-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("pbrain-rapfi-windows-avx2.exe"), b"x").unwrap();
+        std::fs::write(dir.join(SSE), b"x").unwrap();
+        let isa = CpuIsa { avx2: true, avxvnni: true, ..CpuIsa::default() };
+        let r = builds_report(&dir, isa);
+        let ids: Vec<_> = r.builds.iter().map(|b| b.id).collect();
+        assert_eq!(ids, ["avx512vnni", "avx512", "avxvnni", "avx2", "sse"]);
+        // avxvnni 는 돌지만 파일이 없다 — 자동은 있는 것 중 가장 빠른 avx2.
+        assert_eq!(r.auto, Some("avx2"));
+        assert!(r.builds[2].supported && !r.builds[2].present);
+        assert!(pick_build(&dir, "avx2", isa).is_ok());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -556,8 +656,8 @@ pub async fn engine_open(
     };
     let (writer, conn, readers): (Box<dyn Write + Send>, Conn, Vec<Box<dyn Read + Send>>) =
         match spec {
-            EngineSpec::Local { path } => {
-                let exe = resolve_local(&path)?;
+            EngineSpec::Local { path, build } => {
+                let exe = resolve_local(&path, build.as_deref())?;
                 let dir = exe.parent().map(|d| d.to_path_buf()).unwrap_or_default();
                 let mut cmd = Command::new(&exe);
                 // 엔진은 작업 폴더에서 config.toml · 가중치 · rapfi.db 를 찾는다.

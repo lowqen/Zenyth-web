@@ -1378,7 +1378,10 @@ export const EN: Readonly<Record<string, string>> = {
     "Leave empty for the bundled engine (the build matched to this CPU)",
   "네이티브 Rapfi": "Native Rapfi",
   "원격 서버 Rapfi": "Remote server Rapfi",
-  "네이티브 Rapfi (이 컴퓨터)": "Native Rapfi (this computer)",
+  "네이티브 Rapfi · 자동 (이 CPU 최적)": "Native Rapfi · auto (best for this CPU)",
+  "데스크톱 앱은 네이티브 엔진만 씁니다": "The desktop app uses native engines only",
+  "이 CPU 가 지원하지 않는 명령어 집합입니다": "This CPU does not support the instruction set",
+  "설치 폴더에 이 빌드가 없습니다": "This build is not in the install folder",
   "원격 서버 (TCP)": "Remote server (TCP)",
   "엔진이 직접 읽음": "Read by the engine itself",
   "파일이 없습니다. 설정을 바꾸면 새로 만듭니다":

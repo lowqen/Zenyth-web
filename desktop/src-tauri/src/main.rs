@@ -154,6 +154,7 @@ fn main() {
             take_open_files,
             boot_marks,
             is_portable,
+            engine::engine_builds,
             engine::engine_open,
             engine::engine_write,
             engine::engine_close,

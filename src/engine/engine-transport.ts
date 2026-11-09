@@ -1,4 +1,5 @@
 import type { FromWorker, NativeEngineSpec, ToWorker } from "./engine-types";
+import type { NativeBuilds } from "./engine-client";
 import { t } from "../i18n/i18n";
 
 /**
@@ -77,6 +78,8 @@ export interface NativeBridge {
   open(spec: NativeEngineSpec, onEvent: (e: NativeEvent) => void): Promise<number>;
   write(id: number, text: string): Promise<void>;
   close(id: number): Promise<void>;
+  /** 동봉 빌드 목록(엔진 선택창용) — 셸 `engine_builds`. 시험용 다리는 빼도 된다. */
+  builds?(): Promise<NativeBuilds>;
 }
 
 /**
@@ -224,6 +227,16 @@ export const nativeAvailable = (): boolean => bridgePromise !== null;
 
 export const nativeBridge = (): Promise<NativeBridge | null> =>
   bridgePromise ?? Promise.resolve(null);
+
+/** 셸이 아는 동봉 빌드(엔진 선택창). 웹이거나 셸이 답하지 않으면 null. */
+export async function nativeBuilds(): Promise<NativeBuilds | null> {
+  try {
+    const b = await nativeBridge();
+    return (await b?.builds?.()) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /** `"host:port"` 를 푼다. 포트가 없으면 `defaultPort`. 형식이 아니면 null. */
 export function parseRemoteAddress(

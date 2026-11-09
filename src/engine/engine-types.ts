@@ -451,12 +451,21 @@ export type FromWorker =
 
 /**
  * 네이티브 엔진이 어디에 있나(데스크톱 Z3). 셸(`desktop/src-tauri/src/engine.rs`)의 `EngineSpec` 과 같은 모양.
- *   - `local`  사이드카 실행 파일. `path` 가 비면 셸 옆 `engine/` 의 동봉 변형(engine.rs `variant_order`) → `engine/rapfi.exe` → `rapfi.exe` 순으로 찾는다.
+ *   - `local`  사이드카 실행 파일. `path` 가 비면 셸 옆 `engine/` 의 동봉 빌드(`build`, 없으면 engine.rs `BUILDS` 중 이 CPU 최적) → `engine/rapfi.exe` → `rapfi.exe` 순으로 찾는다.
  *              작업 폴더는 실행 파일의 폴더다(엔진이 `config.toml` · 가중치를 거기서 읽는다).
  *   - `remote` 원격 엔진의 TCP(지금 `engine_bak.exe` 프록시가 붙는 `rapfi-server:5050`). 줄 프로토콜 그대로다.
  */
 export type NativeEngineSpec =
-  { kind: "local"; path: string } | { kind: "remote"; host: string; port: number };
+  | {
+      kind: "local";
+      path: string;
+      /**
+       * 동봉 빌드(`NativeBuild` — avx512vnni · avx512 · avxvnni · avx2 · sse). `path` 가 빌 때만 본다. 없으면 셸이
+       * 이 CPU 에 맞는 가장 빠른 것을 고른다. 이 CPU 가 못 돌리는 빌드는 셸이 거절한다.
+       */
+      build?: string;
+    }
+  | { kind: "remote"; host: string; port: number };
 
 /**
  * `postMessage` 로 건너갈 수 있는 모양. 구조화 복제는 `Map`/`Set` 을 그대로

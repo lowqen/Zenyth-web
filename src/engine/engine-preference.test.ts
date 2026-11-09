@@ -2,7 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   BootAbortedError,
   EngineClient,
+  ENGINE_PREFERENCES,
+  NATIVE_BUILDS,
+  desktopCapabilities,
   detectCapabilities,
+  isNativePreference,
+  nativeBuildOf,
+  nativeSpecFor,
+  nativeVariantOf,
   planOrder,
   preferenceBlocker,
   type EngineVariant,
@@ -23,6 +30,54 @@ const ALL: EngineVariant[] = [
   "single-simd128-relaxed",
   "single-simd128",
 ];
+
+describe("데스크톱: 네이티브만 — 자동 · 빌드 다섯 · 원격", () => {
+  const caps = desktopCapabilities();
+
+  it("데스크톱 능력표에는 WASM 변형이 없다", () => {
+    expect(caps.variants).toEqual([]);
+    expect(caps.variant).toBeNull();
+    expect(caps.native).toBe(true);
+    expect(caps.threads).toBe(true);
+  });
+
+  it("빌드마다 고를 수 있는 항목이 있고, 데스크톱에서 보이는 것은 네이티브 항목뿐이다", () => {
+    const shown = ENGINE_PREFERENCES.filter((p) => isNativePreference(p));
+    expect(shown).toEqual(["native", ...NATIVE_BUILDS.map((b) => `native-${b}`), "remote"]);
+    for (const p of shown) expect(preferenceBlocker(caps, p), p).toBeNull();
+    for (const p of ["auto", "multi", "relaxed", "simd"] as const)
+      expect(preferenceBlocker(caps, p), p).toContain("네이티브");
+  });
+
+  it("빌드 고정은 그 빌드로만 띄우고(물러서지 않는다), 원격은 로컬 자동으로 물러선다", () => {
+    expect(planOrder(caps.variants, "native-avx2")).toEqual({ order: ["native"], note: null });
+    expect(planOrder(caps.variants, "native")).toEqual({ order: ["native"], note: null });
+    expect(planOrder(caps.variants, "remote")).toEqual({
+      order: ["remote", "native"],
+      note: null,
+    });
+    expect(nativeVariantOf("native-sse")).toBe("native");
+    expect(nativeVariantOf("remote")).toBe("remote");
+    expect(nativeVariantOf("auto")).toBeNull();
+    expect(nativeBuildOf("native-avx512vnni")).toBe("avx512vnni");
+    expect(nativeBuildOf("native")).toBeNull();
+    expect(nativeBuildOf("remote")).toBeNull();
+  });
+
+  it("셸에 넘길 자리: 빌드는 앱에 든 엔진에만, 경로를 적었으면 경로가 이긴다", () => {
+    const empty = { path: "", remote: "" };
+    expect(nativeSpecFor("native", empty, "avx2")).toEqual({
+      kind: "local",
+      path: "",
+      build: "avx2",
+    });
+    expect(nativeSpecFor("native", empty)).toEqual({ kind: "local", path: "" });
+    expect(nativeSpecFor("native", { path: "C:/r/engine.exe", remote: "" }, "avx2")).toEqual({
+      kind: "local",
+      path: "C:/r/engine.exe",
+    });
+  });
+});
 
 describe("엔진 선택 → 시도할 변형 순서", () => {
   it("자동은 환경의 순서 그대로", () => {
