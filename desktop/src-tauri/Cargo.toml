@@ -4,7 +4,7 @@
 # 버전은 tauri.conf.json 과 같아야 한다(scripts/tauri-config.test.ts) — 릴리스 태그 desktop-v<버전>.
 [package]
 name = "zenyth-desktop"
-version = "1.0.2"
+version = "1.0.3"
 description = "Zenyth — 오목·렌주 분석반 (데스크톱)"
 license = "GPL-3.0-or-later"
 edition = "2021"
