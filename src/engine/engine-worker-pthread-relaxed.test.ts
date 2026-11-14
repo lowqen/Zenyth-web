@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import manifest from "./engine-manifest.json";
 
 /**
  * relaxed 멀티 번들의 pthread 가드 — 엔진 스레드가 **relaxed 진입점 번들**을 다시 열면
@@ -21,7 +22,10 @@ describe("pthread 가드 — relaxed 번들", () => {
     const mod = await import("./engine-worker");
 
     expect(mod.pthreadVariant()).toBe("multi-simd128-relaxed");
-    expect(imported).toEqual(["https://rapfi.example/engine/rapfi-multi-simd128-relaxed.js"]);
+    expect(imported).toEqual([
+      "https://rapfi.example/engine/rapfi-multi-simd128-relaxed.js?v=" +
+        encodeURIComponent(manifest.tag),
+    ]);
     expect(g.onmessage).toBeUndefined();
   });
 });
