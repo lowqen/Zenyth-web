@@ -1,5 +1,5 @@
 diff --git a/Rapfi/command/gomocup.cpp b/Rapfi/command/gomocup.cpp
-index e857f77..842ac16 100644
+index 5c1f46f..ac340b4 100644
 --- a/Rapfi/command/gomocup.cpp
 +++ b/Rapfi/command/gomocup.cpp
 @@ -42,6 +42,15 @@
@@ -18,8 +18,8 @@ index e857f77..842ac16 100644
  #ifdef MULTI_THREADING
      #include <mutex>
      #include <thread>
-@@ -63,6 +72,46 @@ bool                          GUIMode   = false;
- std::atomic_bool              thinking  = false;
+@@ -64,6 +73,46 @@ std::atomic_bool              thinking  = false;
+ std::atomic_bool              exiting   = false;
  std::optional<CandidateRange> candRange = std::nullopt;
  
 +#ifdef ASYNC_DATABASE_SAVE
@@ -65,7 +65,7 @@ index e857f77..842ac16 100644
  void sendActionAndUpdateBoard(ActionType action, Pos bestMove)
  {
      if (action == ActionType::Move) {
-@@ -315,6 +364,7 @@ void getOption()
+@@ -327,6 +376,7 @@ void getOption()
      }
      else if (token == "USEDATABASE") {
          std::cin >> val;
@@ -73,7 +73,7 @@ index e857f77..842ac16 100644
          // A repeated "1" used to build a complete second copy of the database before
          // releasing the first (the argument is evaluated before setupDatabase), which
          // doubles peak memory. Reload explicitly with "0" then "1" instead.
-@@ -444,6 +494,7 @@ void setDatabase()
+@@ -456,6 +506,7 @@ void setDatabase()
  {
      auto databasePath = readPathFromInput();
      if (!databasePath.empty() && !Database::DatabaseCfg.type.empty()) {
@@ -81,7 +81,7 @@ index e857f77..842ac16 100644
          Database::DatabaseCfg.url     = databasePath.u8string();
          auto newDatabaseStorage = Database::createDBStorage(Database::DatabaseCfg);
          if (newDatabaseStorage)
-@@ -791,7 +842,7 @@ bool runProtocol()
+@@ -826,7 +877,7 @@ bool runProtocol()
      // Stop the protocol loop when reaching EOF
      // We do not stop thinking here, but let the outer loop to wait for its finish.
      if (std::cin.eof())
@@ -90,17 +90,21 @@ index e857f77..842ac16 100644
  
      // We assume the command is in uppercase, but also support lowercase
      upperInplace(cmd);
-@@ -804,11 +855,11 @@ bool runProtocol()
+@@ -839,7 +890,7 @@ bool runProtocol()
      };
  
      // clang-format off
 -    if (cmd == "END")                          return Search::Engine.stopThinking(), true;
 +    if (cmd == "END")                          return Search::Engine.stopThinking(), waitDatabaseSave(), true;
-     else if (cmd == "STOP" || cmd == "YXSTOP") return Search::Engine.stopThinking(), false;
+     else if (cmd == "STOP" || cmd == "YXSTOP") {
+         // Raw stop first for minimal latency mid-search. A stop that races the
+         // finish callback loses: the callback's nested ponder startThinking
+@@ -856,7 +907,7 @@ bool runProtocol()
+     }
      // Saving only reads the storage (writes from search are queued meanwhile), so it
      // neither stops nor waits for a running search or ponder.
 -    else if (cmd == "YXSAVEDATABASE")          { auto ctx = dbCommandContext(); saveDatabase(ctx); return false; }
 +    else if (cmd == "YXSAVEDATABASE")          return startDatabaseSave(), false;
-     else if (thinking)                         return false;
- 
- #ifdef MULTI_THREADING
+     // Any other command is dropped while thinking; discard the rest of its
+     // line as well, so its argument tokens are not parsed as commands later.
+     else if (thinking)

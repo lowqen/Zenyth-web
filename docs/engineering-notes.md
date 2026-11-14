@@ -366,3 +366,31 @@ gomoku-dev `test-yixin/docs/개발_핸드북.md` §13.
 모든 기록(8,171,740)을 RYDB 색인에서 찾아 값까지 같음을, 84,244개는 돌을 되살려 엔진 정규화로 키 바이트까지 같음을 확인했다.
 Zobrist 를 xorshift32 로 채운 첫 시도는 충돌했다 — 선형 생성기 출력의 XOR 은 32차원에 갇힌다(SHA-256 에서 뽑아 해결). 표본은 db5 뒤
 486MB 라 관문(가용 RAM 30%) 아래 — 엔진 통합(4단계)은 보류. 계획 · 판단은 gomoku-dev `test-yixin/docs/개발_핸드북.md` §13.5.
+
+## §11. upstream 을 1387d113 으로 (2026-11-14)
+
+웹 엔진의 바탕을 upstream `3c94c2a9`(2026-07-23)에서 `1387d113`(2026-10-23, 0.44.1 통합 릴리스 뒤 수정 10개)으로 올렸다 —
+17커밋: 규칙별 탐색 파라미터 · 규칙별 classical 값 · 프로토콜 정지/종료 수명 · DB 기록 보존 · 평가기 경계 등. upstream 은
+dhbloo/rapfi → **dotb1ue/rapfi** 로 이름이 바뀌었다(옛 주소는 넘겨준다). 데스크톱의 네이티브 엔진(`250615`)은 이미 최신 공식
+릴리스라 그대로다. 폰(Zenyth)은 여전히 `3c94c2a9` 이므로 웹 BENCH 는 웹 자신의 기준선만 본다(`spike/web-baseline.json`).
+
+- **가중치.** Networks `e32ad77a` → `7eeb19b5`. mix9svq(NNUE)는 그대로, classical 모델이 새 정책 형식(v8)으로 옮겨져
+  `model210901.bin` 이 30,109 → 25,896B. 렌주 전용 프리로드 목록은 그대로 맞고, `rapfi.data` 의 크기 · 해시는 바뀐다.
+- **패치 11개 재조정.** 옛 커밋 위에 패치를 커밋으로 쌓고(왕복 바이트 동일 확인) `1387d113` 으로 rebase, 커밋마다 `git diff` 로
+  다시 뽑았다. p2-2 · a1 · p4-1 · a3 · a4 · w8 은 그대로 얹혔다(a1 · a3 · a4 가 고치는 `mix9svqnnue.cpp` 는 upstream 변경 0건,
+  p2-2 의 `setNumThreads` 도 그대로). DB 다섯은 upstream `8c4334e0`(DB)과 `1a62b7e3`(프로토콜)에 겹쳐 손으로 옮겼다:
+  - db1 · db4 · db6 의 명령 분기 — upstream 의 새 `STOP` 블록(protocolMutex 로 두 번 멈춤)과 «생각 중에는 줄 나머지를 버림»을 살리고,
+    `YXSAVEDATABASE` · `YXCOMPACTDATABASE` 를 그 앞에 둔다(저장은 탐색을 멈추지 않는다 — §9).
+  - **upstream 의 DB 수정을 db5 · db6 에도 옮겼다.** (1) 키 구역이 패스 칸으로 끝나면 그 칸을 돌로 세지 않는다 — 예전 로더(그리고
+    그것을 바이트까지 흉내 낸 db5 로더 · db6 저널 파서)는 패스 칸을 (0,0) 돌로 남겨, 그런 기록은 판에서 만든 키와 영영 맞지
+    않았다. 이제 `load()` 와 저널 재생이 같은 키를 만든다. 그런 기록은 다음 저장에서 고쳐진 키로 적히므로 §10 의 «파일 바이트
+    동일»은 이 기록들에 한해 깨진다(의도한 변화 — upstream 과 같다). (2) 주석이 16비트 길이를 넘으면 잘라 적는다(`putBody`).
+    (3) `CompactDBKey::stones` 가 `unique_ptr` 가 되어 db5 의 `makeEntry` 는 `&key.stones[0]` 로 읽는다.
+  - 이 PC 에는 C++ 컴파일러가 없어 컴파일 · 동작 확인은 engine-release 의 게이트(빌드 검증 · relaxed 건전성 · 멀티 변형 관문)와
+    웹 스모크(`scripts/engine-smoke.ts` · `game-smoke.ts`)에 맡긴다.
+- **기준선.** 트리가 바뀌므로 `single-simd128` 기준선 `bb7888cc` 를 내리고 비웠다. engine-release 의 웹 회귀 게이트는 기준선이 비면
+  해시만 찍는다(node-bench 종료코드 3 — 해시를 못 얻으면 1). 첫 릴리스 런의 값을 적어 넣어 다시 게이트로 만든다.
+- **강도 확인은 열린 일.** `sprt.yml` 은 두 엔진을 같은 upstream 커밋으로 빌드하므로 옛 upstream ↔ 새 upstream 대국은 그대로는 안 된다.
+  upstream 0.44.1 은 규칙별 튜닝을 담은 릴리스라 렌주에서 약해질 이유는 없지만, 숫자로 확인하지는 않았다.
+- **감시.** `upstream-watch.yml`(매주 월요일)이 upstream 기본 브랜치 · 최신 릴리스를 고정값과 견주고, 뒤처졌으면 라벨 `upstream-watch`
+  이슈 하나에 커밋 목록 · Networks 변화 · 배포 패치가 어디까지 그대로 얹히는지를 적는다(`tools/upstream-watch.sh`). 올리는 일은 하지 않는다.

@@ -46,10 +46,10 @@ index 587a6f3..f9c0a3d 100644
                      auto convPtr  = convBase + b * ConvB::RegWidth;
                      auto oldConvF = I16LS::load(convPtr);
 diff --git a/Rapfi/eval/simd/vec.h b/Rapfi/eval/simd/vec.h
-index eb90586..5b18908 100644
+index a1fc824..ffdf71f 100644
 --- a/Rapfi/eval/simd/vec.h
 +++ b/Rapfi/eval/simd/vec.h
-@@ -1207,6 +1207,9 @@ namespace detail {
+@@ -1208,6 +1208,9 @@ namespace detail {
          static FORCE_INLINE R add(R a, R b) { return simde_mm_add_epi16(a, b); }
          static FORCE_INLINE R sub(R a, R b) { return simde_mm_sub_epi16(a, b); }
          static FORCE_INLINE R mulhi(R a, R b) { return simde_mm_mulhi_epi16(a, b); }
@@ -59,7 +59,7 @@ index eb90586..5b18908 100644
          static FORCE_INLINE R min(R a, R b) { return simde_mm_min_epi16(a, b); }
          static FORCE_INLINE R max(R a, R b) { return simde_mm_max_epi16(a, b); }
          static FORCE_INLINE R avg(R a, R b) { return simde_mm_avg_epu16(a, b); }
-@@ -1231,6 +1234,7 @@ namespace detail {
+@@ -1232,6 +1235,7 @@ namespace detail {
          static FORCE_INLINE R add(R a, R b) { return simde_mm256_add_epi16(a, b); }
          static FORCE_INLINE R sub(R a, R b) { return simde_mm256_sub_epi16(a, b); }
          static FORCE_INLINE R mulhi(R a, R b) { return simde_mm256_mulhi_epi16(a, b); }
@@ -67,7 +67,7 @@ index eb90586..5b18908 100644
          static FORCE_INLINE R min(R a, R b) { return simde_mm256_min_epi16(a, b); }
          static FORCE_INLINE R max(R a, R b) { return simde_mm256_max_epi16(a, b); }
          static FORCE_INLINE R avg(R a, R b) { return simde_mm256_avg_epu16(a, b); }
-@@ -1268,6 +1272,7 @@ namespace detail {
+@@ -1269,6 +1273,7 @@ namespace detail {
          static FORCE_INLINE R add(R a, R b) { return _mm512_add_epi16(a, b); }
          static FORCE_INLINE R sub(R a, R b) { return _mm512_sub_epi16(a, b); }
          static FORCE_INLINE R mulhi(R a, R b) { return _mm512_mulhi_epi16(a, b); }
@@ -75,7 +75,7 @@ index eb90586..5b18908 100644
          static FORCE_INLINE R min(R a, R b) { return _mm512_min_epi16(a, b); }
          static FORCE_INLINE R max(R a, R b) { return _mm512_max_epi16(a, b); }
          static FORCE_INLINE R avg(R a, R b) { return _mm512_avg_epu16(a, b); }
-@@ -1303,6 +1308,7 @@ namespace detail {
+@@ -1304,6 +1309,7 @@ namespace detail {
              int32x4_t ab7654 = vmull_high_s16(a, b);
              return vuzp2q_s16(vreinterpretq_s16_s32(ab3210), vreinterpretq_s16_s32(ab7654));
          }
@@ -83,7 +83,7 @@ index eb90586..5b18908 100644
          static FORCE_INLINE R min(R a, R b) { return vminq_s16(a, b); }
          static FORCE_INLINE R max(R a, R b) { return vmaxq_s16(a, b); }
          static FORCE_INLINE R avg(R a, R b)
-@@ -1343,6 +1349,15 @@ namespace detail {
+@@ -1344,6 +1350,15 @@ namespace detail {
              const R hi = wasm_i32x4_extmul_high_i16x8(a, b);
              return wasm_i16x8_shuffle(lo, hi, 1, 3, 5, 7, 9, 11, 13, 15);
          }

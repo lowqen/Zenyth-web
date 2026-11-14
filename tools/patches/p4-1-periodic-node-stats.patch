@@ -1,8 +1,8 @@
 diff --git a/Rapfi/search/searchengine.cpp b/Rapfi/search/searchengine.cpp
-index 36ffd23..0aad5a4 100644
+index 31b37ed..fc36a0f 100644
 --- a/Rapfi/search/searchengine.cpp
 +++ b/Rapfi/search/searchengine.cpp
-@@ -40,6 +40,9 @@ namespace Search {
+@@ -43,6 +43,9 @@ namespace Search {
  
  namespace {
  
@@ -12,7 +12,7 @@ index 36ffd23..0aad5a4 100644
  /// Generate the root move list for the main thread from the current board
  /// position and options: applies block-move filtering, balance2 move pair
  /// expansion, and root symmetry filtering.
-@@ -173,6 +176,7 @@ void SearchContext::reset(const SearchOptions &opts, bool ponder)
+@@ -176,6 +179,7 @@ void SearchContext::reset(const SearchOptions &opts, bool ponder)
      options                  = opts;
      inPonder                 = ponder;
      callsCnt                 = 0;
@@ -20,7 +20,7 @@ index 36ffd23..0aad5a4 100644
      startPonderAfterThinking = false;
      resultAction             = ActionType::Move;
      bestMove                 = Pos::NONE;
-@@ -198,6 +202,17 @@ void SearchContext::checkExit(uint32_t elapsedCalls)
+@@ -201,6 +205,17 @@ void SearchContext::checkExit(uint32_t elapsedCalls)
      if (inPonder.load(std::memory_order_relaxed))
          return;
  
@@ -39,10 +39,10 @@ index 36ffd23..0aad5a4 100644
      if (options.maxNodes && engine->nodesSearched() >= options.maxNodes
          || options.timeLimit && engine->searcher()->checkTimeupCondition(timectl)) {
 diff --git a/Rapfi/search/searchengine.h b/Rapfi/search/searchengine.h
-index a21f589..24890ac 100644
+index b919603..8fefae3 100644
 --- a/Rapfi/search/searchengine.h
 +++ b/Rapfi/search/searchengine.h
-@@ -94,6 +94,8 @@ struct SearchContext
+@@ -99,6 +99,8 @@ struct SearchContext
      SearchPrinter printer;
      /// Calls count before exit condition check (main search thread only)
      uint32_t callsCnt;
@@ -52,7 +52,7 @@ index a21f589..24890ac 100644
      /// (set during search, read by the protocol thread)
      std::atomic_bool startPonderAfterThinking;
 diff --git a/Rapfi/search/searchoutput.cpp b/Rapfi/search/searchoutput.cpp
-index 7b3c211..108747f 100644
+index 83f9b3a..584697e 100644
 --- a/Rapfi/search/searchoutput.cpp
 +++ b/Rapfi/search/searchoutput.cpp
 @@ -147,6 +147,13 @@ void SearchPrinter::printPvCompletes(SearchThread      &th,

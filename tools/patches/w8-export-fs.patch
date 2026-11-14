@@ -1,8 +1,8 @@
 diff --git a/Rapfi/CMakeLists.txt b/Rapfi/CMakeLists.txt
-index b2c8f6b..6a401a4 100644
+index 7661be3..d3c9954 100644
 --- a/Rapfi/CMakeLists.txt
 +++ b/Rapfi/CMakeLists.txt
-@@ -360,7 +360,7 @@ if(EMSCRIPTEN)
+@@ -372,7 +372,7 @@ if(EMSCRIPTEN)
          "-s MODULARIZE=1 "
          "-s EXPORT_NAME=Rapfi "
          "-s EXPORTED_FUNCTIONS=\"['_main','_gomocupLoopOnce','_emscripten_force_exit']\" "

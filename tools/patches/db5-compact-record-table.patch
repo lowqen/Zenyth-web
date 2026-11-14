@@ -1,17 +1,16 @@
 diff --git a/Rapfi/database/yxdbstorage.cpp b/Rapfi/database/yxdbstorage.cpp
-index 0d54724..8a8963b 100644
+index ee41c56..981734a 100644
 --- a/Rapfi/database/yxdbstorage.cpp
 +++ b/Rapfi/database/yxdbstorage.cpp
-@@ -24,6 +24,8 @@
+@@ -24,6 +24,7 @@
  #include "dbconfig.h"
  #include "dbtypes.h"
  
 +#include <algorithm>
-+#include <cstdint>
+ #include <cstdint>
  #include <cstring>
  #include <fstream>
- #include <mutex>
-@@ -135,16 +137,25 @@ bool YXDBStorage::get(const DBKey &key, DBRecord &record, DBRecordMask mask) noe
+@@ -131,16 +132,25 @@ bool YXDBStorage::get(const DBKey &key, DBRecord &record, DBRecordMask mask) noe
  
      std::shared_lock<std::shared_mutex> readerLock(mutex);
  
@@ -45,7 +44,7 @@ index 0d54724..8a8963b 100644
      readerLock.unlock();
      for (const PendingOp &op : ops) {
          if (op.isDelete)
-@@ -164,19 +175,47 @@ void YXDBStorage::applyLocked(const DBKey      &key,
+@@ -160,19 +170,47 @@ void YXDBStorage::applyLocked(const DBKey      &key,
                                DBRecordMask      mask,
                                bool              isDelete)
  {
@@ -99,7 +98,7 @@ index 0d54724..8a8963b 100644
      dirty = true;
  }
  
-@@ -328,7 +367,7 @@ bool YXDBStorage::flush() noexcept
+@@ -324,7 +362,7 @@ bool YXDBStorage::flush() noexcept
  size_t YXDBStorage::size() noexcept
  {
      std::shared_lock<std::shared_mutex> readerLock(mutex);
@@ -108,7 +107,7 @@ index 0d54724..8a8963b 100644
  }
  
  YXDBStorage::Cursor YXDBStorage::scan(Cursor                                   cursor,
-@@ -339,28 +378,244 @@ YXDBStorage::Cursor YXDBStorage::scan(Cursor                                   c
+@@ -335,28 +373,244 @@ YXDBStorage::Cursor YXDBStorage::scan(Cursor                                   c
  
      // Resume right after the last key of the previous batch (O(log n), and
      // insertions/deletions between batches can not shift the scan position)
@@ -299,7 +298,7 @@ index 0d54724..8a8963b 100644
 +        for (int k = 0; k < n; k++)
 +            p[k] = uint8_t((key.stones[k].x << 4) | key.stones[k].y);
 +    else
-+        std::memcpy(p, key.stones, 2 * n);
++        std::memcpy(p, &key.stones[0], 2 * n);
 +    e.numBlackStones = key.numBlackStones;
 +    e.numWhiteStones = key.numWhiteStones;
 +    e.rule           = key.rule;
@@ -359,7 +358,7 @@ index 0d54724..8a8963b 100644
      std::vector<int8_t> byteBuffer;
      byteBuffer.resize(1024);  // reserve initial space
  
-@@ -374,7 +629,8 @@ void YXDBStorage::load(std::istream &is, bool ignoreCorrupted)
+@@ -370,7 +624,8 @@ void YXDBStorage::load(std::istream &is, bool ignoreCorrupted)
      bool              isUTF8       = false;  // Is this database UTF-8 encoded?
      const std::string utf8Metadata = "charset=\"UTF-8\"";
  
@@ -369,36 +368,28 @@ index 0d54724..8a8963b 100644
      for (uint32_t recordIdx = 0; recordIdx < numRecords; recordIdx++) {
          // Read record key
          uint16_t numKeyBytes;
-@@ -417,7 +673,9 @@ void YXDBStorage::load(std::istream &is, bool ignoreCorrupted)
-         uint16_t numWhiteStones = numStones / 2;
-         Color    sideToMove     = numBlackStones == numWhiteStones ? BLACK : WHITE;
+@@ -416,7 +671,6 @@ void YXDBStorage::load(std::istream &is, bool ignoreCorrupted)
+         uint16_t numWhiteSlots = numStones / 2;
+         Color    sideToMove    = numBlackSlots == numWhiteSlots ? BLACK : WHITE;
  
--        auto   stones   = std::make_unique<StonePos[]>(numStones);
-+        // Same filling as the original map loader: a pass move ends its color
-+        // early and the slots left over at the end stay zero.
-+        std::fill_n(stones.begin(), numStones, StonePos {0, 0});
-         size_t stoneIdx = 0;
-         for (uint16_t blackIdx = 0; blackIdx < numBlackStones; blackIdx++) {
-             int8_t x = byteBuffer[3 + blackIdx * 2];
-@@ -448,57 +706,133 @@ void YXDBStorage::load(std::istream &is, bool ignoreCorrupted)
-                                                         + std::to_string(recordIdx));
+-        auto     stones         = std::make_unique<StonePos[]>(numStones);
+         size_t   stoneIdx       = 0;
+         uint16_t numBlackStones = 0;
+         uint16_t numWhiteStones = 0;
+@@ -451,65 +705,143 @@ void YXDBStorage::load(std::istream &is, bool ignoreCorrupted)
          }
+         numWhiteStones = uint16_t(stoneIdx) - numBlackStones;
  
--        // Read record message
--        uint16_t numRecordBytes;
--        is.read(reinterpret_cast<char *>(&numRecordBytes), sizeof(numRecordBytes));
--        if (numRecordBytes > byteBuffer.size())
--            byteBuffer.resize(numRecordBytes);
--        is.read(reinterpret_cast<char *>(byteBuffer.data()), numRecordBytes);
--
--        // Parse metadata record
--        if (boardXLen == 0 && boardYLen == 0 && numRecordBytes >= 5 + utf8Metadata.length()) {
--            std::string metadata {reinterpret_cast<char *>(&byteBuffer[5]),
--                                  static_cast<size_t>(numRecordBytes - 5)};
--            if (metadata.rfind(utf8Metadata, 0) == 0)
--                isUTF8 = true;
--            continue;
+-        // The key must hold exactly the parsed stones: a pass slot kept in the
+-        // counts or the array would never match a key constructed from a board.
+-        if (stoneIdx < numStones) {
+-            auto parsedStones = std::make_unique<StonePos[]>(stoneIdx);
+-            std::copy(stones.get(), stones.get() + stoneIdx, parsedStones.get());
+-            stones = std::move(parsedStones);
 -        }
++        // The key holds exactly the parsed stones (the counts above): a pass slot
++        // kept in the key would never match a key constructed from a board.
++
 +        {
 +            // Read record message
 +            uint16_t numRecordBytes;
@@ -416,29 +407,20 @@ index 0d54724..8a8963b 100644
 +                continue;
 +            }
  
--        // Emplace db key and db record in map
--        hint = recordsMap.emplace_hint(
--            hint,
--            std::piecewise_construct,
--            std::forward_as_tuple(rule,
--                                  boardXLen,
--                                  boardYLen,
--                                  sideToMove,
--                                  numBlackStones,
--                                  numWhiteStones,
--                                  stones.release()),
--            std::forward_as_tuple(DBRecord {
--                numRecordBytes > 0 ? static_cast<DBLabel>(byteBuffer[0]) : DBLabel(0),
--                numRecordBytes > 2 ? DBValue(readInt16At(1)) : DBValue(0),
--                numRecordBytes > 4 ? DBDepthBound(readInt16At(3)) : DBDepthBound(0),
--                numRecordBytes > 5
--                    ? (isUTF8 ? std::string {reinterpret_cast<char *>(&byteBuffer[5]),
--                                             static_cast<size_t>(numRecordBytes - 5)}
--                              : LegacyFileCPToUTF8(
--                                    std::string {reinterpret_cast<char *>(&byteBuffer[5]),
--                                                 static_cast<size_t>(numRecordBytes - 5)},
--                                    DatabaseCfg.legacyFileCodePage))
--                    : std::string {}}));
+-        // Read record message
+-        uint16_t numRecordBytes;
+-        is.read(reinterpret_cast<char *>(&numRecordBytes), sizeof(numRecordBytes));
+-        if (numRecordBytes > byteBuffer.size())
+-            byteBuffer.resize(numRecordBytes);
+-        is.read(reinterpret_cast<char *>(byteBuffer.data()), numRecordBytes);
+-
+-        // Parse metadata record
+-        if (boardXLen == 0 && boardYLen == 0 && numRecordBytes >= 5 + utf8Metadata.length()) {
+-            std::string metadata {reinterpret_cast<char *>(&byteBuffer[5]),
+-                                  static_cast<size_t>(numRecordBytes - 5)};
+-            if (metadata.rfind(utf8Metadata, 0) == 0)
+-                isUTF8 = true;
+-            continue;
 +            struct
 +            {
 +                Rule            rule;
@@ -479,8 +461,32 @@ index 0d54724..8a8963b 100644
 +                                        DatabaseCfg.legacyFileCodePage))
 +                        : std::string {}});
 +            entries.push_back(e);
-+        }
+         }
  
+-        // Emplace db key and db record in map
+-        hint = recordsMap.emplace_hint(
+-            hint,
+-            std::piecewise_construct,
+-            std::forward_as_tuple(rule,
+-                                  boardXLen,
+-                                  boardYLen,
+-                                  sideToMove,
+-                                  numBlackStones,
+-                                  numWhiteStones,
+-                                  std::move(stones)),
+-            std::forward_as_tuple(DBRecord {
+-                numRecordBytes > 0 ? static_cast<DBLabel>(byteBuffer[0]) : DBLabel(0),
+-                numRecordBytes > 2 ? DBValue(readInt16At(1)) : DBValue(0),
+-                numRecordBytes > 4 ? DBDepthBound(readInt16At(3)) : DBDepthBound(0),
+-                numRecordBytes > 5
+-                    ? (isUTF8 ? std::string {reinterpret_cast<char *>(&byteBuffer[5]),
+-                                             static_cast<size_t>(numRecordBytes - 5)}
+-                              : LegacyFileCPToUTF8(
+-                                    std::string {reinterpret_cast<char *>(&byteBuffer[5]),
+-                                                 static_cast<size_t>(numRecordBytes - 5)},
+-                                    DatabaseCfg.legacyFileCodePage))
+-                    : std::string {}}));
+-
      next_record:;
      }
  
@@ -536,13 +542,20 @@ index 0d54724..8a8963b 100644
 +        put(&numRecordBytes, sizeof(numRecordBytes));
 +    }
 +    else {
-+        const std::string &utf8Text       = record.text;
-+        uint16_t           numRecordBytes = 5 + utf8Text.length();
++        const std::string &utf8Text = record.text;
++        // The record length header is 16-bit; write a truncated text rather
++        // than a wrapped length that misaligns every following record.
++        size_t textLength = utf8Text.length();
++        if (5 + textLength > UINT16_MAX) {
++            ERRORL("Database record text is too long, saving truncated text.");
++            textLength = UINT16_MAX - 5;
++        }
++        uint16_t numRecordBytes = uint16_t(5 + textLength);
 +        put(&numRecordBytes, sizeof(numRecordBytes));
 +        put(&record.label, sizeof(DBLabel));
 +        put(&record.value, sizeof(DBValue));
 +        put(&record.depthbound, sizeof(DBDepthBound));
-+        put(utf8Text.data(), utf8Text.length());
++        put(utf8Text.data(), textLength);
 +    }
 +}
 +
@@ -553,7 +566,7 @@ index 0d54724..8a8963b 100644
      os.write(reinterpret_cast<char *>(&numRecords), sizeof(numRecords));
  
      // Write a metadata record with board size equals to 0
-@@ -528,40 +862,16 @@ void YXDBStorage::save(std::ostream &os) noexcept
+@@ -539,47 +871,16 @@ void YXDBStorage::save(std::ostream &os) noexcept
          chunk.append(reinterpret_cast<const char *>(p), n);
      };
  
@@ -583,13 +596,20 @@ index 0d54724..8a8963b 100644
 -            put(&numRecordBytes, sizeof(numRecordBytes));
 -        }
 -        else {
--            const std::string &utf8Text       = record.text;
--            uint16_t           numRecordBytes = 5 + utf8Text.length();
+-            const std::string &utf8Text = record.text;
+-            // The record length header is 16-bit; write a truncated text rather
+-            // than a wrapped length that misaligns every following record.
+-            size_t textLength = utf8Text.length();
+-            if (5 + textLength > UINT16_MAX) {
+-                ERRORL("Database record text is too long, saving truncated text.");
+-                textLength = UINT16_MAX - 5;
+-            }
+-            uint16_t numRecordBytes = uint16_t(5 + textLength);
 -            put(&numRecordBytes, sizeof(numRecordBytes));
 -            put(&record.label, sizeof(DBLabel));
 -            put(&record.value, sizeof(DBValue));
 -            put(&record.depthbound, sizeof(DBDepthBound));
--            put(utf8Text.data(), utf8Text.length());
+-            put(utf8Text.data(), textLength);
 -        }
 +    // Main table and overlay merged in key order, as the single map wrote them
 +    auto it = overlay.cbegin();
@@ -605,14 +625,11 @@ index 0d54724..8a8963b 100644
          if (chunk.size() >= ChunkSize) {
              os.write(chunk.data(), chunk.size());
 diff --git a/Rapfi/database/yxdbstorage.h b/Rapfi/database/yxdbstorage.h
-index 2c68c2c..4b280ed 100644
+index 5820189..6cda67a 100644
 --- a/Rapfi/database/yxdbstorage.h
 +++ b/Rapfi/database/yxdbstorage.h
-@@ -23,8 +23,11 @@
- #include <atomic>
- #include <filesystem>
- #include <map>
-+#include <memory>
+@@ -26,6 +26,8 @@
+ #include <memory>
  #include <mutex>
  #include <shared_mutex>
 +#include <string>
@@ -620,7 +637,7 @@ index 2c68c2c..4b280ed 100644
  #include <vector>
  
  namespace Database {
-@@ -139,9 +142,67 @@ private:
+@@ -144,9 +146,67 @@ private:
          bool         isDelete;
      };
  
@@ -691,7 +708,7 @@ index 2c68c2c..4b280ed 100644
      int                                               numBackupsOnSave;
      bool                                              compressedSave;
      bool                                              saveOnClose;
-@@ -166,6 +227,33 @@ private:
+@@ -171,6 +231,33 @@ private:
      bool writeFile(const std::filesystem::path &path) noexcept;
      /// Apply one write to the map. Caller holds the unique lock.
      void applyLocked(const DBKey &key, const DBRecord &record, DBRecordMask mask, bool isDelete);

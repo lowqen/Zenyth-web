@@ -56,7 +56,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORK }}/rapfi
-          key: rapfi-3c94c2a9-v1
+          key: rapfi-1387d113-v1
 
       - name: 진단 — 프로파일 꺼내기(A 이름만 · B 이름 + 값 프로파일 끔), 각각 3국면 훈련
         if: inputs.mode == 'diag'

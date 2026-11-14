@@ -1,8 +1,8 @@
 diff --git a/Rapfi/command/gomocup.cpp b/Rapfi/command/gomocup.cpp
-index 842ac16..e8c1480 100644
+index ac340b4..86db180 100644
 --- a/Rapfi/command/gomocup.cpp
 +++ b/Rapfi/command/gomocup.cpp
-@@ -87,15 +87,19 @@ void waitDatabaseSave()
+@@ -88,15 +88,19 @@ void waitDatabaseSave()
  }
  
  /// YXSAVEDATABASE: prints "Saved database file using N ms." when done, as before.
@@ -25,19 +25,19 @@ index 842ac16..e8c1480 100644
          MESSAGEL("Saved database file using " << (now() - startTime) << " ms.");
      };
  
-@@ -860,6 +864,7 @@ bool runProtocol()
+@@ -908,6 +912,7 @@ bool runProtocol()
      // Saving only reads the storage (writes from search are queued meanwhile), so it
      // neither stops nor waits for a running search or ponder.
      else if (cmd == "YXSAVEDATABASE")          return startDatabaseSave(), false;
 +    else if (cmd == "YXCOMPACTDATABASE")       return startDatabaseSave(true), false;
-     else if (thinking)                         return false;
- 
- #ifdef MULTI_THREADING
+     // Any other command is dropped while thinking; discard the rest of its
+     // line as well, so its argument tokens are not parsed as commands later.
+     else if (thinking)
 diff --git a/Rapfi/config.cpp b/Rapfi/config.cpp
-index 92fe068..c9879e9 100644
+index 2a58fac..ddf6db8 100644
 --- a/Rapfi/config.cpp
 +++ b/Rapfi/config.cpp
-@@ -555,6 +555,10 @@ void Config::readDatabase(const cpptoml::table &t, PendingConfig &pending)
+@@ -604,6 +604,10 @@ void Config::readDatabase(const cpptoml::table &t, PendingConfig &pending)
                  args->get_as<int>("num_backups_on_save").value_or(cfg.yixindb.numBackupsOnSave);
              cfg.yixindb.ignoreCorrupted =
                  args->get_as<bool>("ignore_corrupted").value_or(cfg.yixindb.ignoreCorrupted);
@@ -80,10 +80,10 @@ index 7db540e..15ae9ca 100644
  
      /// Parse state, not a TOML knob: mirrors the legacy null-DatabaseMaker
 diff --git a/Rapfi/database/dbstorage.h b/Rapfi/database/dbstorage.h
-index 92365e8..0aa8a93 100644
+index 5b4aa67..b6548dc 100644
 --- a/Rapfi/database/dbstorage.h
 +++ b/Rapfi/database/dbstorage.h
-@@ -223,6 +223,12 @@ public:
+@@ -224,6 +224,12 @@ public:
      /// return Whether the flush operation succeeded.
      virtual bool flush() noexcept = 0;
  
@@ -97,10 +97,10 @@ index 92365e8..0aa8a93 100644
      virtual size_t size() noexcept = 0;
  
 diff --git a/Rapfi/database/yxdbstorage.cpp b/Rapfi/database/yxdbstorage.cpp
-index 8a8963b..9c161ad 100644
+index 981734a..37bb892 100644
 --- a/Rapfi/database/yxdbstorage.cpp
 +++ b/Rapfi/database/yxdbstorage.cpp
-@@ -63,16 +63,331 @@ CompactDBKey::operator DBKey() const
+@@ -58,16 +58,335 @@ CompactDBKey::operator DBKey() const
      return key;
  }
  
@@ -219,17 +219,18 @@ index 8a8963b..9c161ad 100644
 +    if (numStones > boardXLen * boardYLen)
 +        return false;
 +
-+    key.rule           = rule;
-+    key.boardWidth     = boardXLen;
-+    key.boardHeight    = boardYLen;
-+    key.numBlackStones = (numStones + 1) / 2;
-+    key.numWhiteStones = numStones / 2;
-+    key.sideToMove     = key.numBlackStones == key.numWhiteStones ? BLACK : WHITE;
-+    std::fill_n(key.stones, numStones, StonePos {0, 0});
++    // Slot counts of the two key sections, as load() reads them: a section may
++    // end with a pass slot, so the key keeps only the stones actually parsed.
++    uint16_t numBlackSlots = (numStones + 1) / 2;
++    uint16_t numWhiteSlots = numStones / 2;
++    key.rule        = rule;
++    key.boardWidth  = boardXLen;
++    key.boardHeight = boardYLen;
++    key.sideToMove  = numBlackSlots == numWhiteSlots ? BLACK : WHITE;
 +    size_t stoneIdx = 0;
 +    for (int color = 0; color < 2; color++) {
-+        int begin = color == 0 ? 0 : key.numBlackStones;
-+        int count = color == 0 ? key.numBlackStones : key.numWhiteStones;
++        int begin = color == 0 ? 0 : numBlackSlots;
++        int count = color == 0 ? numBlackSlots : numWhiteSlots;
 +        for (int i = 0; i < count; i++) {
 +            int8_t x = b[3 + (begin + i) * 2], y = b[4 + (begin + i) * 2];
 +            if (x == -1 && y == -1)
@@ -238,7 +239,10 @@ index 8a8963b..9c161ad 100644
 +                return false;
 +            key.stones[stoneIdx++] = {x, y};
 +        }
++        if (color == 0)
++            key.numBlackStones = uint16_t(stoneIdx);
 +    }
++    key.numWhiteStones = uint16_t(stoneIdx - key.numBlackStones);
 +    return true;
 +}
 +
@@ -433,7 +437,7 @@ index 8a8963b..9c161ad 100644
  {
      // A leftover from a save that was killed midway: the real file is intact.
      {
-@@ -111,6 +426,15 @@ YXDBStorage::YXDBStorage(std::filesystem::path filePath,
+@@ -106,6 +425,15 @@ YXDBStorage::YXDBStorage(std::filesystem::path filePath,
  
          load(*istreamPtr, ignoreCorrupted);
      }
@@ -449,7 +453,7 @@ index 8a8963b..9c161ad 100644
  
      MESSAGEL("DATABASE LOAD DONE");
  }
-@@ -185,34 +509,48 @@ void YXDBStorage::applyLocked(const DBKey      &key,
+@@ -180,34 +508,48 @@ void YXDBStorage::applyLocked(const DBKey      &key,
                  e.flags = (e.flags | ENTRY_DELETED) & ~ENTRY_HAS_TEXT;
                  numLiveEntries--;
                  dirty = true;
@@ -499,7 +503,7 @@ index 8a8963b..9c161ad 100644
          if (overlay.size() > std::max<size_t>(4096, entries.size() / 16))
              mergeOverlay();
      }
-@@ -271,17 +609,69 @@ bool YXDBStorage::writeFile(const std::filesystem::path &path) noexcept
+@@ -266,17 +608,69 @@ bool YXDBStorage::writeFile(const std::filesystem::path &path) noexcept
  }
  
  bool YXDBStorage::flush() noexcept
@@ -571,7 +575,7 @@ index 8a8963b..9c161ad 100644
      }
  
      MESSAGEL("DATABASE SAVE START " + pathToConsoleString(filePath));
-@@ -342,6 +732,22 @@ bool YXDBStorage::flush() noexcept
+@@ -337,6 +731,22 @@ bool YXDBStorage::flush() noexcept
      if (!ok)
          std::filesystem::remove(tmpPath, ec);
  
@@ -594,7 +598,7 @@ index 8a8963b..9c161ad 100644
      // 3. Replay the writes that arrived meanwhile; they are not in the file.
      {
          std::lock_guard<std::mutex>         pendingLock(pendingMutex);
-@@ -795,7 +1201,7 @@ void YXDBStorage::load(std::istream &is, bool ignoreCorrupted)
+@@ -797,7 +1207,7 @@ void YXDBStorage::load(std::istream &is, bool ignoreCorrupted)
  }
  
  template <typename Put, typename Key>
@@ -603,7 +607,7 @@ index 8a8963b..9c161ad 100644
  {
      const int8_t PassMove[2] = {-1, -1};
  
-@@ -813,7 +1219,11 @@ void YXDBStorage::putRecord(Put &put, const Key &key, const DBRecord &record)
+@@ -815,7 +1225,11 @@ void YXDBStorage::putRecord(Put &put, const Key &key, const DBRecord &record)
      put(key.whiteStonesBegin(), (key.whiteStonesEnd() - key.whiteStonesBegin()) * 2);
      if (addPassMove && normalSTM == WHITE)
          put(PassMove, 2);
@@ -616,10 +620,10 @@ index 8a8963b..9c161ad 100644
      if (record.isNull()) {
          uint16_t numRecordBytes = 0;
 diff --git a/Rapfi/database/yxdbstorage.h b/Rapfi/database/yxdbstorage.h
-index 4b280ed..921ea5a 100644
+index 6cda67a..4d5d80a 100644
 --- a/Rapfi/database/yxdbstorage.h
 +++ b/Rapfi/database/yxdbstorage.h
-@@ -111,8 +111,10 @@ public:
+@@ -115,8 +115,10 @@ public:
      YXDBStorage(std::filesystem::path filePath,
                  bool                  compressedSave,
                  bool                  saveOnClose,
@@ -632,7 +636,7 @@ index 4b280ed..921ea5a 100644
      /// Close the yixin database. All unsaved records will be flushed to file.
      virtual ~YXDBStorage();
  
-@@ -125,6 +127,7 @@ public:
+@@ -129,6 +131,7 @@ public:
      void   set(const DBKey &key, const DBRecord &record, DBRecordMask mask) noexcept override;
      void   del(const DBKey &key) noexcept override;
      bool   flush() noexcept override;
@@ -640,7 +644,7 @@ index 4b280ed..921ea5a 100644
      size_t size() noexcept override;
      Cursor scan(Cursor                                   cursor,
                  size_t                                   count,
-@@ -219,12 +222,38 @@ private:
+@@ -223,12 +226,38 @@ private:
      std::atomic<bool>      savingHint {false};  // lock-free fast path for get()
      std::vector<PendingOp> pendingOps;  // guarded by pendingMutex
  
@@ -679,7 +683,7 @@ index 4b280ed..921ea5a 100644
      /// Apply one write to the map. Caller holds the unique lock.
      void applyLocked(const DBKey &key, const DBRecord &record, DBRecordMask mask, bool isDelete);
  
-@@ -251,9 +280,17 @@ private:
+@@ -255,9 +284,17 @@ private:
      /// Folds the overlay into the sorted main table and drops deleted entries
      /// (their arena bytes stay until the next load). Caller holds the unique lock.
      void mergeOverlay();
