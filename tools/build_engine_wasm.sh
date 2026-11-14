@@ -31,9 +31,18 @@ set -eu
 #
 #   안드로이드 패치 두 개는 출력 이름(libengine.so)과 bionic 의 libpthread 부재를
 #   다루는 것이라 wasm 에는 해당이 없다. 그래서 패치 없이 베이스에서 바로 빌드한다.
-RAPFI_COMMIT="${RAPFI_COMMIT:-3c94c2a976f24a0dd1c5517623e9ab6fffe66bd7}"
-# 가중치가 바뀌면 BENCH 해시 대조가 무의미해진다. 폰이 쓴 것과 같아야 한다.
-NETWORKS_COMMIT="${NETWORKS_COMMIT:-e32ad77a5364363b3e3a02b3f9e8610ade19ea98}"
+#
+# 2026-11-14: 웹 엔진을 upstream 최신(0.44.1 통합 릴리스 이후, 1387d113 · 2026-10-23)으로 올렸다.
+#   upstream 은 dhbloo/rapfi → dotb1ue/rapfi 로 이름이 바뀌었다(GitHub 가 옛 주소를 넘겨준다).
+#   이제 폰(Zenyth, 3c94c2a9)과 같은 소스가 아니다 — 웹 BENCH 기준선은 웹 자신의 것만 본다
+#   (spike/web-baseline.json). 엔진 패치 11개는 이 커밋 위로 다시 맞췄다(DB 패치 5개는 upstream 의
+#   database 수정 8c4334e0 과 겹쳐 손으로 옮김 — docs/engineering-notes.md §11).
+#   upstream 새 커밋은 .github/workflows/upstream-watch.yml 이 매주 보고 이슈로 알린다.
+RAPFI_COMMIT="${RAPFI_COMMIT:-1387d11312190ec66665d361ff07a7c70221b78a}"
+# 가중치가 바뀌면 BENCH 해시 대조가 무의미해진다. RAPFI_COMMIT 의 Networks 서브모듈과 같아야 한다.
+# 7eeb19b5: mix9svq(NNUE) 가중치는 그대로, classical 모델이 새 정책 형식(v8)으로 옮겨졌다 —
+# model210901.bin 30,109 → 25,896 바이트라 rapfi.data 의 크기 · 해시가 바뀐다.
+NETWORKS_COMMIT="${NETWORKS_COMMIT:-7eeb19b55219a48138756293f92211a1539bab4d}"
 # 배포 릴리스(a4 · a5)와 같은 판에 고정한다(안드로이드가 NDK r27c 를 박아둔 것과 같은 이유).
 # latest(2026-11-07 부터 7.0.0)는 libc++ 이 <vector> 를 간접으로 끌어오지 않아 upstream
 # search/searchoutput.h 가 컴파일되지 않는다. 올릴 때는 게이트를 다시 돌려 정한다.

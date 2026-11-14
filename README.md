@@ -160,8 +160,8 @@ cd Zenyth Web
 pnpm install
 
 # Engine weights (~20 MB) are a release asset, not part of git.
-# The tag must match src/engine/engine-manifest.json.
-gh release download engine-3c94c2a9-w8 --dir public/engine --pattern 'rapfi.data'
+# The tag is read from src/engine/engine-manifest.json, so this command never goes stale.
+gh release download "$(node -p "require('./src/engine/engine-manifest.json').tag")" --dir public/engine --pattern 'rapfi.data'
 
 pnpm dev          # http://localhost:5173
 ```

@@ -1,8 +1,8 @@
 diff --git a/Rapfi/search/searchengine.cpp b/Rapfi/search/searchengine.cpp
-index 3afe0f2..36ffd23 100644
+index 95e1302..31b37ed 100644
 --- a/Rapfi/search/searchengine.cpp
 +++ b/Rapfi/search/searchengine.cpp
-@@ -241,6 +241,24 @@ void SearchEngine::waitForIdle()
+@@ -244,6 +244,24 @@ void SearchEngine::waitForIdle()
  
  void SearchEngine::setNumThreads(size_t numThreads)
  {
@@ -27,7 +27,7 @@ index 3afe0f2..36ffd23 100644
      // Destroy all threads first (which will also wait for them to be idle)
      while (!threads_.empty())
          threads_.pop_back();  // std::unique_ptr will automatically destroy thread
-@@ -258,6 +276,12 @@ void SearchEngine::setNumThreads(size_t numThreads)
+@@ -261,6 +279,12 @@ void SearchEngine::setNumThreads(size_t numThreads)
          }
  #endif
  

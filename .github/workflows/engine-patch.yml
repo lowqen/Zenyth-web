@@ -33,8 +33,8 @@ on:
         default: false
         type: boolean
       base_tag:
-        description: "대조 기준 릴리스 — 패치 없는 engine-3c94c2a9-rx, 또는 배포 구성 위에 얹는 패치면 배포 릴리스(예: engine-3c94c2a9-a1, patches 에 그 패치들을 함께)"
-        default: "engine-3c94c2a9-rx"
+        description: "대조 기준 릴리스 — 배포 릴리스(engine-1387d113-a6, patches 에 배포 패치 11개와 시험 패치를 함께). 패치 없는 릴리스는 upstream 1387d113 에는 없다"
+        default: "engine-1387d113-a6"
         type: string
 
 permissions:
@@ -49,8 +49,8 @@ jobs:
       # 배포 릴리스와 같은 Emscripten(engine-release.yml 의 고정 이유 참고 — 7.0.0 은 searchoutput.h 가 안 된다).
       EMSDK_VERSION: "6.0.13"
       ENABLE_LTO: "ON"
-      # 대조 기준 = **패치 없는** 릴리스. 배포 중인 engine-3c94c2a9-p2 는 P2-2 패치·wasm-opt 를 실었으니
-      # 「패치 없음 ↔ 패치」 대조에는 이 태그를 그대로 둔다(지우지 말 것).
+      # 대조 기준 릴리스. upstream 3c94c2a9 시절에는 패치 없는 engine-3c94c2a9-rx 와 맞댔다(지우지 말 것 — 옛 대조 재현용).
+      # upstream 1387d113 부터는 패치 없는 릴리스가 없으니 배포 릴리스와 맞대고, patches 에 배포 패치들을 함께 넘긴다.
       ENGINE_TAG: ${{ inputs.base_tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -72,7 +72,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORK }}/rapfi
-          key: rapfi-3c94c2a9-v1
+          key: rapfi-1387d113-v1
 
       - name: 빌드 (패치 적용)
         env:

@@ -1,14 +1,14 @@
 engine     : Rapfi WebAssembly (SIMD 4종)
-upstream   : 3c94c2a976f24a0dd1c5517623e9ab6fffe66bd7  (dhbloo/rapfi, 패치: p2-2-keep-evaluators-on-rebuild.patch a1-q15mulr.patch p4-1-periodic-node-stats.patch a3-starblock-multi.patch a4-policy-cache.patch w8-export-fs.patch db1-atomic-nonblocking-save.patch db2-usedatabase-guard.patch db4-async-save.patch db5-compact-record-table.patch db6-differential-save-journal.patch)
-networks   : e32ad77a5364363b3e3a02b3f9e8610ade19ea98
+upstream   : 1387d11312190ec66665d361ff07a7c70221b78a  (dhbloo/rapfi, 패치: p2-2-keep-evaluators-on-rebuild.patch a1-q15mulr.patch p4-1-periodic-node-stats.patch a3-starblock-multi.patch a4-policy-cache.patch w8-export-fs.patch db1-atomic-nonblocking-save.patch db2-usedatabase-guard.patch db4-async-save.patch db5-compact-record-table.patch db6-differential-save-journal.patch)
+networks   : 7eeb19b55219a48138756293f92211a1539bab4d
 emscripten : emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.13 (e13ee988ce3d87a738dd8f3661d02223308c412a)
 cmake opts : -DNO_COMMAND_MODULES=ON -DUSE_WASM_SIMD=ON -DUSE_WASM_SIMD_RELAXED=OFF(-relaxed 변형은 ON) -DCMAKE_BUILD_TYPE=Release
-data       : rapfi.data (모든 변형 공유) 19865597 bytes sha256 85719fa9190d1a0e6c91d8b0863fb72816e3eed5ac8c67a93705e4d51dcfcf36
+data       : rapfi.data (모든 변형 공유) 19861384 bytes sha256 8e89f32ab77b7d397635010f1b6da1e1580464b901f8a1c69e97fc7ee18efb2b
 link opts  : (upstream CMakeLists 의 EMSCRIPTEN 블록이 전부 정한다 — 우리는 얹지 않는다)
 wasm-opt   : 추가 후처리 -O4 --converge (133)
 variants   : single-simd128 multi-simd128 multi-simd128-relaxed single-simd128-relaxed
 preloads   : renju
 note       : SIMD 없는 변형은 eval/mix10nnue.cpp 의 static_assert 때문에 이 커밋에서 빌드되지 않는다
-built_at   : 2026-11-08T00:12:10Z
+built_at   : 2026-11-14T03:20:44Z
 build_by   : Zenyth-web/tools/build_engine_wasm.sh
 bench      : spike/node-bench.mjs 가 두 변형에서 Hash 를 뽑아 e240ab16 과 대조한다

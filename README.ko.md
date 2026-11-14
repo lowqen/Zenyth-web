@@ -149,8 +149,8 @@ cd Zenyth Web
 pnpm install
 
 # 엔진 가중치(~20MB)는 git 이 아니라 릴리스 자산이다.
-# 태그는 src/engine/engine-manifest.json 의 tag 와 같아야 한다.
-gh release download engine-3c94c2a9-w8 --dir public/engine --pattern 'rapfi.data'
+# 태그는 src/engine/engine-manifest.json 의 tag 를 그대로 읽는다 — 엔진을 올려도 이 명령은 그대로다.
+gh release download "$(node -p "require('./src/engine/engine-manifest.json').tag")" --dir public/engine --pattern 'rapfi.data'
 
 pnpm dev          # http://localhost:5173
 ```

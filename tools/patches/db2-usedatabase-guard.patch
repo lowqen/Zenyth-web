@@ -1,8 +1,8 @@
 diff --git a/Rapfi/command/gomocup.cpp b/Rapfi/command/gomocup.cpp
-index eeba9c8..e857f77 100644
+index 2f7d90c..5c1f46f 100644
 --- a/Rapfi/command/gomocup.cpp
 +++ b/Rapfi/command/gomocup.cpp
-@@ -315,8 +315,13 @@ void getOption()
+@@ -327,8 +327,13 @@ void getOption()
      }
      else if (token == "USEDATABASE") {
          std::cin >> val;

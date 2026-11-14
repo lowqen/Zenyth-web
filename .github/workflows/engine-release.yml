@@ -22,7 +22,7 @@ on:
     inputs:
       tag:
         description: "릴리스 태그"
-        default: "engine-3c94c2a9-a6"
+        default: "engine-1387d113-a6"
         type: string
       runner:
         description: "러너 — ubuntu-latest(기본, GitHub 호스트) 또는 self-hosted"
@@ -103,7 +103,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORK }}/rapfi
-          key: rapfi-3c94c2a9-v1
+          key: rapfi-1387d113-v1
 
       - name: 빌드 + 검증 게이트
         env:
@@ -114,8 +114,11 @@ jobs:
           WASM_OPT_POST: "-O4 --converge"
         run: bash tools/build_engine_wasm.sh
 
+      # spike/web-baseline.json 의 single-simd128 기준선이 비어 있으면(upstream 을 올린 첫 릴리스) 판정하지 않고
+      # 해시만 찍는다 — node-bench 가 3(미판정)을 낸다. 해시를 못 얻으면(엔진 무응답) 기준선과 무관하게 1 이다.
+      # 그 런이 찍은 해시를 기준선에 적어 넣으면 다음 릴리스부터 다시 게이트다.
       - name: 웹 회귀 게이트 (single-simd128)
-        run: node spike/node-bench.mjs single-simd128
+        run: node spike/node-bench.mjs single-simd128 || [ $? -eq 3 ]
 
       # relaxed 명령은 명세상 **구현 정의**다. 노드 22+ 는 relaxed 를 기본으로 읽고, 노드 26 은
       # 예전 플래그 `--experimental-wasm-relaxed-simd` 를 `bad option` 으로 거부한다 — 붙이지 않는다.
@@ -161,7 +164,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.WORK }}/rapfi
-          key: rapfi-3c94c2a9-v1
+          key: rapfi-1387d113-v1
 
       - name: 릴리스 본문
         run: |
@@ -177,7 +180,7 @@ jobs:
             echo
             echo "Rapfi 는 GPL-3.0-or-later 입니다. 이 자산은 그 엔진을 WebAssembly 로"
             echo "컴파일한 것이므로 같은 라이선스로 배포됩니다. 대응 소스는 upstream"
-            echo "커밋 <https://github.com/dhbloo/rapfi/tree/3c94c2a9> 이고(아래 패치를 얹음), 빌드에 쓴"
+            echo "커밋 <https://github.com/dotb1ue/rapfi/tree/$(git -C "$WORK/rapfi" rev-parse --short=8 HEAD)> 이고(아래 패치를 얹음), 빌드에 쓴"
             echo "스크립트는 이 저장소의 \`tools/build_engine_wasm.sh\` 입니다."
             echo
             if [ -n "$RAPFI_PATCHES" ]; then

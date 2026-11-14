@@ -29,7 +29,7 @@
 # 이 패치는 **진단 전용**이다. 배포 빌드에는 들어가지 않는다(스크립트가 끝에서 되돌린다).
 set -eu
 
-RAPFI_COMMIT="${RAPFI_COMMIT:-3c94c2a976f24a0dd1c5517623e9ab6fffe66bd7}"
+RAPFI_COMMIT="${RAPFI_COMMIT:-1387d11312190ec66665d361ff07a7c70221b78a}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="${WORK:-$HOME/rapfi-wasm-work}"
 OUT="$ROOT/out-diag"

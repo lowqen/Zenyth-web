@@ -26,13 +26,22 @@
     "평가값이 달라지고 탐색 트리가 바뀐다(노드 7,170,518 -> 7,465,395). 의도한 변경이다 —",
     "WASM SPRT(relaxed · 500ms, sprt 37247788294)에서 H1, Elo +20.2(docs/engineering-notes.md §2 A1).",
     "값은 같은 소스 · 같은 플래그(P2-2 + A1, wasm-opt -O4 --converge)로 mate-suite 37178502835 · sprt 37247788294 의",
-    "빌드가 두 번 낸 것과 같다."
+    "빌드가 두 번 낸 것과 같다.",
+    "",
+    "2026-11-14: **기준선을 bb7888cc -> 4eb7071b 로 갱신했다. upstream 을 3c94c2a9 -> 1387d113(0.44.1 이후)으로 올렸기 때문이다.**",
+    "upstream 이 규칙별 탐색 파라미터 · 규칙별 classical 값 · 탐색 수정을 넣었고, Networks 7eeb19b5 에서 classical 모델이",
+    "새 정책 형식으로 옮겨져(model210901.bin 이 바뀜) 렌주 전용 .data 도 달라졌다 — 트리와 해시가 바뀌는 것이 당연하다(노드 7,465,395 -> 13,729,190).",
+    "⚠ 같은 날 함정 하나: upstream 41c055d0 부터 엔진은 **모르는 명령줄 인자를 보면 config.toml 을 읽지 않고** 기본값(classical 만)으로 뜬다.",
+    "node 에서 Emscripten 은 Module.arguments 가 없으면 process.argv 를 넘기므로, node-bench 의 변형 이름(`single-simd128`)이 엔진 인자가 되어",
+    "engine-1387d113-a6 릴리스 런의 웹 회귀 단계도 설정 없이 돌았다(로컬에서 같은 인자를 넘기면 3c22c262 · 743,443 노드 — 미판정이라 통과). 하네스(spike/src/engine-core.js · bench/sprt)가",
+    "arguments: [] 를 넘기게 고친 뒤 같은 릴리스 산출물을 로컬(node 24)에서 다시 재서 4eb7071b 를 얻었다. 같은 방법으로 옛 a6 산출물은 bb7888cc 가",
+    "나와 CI 기준선과 일치한다 — 일반 SIMD 의 해시는 기계와 무관하다(2026-09-01 참고). 브라우저 앱은 process.argv 가 없어 영향이 없었다."
   ],
-  "measuredAt": "2026-10-05",
-  "measuredBy": "mate-suite 37178502835 · sprt 37247788294 의 B/A 빌드(P2-2 + A1, -O4 --converge)",
+  "measuredAt": "2026-11-14",
+  "measuredBy": "engine-1387d113-a6 릴리스 산출물(single-simd128) · 로컬 node 24 · arguments: [] 로 고친 node-bench",
   "engine": {
-    "upstream": "3c94c2a976f24a0dd1c5517623e9ab6fffe66bd7",
-    "networks": "e32ad77a5364363b3e3a02b3f9e8610ade19ea98",
+    "upstream": "1387d11312190ec66665d361ff07a7c70221b78a",
+    "networks": "7eeb19b55219a48138756293f92211a1539bab4d",
     "config": "렌주 전용 사본 (rapfiweb-renju.toml). default_thread_num = 1",
     "preloads": "렌주 흑/백 가중치 + classical/model210901.bin + config.toml"
   },
@@ -42,9 +51,9 @@
   },
   "variants": {
     "single-simd128": {
-      "hash": "bb7888cc",
-      "nodes": "7465395",
-      "note": "배포 경로(렌주 전용 .data) · 엔진 패치 P2-2 + A1. 이 값이 바뀌면 CI 실패."
+      "hash": "4eb7071b",
+      "nodes": "13729190",
+      "note": "배포 경로(렌주 전용 .data) · upstream 1387d113 · 배포 패치 11개. 이 값이 바뀌면 CI 실패."
     },
     "single-simd128-relaxed": {
       "hash": null,
@@ -84,6 +93,12 @@
       "nodes": "7170518",
       "until": "2026-10-05",
       "why": "A1(q15mulr) 이전 — 렌주 전용 .data, 패치 P2-2(결과 불변)"
+    },
+    {
+      "hash": "bb7888cc",
+      "nodes": "7465395",
+      "until": "2026-11-14",
+      "why": "upstream 3c94c2a9 · Networks e32ad77a — 렌주 전용 .data, 패치 P2-2 + A1(나머지 배포 패치는 결과 불변)"
     }
   ]
 }

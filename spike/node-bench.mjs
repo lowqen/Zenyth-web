@@ -113,5 +113,7 @@ const report = {
   tail: out.slice(-20),
 };
 console.log(JSON.stringify(report, null, 2));
-// 기준선이 없는 변형은 실패로 세지 않는다(종료코드 3 = 미판정).
-process.exit(pass ? 0 : gated ? 1 : 3);
+// 기준선이 없는 변형은 실패로 세지 않는다(종료코드 3 = 미판정). 단 해시를 아예 얻지 못했으면
+// 기준선과 무관하게 실패다 — 미판정(3)을 받아 주는 단계(upstream 을 올린 첫 릴리스 등)가
+// BENCH 에 응답하지 않는 엔진까지 통과시키지 않게.
+process.exit(pass ? 0 : gated || hash == null ? 1 : 3);
