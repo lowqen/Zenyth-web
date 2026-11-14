@@ -36,6 +36,9 @@ export const VARIANTS = ["single-simd128", "multi-simd128"];
  */
 export async function startEngine({ factory, baseUrl, onLine, onErr, onExit }) {
   const args = {
+    // node 에서 Emscripten 은 Module.arguments 가 없으면 process.argv 를 엔진 명령줄로 넘긴다. upstream 1387d113 부터
+    // 엔진은 모르는 인자를 보면 config.toml 을 읽지 않고 기본값으로 뜬다(41c055d0) — 하네스의 인자가 새지 않게 비운다.
+    arguments: [],
     locateFile: (path) => (baseUrl ? baseUrl + path : path),
     onReceiveStdout: (line) => onLine(line),
     onReceiveStderr: (line) => (onErr ?? onLine)("[stderr] " + line),
