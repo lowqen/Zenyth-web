@@ -49,7 +49,7 @@ jobs:
       # 배포 릴리스와 같은 Emscripten(engine-release.yml 의 고정 이유 참고 — 7.0.0 은 searchoutput.h 가 안 된다).
       EMSDK_VERSION: "6.0.13"
       ENABLE_LTO: "ON"
-      # 대조 기준 릴리스. upstream 3c94c2a9 시절에는 패치 없는 engine-3c94c2a9-rx 와 맞댔다(지우지 말 것 — 옛 대조 재현용).
+      # 대조 기준 릴리스. upstream 3c94c2a9 시절에는 패치 없는 engine-3c94c2a9-rx 와 맞댔다(2026-11-14 실험 판 정리로 지움).
       # upstream 1387d113 부터는 패치 없는 릴리스가 없으니 배포 릴리스와 맞대고, patches 에 배포 패치들을 함께 넘긴다.
       ENGINE_TAG: ${{ inputs.base_tag }}
     steps:
