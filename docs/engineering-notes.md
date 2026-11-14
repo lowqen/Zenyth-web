@@ -388,8 +388,19 @@ dhbloo/rapfi → **dotb1ue/rapfi** 로 이름이 바뀌었다(옛 주소는 넘�
     (3) `CompactDBKey::stones` 가 `unique_ptr` 가 되어 db5 의 `makeEntry` 는 `&key.stones[0]` 로 읽는다.
   - 이 PC 에는 C++ 컴파일러가 없어 컴파일 · 동작 확인은 engine-release 의 게이트(빌드 검증 · relaxed 건전성 · 멀티 변형 관문)와
     웹 스모크(`scripts/engine-smoke.ts` · `game-smoke.ts`)에 맡긴다.
-- **기준선.** 트리가 바뀌므로 `single-simd128` 기준선 `bb7888cc` 를 내리고 비웠다. engine-release 의 웹 회귀 게이트는 기준선이 비면
-  해시만 찍는다(node-bench 종료코드 3 — 해시를 못 얻으면 1). 첫 릴리스 런의 값을 적어 넣어 다시 게이트로 만든다.
+- **배포 — 릴리스 `engine-1387d113-a6`**(브랜치 `engine/upstream-1387d113` 의 a0af6622 에서). 게이트 전부 통과 — 손으로 옮긴 DB 패치도
+  첫 빌드에 컴파일됐다. `public/engine/` · 매니페스트 · web.yml · deploy.yml · `fetch-engines.mjs` 의 `ENGINE_TAG` 를 옮겼다.
+  `rapfi.data` 19,865,597 → 19,861,384B(classical 모델 형식). 로컬에서 web.yml 과 같은 조립으로 `verify-engine` ·
+  엔진 스모크(격리 · 비격리) · 대국 스모크 · DB 스모크(저널 저장 → 새로고침 → 다시 읽기)가 모두 통과했다.
+- **함정 — 모르는 명령줄 인자.** upstream `41c055d0`(CLI 옵션 검증)부터 엔진은 모르는 인자를 보면 `ERROR unsupported argument` 를
+  찍고 **`config.toml` 을 읽지 않은 채** 기본값(classical 만)으로 뜬다. node 에서 Emscripten 은 `Module.arguments` 가 없으면
+  `process.argv` 를 엔진 명령줄로 넘기므로 node-bench 의 변형 이름이 새어 들어가, 릴리스 런의 웹 회귀 단계는 설정 없이 돈 BENCH 를
+  찍었다(743,443 노드 — 미판정이라 통과). node 하네스 셋(`spike/src/engine-core.js` · `bench/sprt/wasm-pbrain.mjs` ·
+  `multi-probe.mjs`)이 `arguments: []` 를 넘기게 고쳤다. 브라우저 앱은 `process.argv` 가 없어 영향이 없었고(스모크가 증언),
+  relaxed 건전성 게이트는 인자 없이 불려 유효했다.
+- **기준선** `bb7888cc` → **`4eb7071b`**(13,729,190 노드). 릴리스 산출물을 로컬에서 고친 node-bench 로 쟀다 — 같은 방법으로 옛 a6 산출물은
+  `bb7888cc` 가 나와 CI 값과 일치한다(일반 SIMD 해시는 기계와 무관, `spike/web-baseline.json`). node-bench 는 이제 해시를 못 얻으면
+  기준선과 무관하게 실패하고, 기준선이 비었을 때만 미판정(3)이다.
 - **강도 확인은 열린 일.** `sprt.yml` 은 두 엔진을 같은 upstream 커밋으로 빌드하므로 옛 upstream ↔ 새 upstream 대국은 그대로는 안 된다.
   upstream 0.44.1 은 규칙별 튜닝을 담은 릴리스라 렌주에서 약해질 이유는 없지만, 숫자로 확인하지는 않았다.
 - **감시.** `upstream-watch.yml`(매주 월요일)이 upstream 기본 브랜치 · 최신 릴리스를 고정값과 견주고, 뒤처졌으면 라벨 `upstream-watch`

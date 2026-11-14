@@ -1,6 +1,13 @@
 # public/engine/
 
-Rapfi WebAssembly 산출물 — **네 변형**이 같은 빌드(릴리스 `engine-3c94c2a9-a6`)에서 나온다.
+Rapfi WebAssembly 산출물 — **네 변형**이 같은 빌드(릴리스 `engine-1387d113-a6`)에서 나온다.
+
+`engine-1387d113-a6` 은 패치 묶음은 `a6` 그대로(11개)이고 바탕 upstream 을 `3c94c2a9` → `1387d113`(0.44.1 이후, dotb1ue/rapfi)으로,
+가중치(Networks)를 `e32ad77a` → `7eeb19b5` 로 올린 판이다(docs/engineering-notes.md §11). 탐색이 달라진다 — 규칙별 탐색 파라미터 ·
+규칙별 classical 값 · upstream 의 탐색 · 프로토콜 수정. mix9svq 가중치는 그대로이고 classical 모델 파일이 새 형식이라 `.data` 가 달라졌다.
+DB 패치 다섯은 upstream 의 DB 수정과 겹쳐 새 커밋에 맞춰 다시 썼다(패스 칸으로 끝나는 키를 이제 바르게 읽는다).
+
+아래는 옛 바탕(`3c94c2a9`) 위에서 패치를 하나씩 얹어 온 기록이다.
 
 `a6` 은 `a5` 에 DB 패치 둘을 얹었다(탐색 불변, 가중치 · Emscripten 6.0.13 그대로 — docs/engineering-notes.md §10).
 `tools/patches/db5-compact-record-table.patch` 는 yixindb 기록을 메모리에서 압축 기록 표로 들고(적재 · 메모리 약 1/3),
