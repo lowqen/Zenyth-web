@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import manifest from "./engine-manifest.json";
 
 /**
  * 데스크톱 셸의 엔진 스레드 — Tauri 웹뷰에서는 워커 안의 같은 출처 중첩 워커가 열리지
@@ -18,7 +19,9 @@ describe("데스크톱 blob 엔진 스레드", () => {
 
     const mod = await import("./engine-worker");
 
-    expect(imported).toEqual(["https://tauri.localhost/engine/rapfi-multi-simd128.js"]);
+    expect(imported).toEqual([
+      "https://tauri.localhost/engine/rapfi-multi-simd128.js?v=" + encodeURIComponent(manifest.tag),
+    ]);
     // 부트스트랩 소스는 원래 주소를 심고 그 번들을 읽는다.
     const src = mod.pthreadBootstrapSource(script);
     const seen: Record<string, unknown> = {};

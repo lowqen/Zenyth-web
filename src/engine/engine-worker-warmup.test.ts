@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import manifest from "./engine-manifest.json";
 import type { FromWorker, ToWorker, WeightsSpec } from "./engine-types";
 import { sha256Hex } from "./weights-cache";
 
@@ -111,7 +112,7 @@ describe("기동 — 공유 가중치와 예열", () => {
     expect(glueOpts.getPreloadedPackage!("x", 0)).toBeNull();
     expect(glueOpts.locateFile!("rapfi-single-simd128.data")).toBe(s.url);
     expect(glueOpts.locateFile!("rapfi-single-simd128.wasm")).toBe(
-      "/engine/rapfi-single-simd128.wasm",
+      "/engine/rapfi-single-simd128.wasm?v=" + encodeURIComponent(manifest.tag),
     );
   });
 

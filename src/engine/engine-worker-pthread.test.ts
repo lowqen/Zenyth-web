@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import manifest from "./engine-manifest.json";
 
 /**
  * pthread 가드 — 엔진 스레드가 이 워커 번들을 `name: "em-pthread"` 로 **다시 열었을 때**
@@ -24,7 +25,9 @@ describe("pthread 가드", () => {
     const mod = await import("./engine-worker");
 
     expect(mod.IS_PTHREAD).toBe(true);
-    expect(imported).toEqual(["https://rapfi.example/engine/rapfi-multi-simd128.js"]);
+    expect(imported).toEqual([
+      "https://rapfi.example/engine/rapfi-multi-simd128.js?v=" + encodeURIComponent(manifest.tag),
+    ]);
     // 호스트의 메시지 처리기는 걸리지 않았다 — 글루가 제 것을 건다.
     expect(g.onmessage).toBeUndefined();
   });

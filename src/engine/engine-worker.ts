@@ -10,6 +10,7 @@ import {
   type ToWorker,
 } from "./engine-types";
 import { loadWeights } from "./weights-cache";
+import engineManifest from "./engine-manifest.json";
 import type { Move } from "../core/model/move";
 
 /**
@@ -112,6 +113,20 @@ const post = (m: FromWorker) => self.postMessage(m);
 // (`engine-client.ts`). 다른 경로로 띄우면 여기서 글루를 못 찾고, 기동 핸드셰이크가
 // 시간을 넘겨 클라이언트가 단일 변형으로 물러선다.
 
+/**
+ * 엔진 산출물(글루 `.js` · `.wasm`) 주소에 붙이는 판 표시. `/engine/*` 는 `immutable` 로 1년 캐시되는데
+ * 파일 이름에는 판이 없어서, 엔진을 올린 뒤에도 재방문 브라우저가 옛 글루 · wasm 을 새 가중치(`rapfi.data?v=<해시>`)와
+ * 섞어 띄웠다 — upstream 1387d113 으로 올린 날 relaxed 멀티가 옛 엔진으로 새 classical 모델을 못 읽어 기동에 실패했다
+ * (docs/engineering-notes.md §11). 릴리스 태그는 산출물이 바뀔 때마다 바뀌므로(태그 불변 규칙) 주소가 곧 판이다.
+ * 매니페스트가 이 번들에 들어오므로 엔진을 올리면 워커 번들의 해시도 바뀐다.
+ */
+export const ENGINE_ASSET_VERSION: string = engineManifest.tag;
+
+/** 엔진 산출물 주소에 판 표시를 붙인다. */
+export function versionedEngineUrl(url: string): string {
+  return `${url}${url.includes("?") ? "&" : "?"}v=${encodeURIComponent(ENGINE_ASSET_VERSION)}`;
+}
+
 /** 엔진 스레드로 열렸는가. */
 export const IS_PTHREAD =
   typeof self !== "undefined" && (self as unknown as { name?: string }).name === "em-pthread";
@@ -145,7 +160,9 @@ function pthreadScriptUrl(): string {
 /** 멀티 변형 글루의 주소 — 엔진 스레드가 읽는다. */
 export function pthreadGlueUrl(): string {
   const base = import.meta.env?.VITE_ENGINE_BASE_URL ?? "/engine/";
-  return new URL(`${base}rapfi-${pthreadVariant()}.js`, pthreadScriptUrl()).href;
+  return versionedEngineUrl(
+    new URL(`${base}rapfi-${pthreadVariant()}.js`, pthreadScriptUrl()).href,
+  );
 }
 
 if (IS_PTHREAD) importScripts(pthreadGlueUrl());
@@ -533,7 +550,7 @@ function drain(chunk: string) {
  * upstream 규약을 그대로 둬야 하고, 20MB 짜리 `.data` 를 번들에 넣을 일도 없다.
  */
 function loadFactory(baseUrl: string, variant: string): ModuleFactory {
-  const url = `${baseUrl}rapfi-${variant}.js`;
+  const url = versionedEngineUrl(`${baseUrl}rapfi-${variant}.js`);
   if (variant.startsWith("multi") && needsBlobPthreads(self.location?.href ?? "")) {
     installBlobPthreads(self as unknown as Parameters<typeof installBlobPthreads>[0]);
   }
@@ -660,7 +677,9 @@ async function boot(msg: Extract<ToWorker, { type: "boot" }>) {
   const opts: Partial<EmscriptenModule> = {
     // 공유 가중치를 쓰면 `.data` 요청은 어느 변형이든 그 한 파일로 간다(훅이 먼저 답하므로
     // 실제로는 요청이 나가지 않는다 — 훅이 없는 글루를 위한 안전망).
-    locateFile: (p: string) => (shared && p.endsWith(".data") ? shared : msg.engineBaseUrl + p),
+    // 나머지(.wasm)는 판 표시를 붙여 옛 캐시를 비켜 간다(ENGINE_ASSET_VERSION).
+    locateFile: (p: string) =>
+      shared && p.endsWith(".data") ? shared : versionedEngineUrl(msg.engineBaseUrl + p),
     onReceiveStdout: drain,
     onReceiveStderr: drain,
     onExit: (code: number) => post({ type: "exit", code }),
