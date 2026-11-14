@@ -1,0 +1,143 @@
+From 80d227f7fcef4110d40c672b4570d81bd7e8b183 Mon Sep 17 00:00:00 2001
+From: lowqen <lowqen@gmail.com>
+Date: Sun, 4 Oct 2026 11:26:52 +0900
+Subject: [PATCH 02/10] =?UTF-8?q?build(pgo):=20=EC=A7=84=EB=8B=A8=20?=
+ =?UTF-8?q?=EB=AA=A8=EB=93=9C=20=E2=80=94=20=EA=B3=84=EC=B8=A1=20=EB=B9=8C?=
+ =?UTF-8?q?=EB=93=9C=EC=97=90=20=EC=9D=B4=EB=A6=84=20=EC=84=B9=EC=85=98=20?=
+ =?UTF-8?q?=C2=B7=20=EA=B0=92=20=ED=94=84=EB=A1=9C=ED=8C=8C=EC=9D=BC=20?=
+ =?UTF-8?q?=EB=81=94=EC=9D=84=20=EB=94=B0=EB=A1=9C=20=EC=96=B9=EC=96=B4=20?=
+ =?UTF-8?q?=ED=94=84=EB=A1=9C=ED=8C=8C=EC=9D=BC=20=EA=BA=BC=EB=82=B4?=
+ =?UTF-8?q?=EA=B8=B0=20=ED=99=95=EC=9D=B8?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+첫 실행(37169771582): 계측 빌드 링크 · 훈련(150국면 364초)은 됐으나 END 의 종료 경로에서
+RuntimeError: memory access out of bounds — 정상 빌드의 END 는 깨끗하다. PGO_GEN_CFLAGS ·
+PGO_GEN_LDFLAGS · PGO_TRAIN_LIMIT · PGO_STOP_AFTER_TRAIN 과 pgo.yml mode=diag 를 더한다.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .github/workflows/pgo.yml      | 20 ++++++++++++++++++++
+ tools/build_engine_wasm.sh     |  3 ++-
+ tools/build_engine_wasm_pgo.sh | 10 +++++++++-
+ 3 files changed, 31 insertions(+), 2 deletions(-)
+
+diff --git a/.github/workflows/pgo.yml b/.github/workflows/pgo.yml
+index 7672165..d6f645b 100644
+--- a/.github/workflows/pgo.yml
++++ b/.github/workflows/pgo.yml
+@@ -6,6 +6,11 @@ name: WASM PGO (P3-5)
+ on:
+   workflow_dispatch:
+     inputs:
++      mode:
++        description: "full = 전체(기준 · PGO · NPS) · diag = 계측 빌드 두 벌(이름 · 값 프로파일 끔)로 프로파일 꺼내기만 진단"
++        default: "full"
++        type: choice
++        options: ["full", "diag"]
+       train_nodes:
+         description: "훈련 국면당 노드"
+         default: "200000"
+@@ -51,7 +56,19 @@ jobs:
+           path: ${{ env.WORK }}/rapfi
+           key: rapfi-3c94c2a9-v1
+ 
++      - name: 진단 — 프로파일 꺼내기(A 이름만 · B 이름 + 값 프로파일 끔), 각각 3국면 훈련
++        if: inputs.mode == 'diag'
++        run: |
++          for v in A B; do
++            if [ $v = A ]; then gen=""; else gen="-mllvm -disable-vp=true"; fi
++            echo "================ 진단 $v — PGO_GEN_CFLAGS='$gen'"
++            PGO_GEN_CFLAGS="$gen" PGO_GEN_LDFLAGS="--profiling-funcs" PGO_TRAIN_LIMIT=3 PGO_TRAIN_NODES=20000 \
++              PGO_STOP_AFTER_TRAIN=1 bash tools/build_engine_wasm_pgo.sh > diag-$v.log 2>&1 && echo "진단 $v: 성공" || echo "진단 $v: 실패"
++            grep -E "훈련 국면|\[pgo\]|RuntimeError|at .*wasm-function|at [_A-Za-z].*\(wasm|profraw|Total functions|Maximum function count|X " diag-$v.log | head -40
++          done
++
+       - name: 기준 빌드 — 배포 구성(P2-2 + -O4 --converge), PGO 없음
++        if: inputs.mode == 'full'
+         run: |
+           set -o pipefail
+           grep -m1 "model name" /proc/cpuinfo || true
+@@ -61,6 +78,7 @@ jobs:
+           cp out/engine/rapfi-single-simd128.* out/engine/ENGINE_VERSION.txt bench/gomocalc/engines/rapfiweb-base/
+ 
+       - name: PGO — 계측 → 훈련 → merge → 사용 빌드
++        if: inputs.mode == 'full'
+         env:
+           PGO_TRAIN_NODES: ${{ inputs.train_nodes }}
+         run: |
+@@ -73,6 +91,7 @@ jobs:
+           cp out/engine/rapfi-single-simd128.* out/engine/ENGINE_VERSION.txt bench/gomocalc/engines/rapfiweb-pgo/
+ 
+       - name: 1 스레드 NPS — 기준 ↔ PGO, 순서 뒤집어 두 번
++        if: inputs.mode == 'full'
+         env:
+           VARIANTS: single-simd128
+           THREADS: "1"
+@@ -96,5 +115,6 @@ jobs:
+           path: |
+             out/pgo/
+             pgo-build.log
++            diag-*.log
+             bench/gomocalc/results/pgo-run*
+             bench/gomocalc/engines/rapfiweb-*/ENGINE_VERSION.txt
+diff --git a/tools/build_engine_wasm.sh b/tools/build_engine_wasm.sh
+index 1435845..2543145 100755
+--- a/tools/build_engine_wasm.sh
++++ b/tools/build_engine_wasm.sh
+@@ -256,7 +256,8 @@ build_variant () {
+   [ "$threads" = "ON" ] || extra+=(-DNO_MULTI_THREADING=ON)
+   local cflags="" ldflags="$EXTRA_LDFLAGS"
+   if [ -n "$PGO_GENERATE" ]; then
+-    cflags="-fprofile-instr-generate"
++    # PGO_GEN_CFLAGS: 계측 빌드에만 더할 컴파일 플래그(예: -mllvm -disable-vp=true — 값 프로파일 끄기)
++    cflags="-fprofile-instr-generate ${PGO_GEN_CFLAGS:-}"
+     ldflags="$ldflags -fprofile-instr-generate --pre-js $ROOT/tools/pgo/profdump.js"
+   elif [ -n "$PGO_PROFILE" ]; then
+     # 프로파일에 없는 함수(다른 변형 · 훈련이 안 닿은 경로)는 경고만 — PGO 없이 컴파일된다
+diff --git a/tools/build_engine_wasm_pgo.sh b/tools/build_engine_wasm_pgo.sh
+index 19342cc..c54f397 100755
+--- a/tools/build_engine_wasm_pgo.sh
++++ b/tools/build_engine_wasm_pgo.sh
+@@ -8,6 +8,8 @@
+ # 나머지 환경 변수(RAPFI_PATCHES · WASM_OPT_POST · BASE_VARIANTS · EXTRA_VARIANTS · ENABLE_LTO …)는 **마지막(사용) 빌드**에
+ # 그대로 넘어간다. 계측 빌드는 훈련에 쓰는 single-simd128 하나만, wasm-opt 후처리 없이 만든다.
+ #   PGO_TRAIN_NODES   국면당 노드(기본 200000) · PGO_TRAIN_POSITIONS  국면 파일들(train.mjs 기본)
++#   PGO_TRAIN_LIMIT   훈련 국면 수 상한(진단용) · PGO_STOP_AFTER_TRAIN=1  훈련 뒤 멈춤(진단 — 프로파일 꺼내기만 확인)
++#   PGO_GEN_CFLAGS · PGO_GEN_LDFLAGS  계측 빌드에만 더할 플래그(예: -mllvm -disable-vp=true · --profiling-funcs)
+ # 산출물: out/engine(PGO 빌드) + out/pgo/{rapfi.profdata, rapfi.profraw, train.log, profdata-show.txt}
+ set -eu
+ 
+@@ -21,7 +23,7 @@ echo "=========================================================="
+ echo " PGO 1/4 — 계측 빌드(single-simd128, -fprofile-instr-generate)"
+ echo "=========================================================="
+ PGO_GENERATE=1 PGO_PROFILE="" BASE_VARIANTS=single-simd128 EXTRA_VARIANTS="" WASM_OPT_POST="" \
+-  bash "$ROOT/tools/build_engine_wasm.sh"
++  EXTRA_LDFLAGS="${PGO_GEN_LDFLAGS:-}" bash "$ROOT/tools/build_engine_wasm.sh"
+ cp "$ROOT"/out/engine/rapfi-single-simd128.* "$ROOT/out/engine/package.json" "$PGO_DIR/inst/"
+ grep -E "^(upstream|pgo) " "$ROOT/out/engine/ENGINE_VERSION.txt" | sed "s/^/  | /"
+ 
+@@ -42,6 +44,7 @@ echo "=========================================================="
+   cd "$ROOT"
+   posArgs=()
+   [ -n "${PGO_TRAIN_POSITIONS:-}" ] && posArgs=(--positions "$PGO_TRAIN_POSITIONS")
++  [ -n "${PGO_TRAIN_LIMIT:-}" ] && posArgs+=(--limit "$PGO_TRAIN_LIMIT")
+   RAPFI_PROFRAW="$PGO_DIR/rapfi.profraw" node tools/pgo/train.mjs --dir "$PGO_DIR/inst" \
+     --nodes "${PGO_TRAIN_NODES:-200000}" "${posArgs[@]}" 2>&1 | tee "$PGO_DIR/train.log"
+ )
+@@ -50,6 +53,11 @@ if [ ! -s "$PGO_DIR/rapfi.profraw" ]; then
+   exit 1
+ fi
+ echo "  . profraw $(stat -c%s "$PGO_DIR/rapfi.profraw") bytes"
++if [ -n "${PGO_STOP_AFTER_TRAIN:-}" ]; then
++  "$PROFDATA" merge -o "$PGO_DIR/rapfi.profdata" "$PGO_DIR/rapfi.profraw" && "$PROFDATA" show "$PGO_DIR/rapfi.profdata" | sed "s/^/  | /"
++  echo "PGO_STOP_AFTER_TRAIN — 여기서 멈춘다"
++  exit 0
++fi
+ 
+ echo "=========================================================="
+ echo " PGO 3/4 — llvm-profdata merge"
+-- 
+2.56.0.windows.4
+

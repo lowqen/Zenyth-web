@@ -1,0 +1,57 @@
+From 42b0977733fb46156cb19ad1f826b339b22fc308 Mon Sep 17 00:00:00 2001
+From: lowqen <lowqen@gmail.com>
+Date: Sun, 4 Oct 2026 12:19:17 +0900
+Subject: [PATCH 09/10] =?UTF-8?q?build(pgo):=20profdump=20=E2=80=94=20?=
+ =?UTF-8?q?=EC=86=8D=EC=84=B1=EC=9D=84=20=EB=8C=80=EA=B4=84=ED=98=B8?=
+ =?UTF-8?q?=EB=A1=9C(Closure=20=EA=B0=80=20pre-js=20=EC=9D=98=20=EC=A0=90?=
+ =?UTF-8?q?=20=ED=91=9C=EA=B8=B0=20=EC=9D=B4=EB=A6=84=EC=9D=84=20=EB=B0=94?=
+ =?UTF-8?q?=EA=BE=BC=EB=8B=A4)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+진단 37173142332: 런타임을 맞춘 뒤 프런트엔드(235KB) · IR(350KB) 모두 프로파일을 쓴다. 다만
+RAPFI_PROFRAW 가 무시되고 기본 이름으로 떨어졌다 — upstream 링크의 Closure 가 process.env.X 를 줄였다.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ tools/pgo/profdump.js | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/tools/pgo/profdump.js b/tools/pgo/profdump.js
+index 81d1d3e..f45296f 100644
+--- a/tools/pgo/profdump.js
++++ b/tools/pgo/profdump.js
+@@ -8,11 +8,13 @@
+ // upstream preamble.js 는 `Module["onExit"] = Module["onExit"] || …` 라 우리가 감싼 것을 그대로 둔다.
+ //
+ // 꺼낼 경로: 환경 변수 RAPFI_PROFRAW(기본 ./rapfi.profraw). Node 에서만 동작한다(브라우저에서는 건너뜀).
++// 속성은 모두 대괄호로 — upstream 링크가 Closure 로 이 pre-js 까지 줄여 `process.env.X` 같은 점 표기 이름을 바꾼다
++// (진단 37173142332 에서 RAPFI_PROFRAW 가 무시되고 기본 이름으로 떨어졌다).
+ (function () {
+   var prev = Module["onExit"];
+   Module["onExit"] = function (code) {
+-    if (typeof process !== "undefined" && process.versions && process.versions.node) {
+-      var out = (process.env && process.env.RAPFI_PROFRAW) || "rapfi.profraw";
++    if (typeof process !== "undefined" && process["versions"] && process["versions"]["node"]) {
++      var out = (process["env"] && process["env"]["RAPFI_PROFRAW"]) || "rapfi.profraw";
+       try {
+         // 프런트엔드 계측은 default.profraw, IR 계측(-fprofile-generate)은 default_<id>.profraw — 루트의 .profraw 를 모두
+         var names = FS.readdir("/").filter(function (n) {
+@@ -20,10 +22,10 @@
+         });
+         if (names.length !== 1) throw new Error("루트의 .profraw 가 " + names.length + "개: " + names.join(","));
+         var data = FS.readFile("/" + names[0]);
+-        require("fs").writeFileSync(out, data);
+-        process.stderr.write("[pgo] /" + names[0] + " " + data.length + " bytes -> " + out + "\n");
++        require("fs")["writeFileSync"](out, data);
++        process["stderr"]["write"]("[pgo] /" + names[0] + " " + data.length + " bytes -> " + out + "\n");
+       } catch (e) {
+-        process.stderr.write("[pgo] 프로파일을 꺼내지 못함: " + e + "\n");
++        process["stderr"]["write"]("[pgo] 프로파일을 꺼내지 못함: " + e + "\n");
+       }
+     }
+     if (prev) prev(code);
+-- 
+2.56.0.windows.4
+

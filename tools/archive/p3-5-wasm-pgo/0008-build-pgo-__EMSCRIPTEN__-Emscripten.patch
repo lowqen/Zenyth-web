@@ -1,0 +1,44 @@
+From d182c585b95d06a7333904b7a2c903bc0f584cdd Mon Sep 17 00:00:00 2001
+From: lowqen <lowqen@gmail.com>
+Date: Sun, 4 Oct 2026 12:07:05 +0900
+Subject: [PATCH 08/10] =?UTF-8?q?build(pgo):=20=ED=94=84=EB=A1=9C=ED=8C=8C?=
+ =?UTF-8?q?=EC=9D=BC=20=EB=9F=B0=ED=83=80=EC=9E=84=20=E2=80=94=20=ED=98=B8?=
+ =?UTF-8?q?=EC=8A=A4=ED=8A=B8=20=EC=9D=B4=EB=A6=84=20=EB=B6=84=EA=B8=B0?=
+ =?UTF-8?q?=EC=97=90=20=5F=5FEMSCRIPTEN=5F=5F=20(Emscripten=20=EC=82=AC?=
+ =?UTF-8?q?=EB=B3=B8=EC=9D=98=20=EC=86=90=EC=A7=88=20=EC=9E=AC=ED=98=84)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+진단 37172796755: undefined symbol lprofGetHostName — upstream 은 __wasi__ 에서만 빈 값으로 둔다.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ tools/pgo/sync_profile_runtime.sh | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/tools/pgo/sync_profile_runtime.sh b/tools/pgo/sync_profile_runtime.sh
+index 87128ad..027a692 100755
+--- a/tools/pgo/sync_profile_runtime.sh
++++ b/tools/pgo/sync_profile_runtime.sh
+@@ -83,6 +83,17 @@ for f in "$RT/lib/profile"/*; do
+     echo "    - 뺌: $(basename "$f")(sanitizer/interception 의존 · 원래 사본에 없음)"
+   fi
+ done
++# Emscripten 이 자기 사본에 얹어 둔 손질을 다시 한다 — upstream 은 호스트 이름을 __wasi__ 에서만 빈 값으로 두고
++# 나머지는 lprofGetHostName(COMPILER_RT_HAS_UNAME 일 때만 정의)을 부른다. Emscripten 빌드는 그 매크로를 안 켜서
++# 링크가 "undefined symbol: lprofGetHostName" 으로 실패한다(진단 37172796755).
++port="$RT/lib/profile/InstrProfilingPort.h"
++if grep -q '^#if defined(__ORBIS__) || defined(__wasi__)$' "$port"; then
++  sed -i 's/^#if defined(__ORBIS__) || defined(__wasi__)$/#if defined(__ORBIS__) || defined(__wasi__) || defined(__EMSCRIPTEN__)/' "$port"
++  echo "    + InstrProfilingPort.h: 호스트 이름 — __EMSCRIPTEN__ 도 빈 값"
++elif ! grep -q '__EMSCRIPTEN__' "$port"; then
++  echo "  X InstrProfilingPort.h 의 호스트 이름 분기를 찾지 못했다 — upstream 이 바뀌었다, 손으로 볼 것"
++  exit 1
++fi
+ echo "$commit" > "$STAMP"
+ echo "  . 바꿈 — Emscripten 런타임 raw 형식 이제 $(ver_of "$RT")"
+ 
+-- 
+2.56.0.windows.4
+
