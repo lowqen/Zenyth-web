@@ -1,0 +1,444 @@
+From 0d2f50a81828c81167e93d4ad613875684436976 Mon Sep 17 00:00:00 2001
+From: lowqen <lowqen@gmail.com>
+Date: Sun, 4 Oct 2026 11:00:55 +0900
+Subject: [PATCH 01/10] =?UTF-8?q?build:=20WASM=20LLVM=20PGO=20=ED=8C=8C?=
+ =?UTF-8?q?=EC=9D=B4=ED=94=84=EB=9D=BC=EC=9D=B8(P3-5)=20=E2=80=94=20?=
+ =?UTF-8?q?=EA=B3=84=EC=B8=A1=20=E2=86=92=20Node=20=ED=9B=88=EB=A0=A8=20?=
+ =?UTF-8?q?=E2=86=92=20merge=20=E2=86=92=20=EC=82=AC=EC=9A=A9=20=EB=B9=8C?=
+ =?UTF-8?q?=EB=93=9C?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+엔진 코드는 바꾸지 않는다 — tools/build_engine_wasm.sh 에 컴파일 · 링크 플래그만:
+  PGO_GENERATE=1  -fprofile-instr-generate + --pre-js tools/pgo/profdump.js
+  PGO_PROFILE=f   -fprofile-instr-use=f(빠진 함수는 경고만)
+  BASE_VARIANTS   계측 빌드는 훈련용 single-simd128 하나만
+upstream 링크가 EXIT_RUNTIME=1 이라 프로파일 런타임은 atexit 에서 /default.profraw 를 메모리 FS 에
+쓰고, upstream 의 EXPORTED_RUNTIME_METHODS(['cwrap'])가 우리 -s 를 덮어 FS 를 밖으로 못 내보낸다 —
+그래서 우리 pre-js 가 모듈 안에서 Module.onExit(atexit 뒤 · process.exit 전)를 감싸 디스크로 꺼낸다.
+tools/pgo/train.mjs: 균형 개시 · 필승 묶음(표준 · 하드) 150국면을 노드 제한으로 풀고 END.
+tools/build_engine_wasm_pgo.sh: 네 단계를 잇는다 — llvm-profdata 는 emsdk 의 것(clang 과 같은 LLVM).
+pgo.yml: 같은 러너에서 기준(배포 구성) ↔ PGO, BENCH 게이트 + 1 스레드 NPS 순서 뒤집어 두 번.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .github/workflows/pgo.yml      | 100 +++++++++++++++++++++++++++++++++
+ tools/build_engine_wasm.sh     |  49 ++++++++++++++--
+ tools/build_engine_wasm_pgo.sh |  69 +++++++++++++++++++++++
+ tools/pgo/profdump.js          |  26 +++++++++
+ tools/pgo/train.mjs            |  90 +++++++++++++++++++++++++++++
+ 5 files changed, 329 insertions(+), 5 deletions(-)
+ create mode 100644 .github/workflows/pgo.yml
+ create mode 100755 tools/build_engine_wasm_pgo.sh
+ create mode 100644 tools/pgo/profdump.js
+ create mode 100644 tools/pgo/train.mjs
+
+diff --git a/.github/workflows/pgo.yml b/.github/workflows/pgo.yml
+new file mode 100644
+index 0000000..7672165
+--- /dev/null
++++ b/.github/workflows/pgo.yml
+@@ -0,0 +1,100 @@
++name: WASM PGO (P3-5)
++
++# tools/build_engine_wasm_pgo.sh — 계측 빌드 → Node 훈련(균형 개시 · 필승 묶음 표준 · 하드) → llvm-profdata merge →
++# 프로파일 사용 빌드. 같은 러너에서 기준(배포 구성) ↔ PGO 를 1 스레드 NPS 로 두 번(순서 뒤집어) 잰다.
++# 엔진 코드는 바꾸지 않는다(컴파일 · 링크 플래그뿐) — PGO 빌드는 BENCH 2b7c7da9 · 7,170,518 그대로여야 한다.
++on:
++  workflow_dispatch:
++    inputs:
++      train_nodes:
++        description: "훈련 국면당 노드"
++        default: "200000"
++        type: string
++      time_ms:
++        default: "10000"
++        type: string
++      repeat:
++        default: "2"
++        type: string
++
++permissions:
++  contents: read
++
++jobs:
++  pgo:
++    runs-on: ubuntu-latest
++    timeout-minutes: 300
++    env:
++      WORK: ${{ github.workspace }}/../rapfi-wasm-work
++      ENABLE_LTO: "ON"
++      RAPFI_PATCHES: tools/patches/p2-2-keep-evaluators-on-rebuild.patch
++      WASM_OPT_POST: "-O4 --converge"
++      BASE_VARIANTS: single-simd128
++    steps:
++      - uses: actions/checkout@v4
++      - uses: actions/setup-node@v4
++        with:
++          node-version: "26"
++      - uses: pnpm/action-setup@v4
++      - run: pnpm install --no-frozen-lockfile
++      - run: pnpm exec playwright install --with-deps chromium
++      - name: 시스템 도구
++        run: sudo apt-get update -qq && sudo apt-get install -y ninja-build ccache file
++      - name: emsdk 캐시 복원
++        uses: actions/cache/restore@v4
++        with:
++          path: ${{ env.WORK }}/emsdk
++          key: emsdk-latest-v1
++      - name: rapfi 소스 캐시 복원
++        uses: actions/cache/restore@v4
++        with:
++          path: ${{ env.WORK }}/rapfi
++          key: rapfi-3c94c2a9-v1
++
++      - name: 기준 빌드 — 배포 구성(P2-2 + -O4 --converge), PGO 없음
++        run: |
++          set -o pipefail
++          grep -m1 "model name" /proc/cpuinfo || true
++          bash tools/build_engine_wasm.sh
++          node spike/node-bench.mjs single-simd128 | grep -E '"(hash|nodes|nodesPerSec|pass)"'
++          mkdir -p bench/gomocalc/engines/rapfiweb-base
++          cp out/engine/rapfi-single-simd128.* out/engine/ENGINE_VERSION.txt bench/gomocalc/engines/rapfiweb-base/
++
++      - name: PGO — 계측 → 훈련 → merge → 사용 빌드
++        env:
++          PGO_TRAIN_NODES: ${{ inputs.train_nodes }}
++        run: |
++          set -o pipefail
++          bash tools/build_engine_wasm_pgo.sh 2>&1 | tee pgo-build.log
++          echo "--- PGO 빌드 BENCH(2b7c7da9 · 7,170,518 이어야 함 — 다르면 여기서 멈춘다)"
++          node spike/node-bench.mjs single-simd128 | grep -E '"(hash|nodes|nodesPerSec|pass)"'
++          ls -l out/engine/rapfi-single-simd128.wasm bench/gomocalc/engines/rapfiweb-base/rapfi-single-simd128.wasm
++          mkdir -p bench/gomocalc/engines/rapfiweb-pgo
++          cp out/engine/rapfi-single-simd128.* out/engine/ENGINE_VERSION.txt bench/gomocalc/engines/rapfiweb-pgo/
++
++      - name: 1 스레드 NPS — 기준 ↔ PGO, 순서 뒤집어 두 번
++        env:
++          VARIANTS: single-simd128
++          THREADS: "1"
++          TIME_MS: ${{ inputs.time_ms }}
++          REPEAT: ${{ inputs.repeat }}
++          BENCH: single-simd128
++        run: |
++          grep -m1 "model name" /proc/cpuinfo || true
++          ENGINES=rapfiweb-base,rapfiweb-pgo LABEL=pgo-run1 node bench/gomocalc/run.mjs
++          ENGINES=rapfiweb-pgo,rapfiweb-base LABEL=pgo-run2 node bench/gomocalc/run.mjs
++          for r in pgo-run1 pgo-run2; do
++            node bench/gomocalc/report.mjs bench/gomocalc/results/$r.json > bench/gomocalc/results/$r.md
++            { echo "### $r"; sed -n '/예열 뒤 NPS/,/^$/p;/내장 BENCH/,/^$/p' bench/gomocalc/results/$r.md; } >> "$GITHUB_STEP_SUMMARY"
++          done
++
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: pgo
++          retention-days: 14
++          path: |
++            out/pgo/
++            pgo-build.log
++            bench/gomocalc/results/pgo-run*
++            bench/gomocalc/engines/rapfiweb-*/ENGINE_VERSION.txt
+diff --git a/tools/build_engine_wasm.sh b/tools/build_engine_wasm.sh
+index 9caf438..1435845 100755
+--- a/tools/build_engine_wasm.sh
++++ b/tools/build_engine_wasm.sh
+@@ -63,6 +63,18 @@ RAPFI_PATCHES="${RAPFI_PATCHES:-}"
+ # 않음.** emcc 가 링크 때 이미 wasm-opt 를 돌리므로 이것은 그 위에 얹는 추가 패스다. 켜면 [4.5/6] 에서
+ # 변형마다 그 변형이 쓰는 기능만 켜고 돌린다(wasm_features). 적용 여부는 ENGINE_VERSION.txt 에 적힌다.
+ WASM_OPT_POST="${WASM_OPT_POST:-}"
++# LLVM PGO(P3-5 — tools/build_engine_wasm_pgo.sh 가 쓴다). **기본은 둘 다 비움 = PGO 없음.**
++#   PGO_GENERATE=1     계측 빌드: -fprofile-instr-generate + --pre-js tools/pgo/profdump.js(프로파일을 디스크로)
++#   PGO_PROFILE=<경로> 프로파일 사용 빌드: -fprofile-instr-use=<.profdata> — 컴파일 플래그만, 엔진 코드는 그대로
++# 둘 다 CMAKE_C(XX)_FLAGS 로 넣는다(upstream 은 그 변수에 덧붙이기만 한다). 적용 여부는 ENGINE_VERSION.txt 에 적힌다.
++PGO_GENERATE="${PGO_GENERATE:-}"
++PGO_PROFILE="${PGO_PROFILE:-}"
++# 기본 변형(공백 구분). 계측 빌드는 훈련에 쓰는 단일 스레드만 만들면 된다(BASE_VARIANTS=single-simd128).
++BASE_VARIANTS="${BASE_VARIANTS:-single-simd128 multi-simd128}"
++if [ -n "$PGO_GENERATE" ] && [ -n "$PGO_PROFILE" ]; then
++  echo "  X PGO_GENERATE 와 PGO_PROFILE 은 함께 쓸 수 없다"
++  exit 1
++fi
+ 
+ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ WORK="${WORK:-$HOME/rapfi-wasm-work}"
+@@ -242,14 +254,24 @@ build_variant () {
+   local dir="build-$name"
+   local extra=()
+   [ "$threads" = "ON" ] || extra+=(-DNO_MULTI_THREADING=ON)
++  local cflags="" ldflags="$EXTRA_LDFLAGS"
++  if [ -n "$PGO_GENERATE" ]; then
++    cflags="-fprofile-instr-generate"
++    ldflags="$ldflags -fprofile-instr-generate --pre-js $ROOT/tools/pgo/profdump.js"
++  elif [ -n "$PGO_PROFILE" ]; then
++    # 프로파일에 없는 함수(다른 변형 · 훈련이 안 닿은 경로)는 경고만 — PGO 없이 컴파일된다
++    cflags="-fprofile-instr-use=$PGO_PROFILE -Wno-profile-instr-unprofiled -Wno-profile-instr-out-of-date -Wno-backend-plugin"
++  fi
+ 
+-  echo "--- build: $name (threads=$threads relaxed=$relaxed) ---"
++  echo "--- build: $name (threads=$threads relaxed=$relaxed${cflags:+ · $cflags}) ---"
+   emcmake cmake -S . -B "$dir" -G Ninja \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DNO_COMMAND_MODULES=ON \
+     -DUSE_WASM_SIMD=ON \
+     -DUSE_WASM_SIMD_RELAXED="$relaxed" \
+-    -DCMAKE_EXE_LINKER_FLAGS="$EXTRA_LDFLAGS" \
++    -DCMAKE_C_FLAGS="$cflags" \
++    -DCMAKE_CXX_FLAGS="$cflags" \
++    -DCMAKE_EXE_LINKER_FLAGS="$ldflags" \
+     "${extra[@]}"
+   cmake --build "$dir" -j"$JOBS"
+ }
+@@ -260,11 +282,17 @@ build_variant () {
+ # 빼는 CMake 옵션이 없다. upstream README 의 4종 안내는 mix10 이전 것이다.
+ # 그래서 SIMD 두 종만 만든다 — 지원 범위는 Chrome/Edge 91+, Firefox 89+,
+ # Safari 16.4+ 이고, 빠지는 것은 사실상 iOS 16.4 미만이다.
+-build_variant single-simd128 OFF
+-build_variant multi-simd128  ON
++VARIANTS=()
++for v in $BASE_VARIANTS; do
++  case "$v" in
++    single-simd128) build_variant single-simd128 OFF ;;
++    multi-simd128)  build_variant multi-simd128  ON ;;
++    *) echo "  X BASE_VARIANTS 에 모르는 변형: $v"; exit 1 ;;
++  esac
++  VARIANTS+=("$v")
++done
+ 
+ # 추가 변형(EXTRA_VARIANTS) — relaxed SIMD. 이름이 곧 설정이다.
+-VARIANTS=(single-simd128 multi-simd128)
+ for v in $EXTRA_VARIANTS; do
+   case "$v" in
+     multi-simd128-relaxed)  build_variant "$v" ON ON ;;
+@@ -434,6 +462,14 @@ verify () {
+     echo "  X -msimd128 없음 — 스칼라 빌드다(이 커밋에서는 링크도 안 된다)"
+     fail=1
+   fi
++  if [ -n "$PGO_GENERATE" ]; then
++    grep -q -- "-fprofile-instr-generate" "$nj" || { echo "  X PGO_GENERATE 인데 -fprofile-instr-generate 가 없다"; fail=1; }
++    grep -q -- "profdump.js" "$nj" || { echo "  X PGO_GENERATE 인데 profdump.js(프로파일 꺼내기)가 없다"; fail=1; }
++  elif [ -n "$PGO_PROFILE" ]; then
++    grep -q -- "-fprofile-instr-use=" "$nj" || { echo "  X PGO_PROFILE 인데 -fprofile-instr-use 가 없다"; fail=1; }
++  else
++    grep -q -- "-fprofile-instr" "$nj" && { echo "  X PGO 를 켜지 않았는데 -fprofile-instr 플래그가 있다(이전 빌드 캐시?)"; fail=1; }
++  fi
+   if ! grep -q -- "preamble.js" "$nj"; then
+     echo "  X --pre-js preamble.js 가 없다 — sendCommand 펌프 없이 나온 빌드다"
+     fail=1
+@@ -486,6 +522,9 @@ ls -l "$OUT/bench" | sed "s/^/  . /"
+   echo "data       : rapfi.data (모든 변형 공유) $DATA_SIZE bytes sha256 $DATA_SHA"
+   echo "link opts  : (upstream CMakeLists 의 EMSCRIPTEN 블록이 전부 정한다 — 우리는 얹지 않는다)"
+   echo "wasm-opt   : 추가 후처리 $WASM_OPT_NOTE"
++  if [ -n "$PGO_GENERATE" ]; then echo "pgo        : 계측 빌드(-fprofile-instr-generate) — 배포하지 말 것";
++  elif [ -n "$PGO_PROFILE" ]; then echo "pgo        : 프로파일 사용 $(basename "$PGO_PROFILE") sha256 $(sha256sum "$PGO_PROFILE" | cut -c1-16)";
++  else echo "pgo        : 없음"; fi
+   echo "variants   : ${VARIANTS[*]}"
+   echo "preloads   : $PRELOAD_SET"
+   echo "note       : SIMD 없는 변형은 eval/mix10nnue.cpp 의 static_assert 때문에 이 커밋에서 빌드되지 않는다"
+diff --git a/tools/build_engine_wasm_pgo.sh b/tools/build_engine_wasm_pgo.sh
+new file mode 100755
+index 0000000..19342cc
+--- /dev/null
++++ b/tools/build_engine_wasm_pgo.sh
+@@ -0,0 +1,69 @@
++#!/usr/bin/env bash
++#
++# WASM LLVM PGO 빌드 (P3-5) — 계측 빌드 → Node 훈련 → llvm-profdata merge → 프로파일 사용 빌드.
++# 엔진 코드는 건드리지 않는다: tools/build_engine_wasm.sh 의 PGO_GENERATE / PGO_PROFILE 컴파일 · 링크 플래그뿐이다.
++#
++#   RAPFI_PATCHES="…" WASM_OPT_POST="-O4 --converge" bash tools/build_engine_wasm_pgo.sh
++#
++# 나머지 환경 변수(RAPFI_PATCHES · WASM_OPT_POST · BASE_VARIANTS · EXTRA_VARIANTS · ENABLE_LTO …)는 **마지막(사용) 빌드**에
++# 그대로 넘어간다. 계측 빌드는 훈련에 쓰는 single-simd128 하나만, wasm-opt 후처리 없이 만든다.
++#   PGO_TRAIN_NODES   국면당 노드(기본 200000) · PGO_TRAIN_POSITIONS  국면 파일들(train.mjs 기본)
++# 산출물: out/engine(PGO 빌드) + out/pgo/{rapfi.profdata, rapfi.profraw, train.log, profdata-show.txt}
++set -eu
++
++ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++WORK="${WORK:-$HOME/rapfi-wasm-work}"
++PGO_DIR="$WORK/pgo"
++rm -rf "$PGO_DIR"
++mkdir -p "$PGO_DIR/inst"
++
++echo "=========================================================="
++echo " PGO 1/4 — 계측 빌드(single-simd128, -fprofile-instr-generate)"
++echo "=========================================================="
++PGO_GENERATE=1 PGO_PROFILE="" BASE_VARIANTS=single-simd128 EXTRA_VARIANTS="" WASM_OPT_POST="" \
++  bash "$ROOT/tools/build_engine_wasm.sh"
++cp "$ROOT"/out/engine/rapfi-single-simd128.* "$ROOT/out/engine/package.json" "$PGO_DIR/inst/"
++grep -E "^(upstream|pgo) " "$ROOT/out/engine/ENGINE_VERSION.txt" | sed "s/^/  | /"
++
++# llvm-profdata 는 **emsdk 의 clang 과 같은 LLVM** 이어야 한다(.profraw 형식 판이 LLVM 마다 다르다).
++PROFDATA="$WORK/emsdk/upstream/bin/llvm-profdata"
++if [ ! -x "$PROFDATA" ]; then
++  echo "  X emsdk 에 llvm-profdata 가 없습니다: $PROFDATA"
++  ls "$WORK/emsdk/upstream/bin" | sed "s/^/    /"
++  exit 1
++fi
++echo "  . $("$PROFDATA" --version 2>&1 | grep -i version | head -1)"
++echo "  . clang: $("$WORK/emsdk/upstream/bin/clang" --version | head -1)"
++
++echo "=========================================================="
++echo " PGO 2/4 — 훈련(Node, 계측 WASM)"
++echo "=========================================================="
++(
++  cd "$ROOT"
++  posArgs=()
++  [ -n "${PGO_TRAIN_POSITIONS:-}" ] && posArgs=(--positions "$PGO_TRAIN_POSITIONS")
++  RAPFI_PROFRAW="$PGO_DIR/rapfi.profraw" node tools/pgo/train.mjs --dir "$PGO_DIR/inst" \
++    --nodes "${PGO_TRAIN_NODES:-200000}" "${posArgs[@]}" 2>&1 | tee "$PGO_DIR/train.log"
++)
++if [ ! -s "$PGO_DIR/rapfi.profraw" ]; then
++  echo "  X 프로파일(.profraw)이 없거나 비었습니다 — profdump.js(onExit)가 돌지 않았다"
++  exit 1
++fi
++echo "  . profraw $(stat -c%s "$PGO_DIR/rapfi.profraw") bytes"
++
++echo "=========================================================="
++echo " PGO 3/4 — llvm-profdata merge"
++echo "=========================================================="
++"$PROFDATA" merge -o "$PGO_DIR/rapfi.profdata" "$PGO_DIR/rapfi.profraw"
++"$PROFDATA" show "$PGO_DIR/rapfi.profdata" | tee "$PGO_DIR/profdata-show.txt" | sed "s/^/  | /"
++# 훈련이 핫패스에 닿았는지 — 가장 뜨거운 함수 몇 개(NNUE · 탐색이어야 한다)
++"$PROFDATA" show --topn=12 "$PGO_DIR/rapfi.profdata" 2>/dev/null | tail -14 | sed "s/^/  | /" || true
++
++echo "=========================================================="
++echo " PGO 4/4 — 프로파일 사용 빌드(-fprofile-instr-use)"
++echo "=========================================================="
++PGO_GENERATE="" PGO_PROFILE="$PGO_DIR/rapfi.profdata" bash "$ROOT/tools/build_engine_wasm.sh"
++mkdir -p "$ROOT/out/pgo"
++cp "$PGO_DIR/rapfi.profdata" "$PGO_DIR/rapfi.profraw" "$PGO_DIR/train.log" "$PGO_DIR/profdata-show.txt" "$ROOT/out/pgo/"
++grep -E "^(upstream|wasm-opt|pgo) " "$ROOT/out/engine/ENGINE_VERSION.txt" | sed "s/^/  | /"
++echo "완료: out/engine(PGO) · out/pgo/"
+diff --git a/tools/pgo/profdump.js b/tools/pgo/profdump.js
+new file mode 100644
+index 0000000..5baa9a6
+--- /dev/null
++++ b/tools/pgo/profdump.js
+@@ -0,0 +1,26 @@
++// PGO 계측 빌드 전용 --pre-js — LLVM 프로파일(.profraw)을 Emscripten 메모리 FS 에서 실제 디스크로 꺼낸다.
++// (tools/build_engine_wasm.sh 가 PGO_GENERATE=1 일 때만 링크에 얹는다. 배포 빌드에는 들어가지 않는다.)
++//
++// 왜 여기서: 프로파일 런타임은 atexit 에서 "/default.profraw" 를 **메모리 FS** 에 쓴다. upstream 링크는
++// EXIT_RUNTIME=1 이라 END → emscripten_force_exit → (atexit 실행) → Module.onExit → node process.exit 순서로
++// 끝나는데, FS 는 모듈 안에서만 보이고 upstream 의 EXPORTED_RUNTIME_METHODS(['cwrap'])가 우리 -s 를 덮어
++// FS 를 밖으로 내보낼 수도 없다. pre-js 는 모듈 안에서 돌므로 onExit 를 감싸 그 사이에 꺼낼 수 있다.
++// upstream preamble.js 는 `Module["onExit"] = Module["onExit"] || …` 라 우리가 감싼 것을 그대로 둔다.
++//
++// 꺼낼 경로: 환경 변수 RAPFI_PROFRAW(기본 ./rapfi.profraw). Node 에서만 동작한다(브라우저에서는 건너뜀).
++(function () {
++  var prev = Module["onExit"];
++  Module["onExit"] = function (code) {
++    if (typeof process !== "undefined" && process.versions && process.versions.node) {
++      var out = (process.env && process.env.RAPFI_PROFRAW) || "rapfi.profraw";
++      try {
++        var data = FS.readFile("/default.profraw");
++        require("fs").writeFileSync(out, data);
++        process.stderr.write("[pgo] profraw " + data.length + " bytes -> " + out + "\n");
++      } catch (e) {
++        process.stderr.write("[pgo] /default.profraw 를 꺼내지 못함: " + e + "\n");
++      }
++    }
++    if (prev) prev(code);
++  };
++})();
+diff --git a/tools/pgo/train.mjs b/tools/pgo/train.mjs
+new file mode 100644
+index 0000000..88a748e
+--- /dev/null
++++ b/tools/pgo/train.mjs
+@@ -0,0 +1,90 @@
++#!/usr/bin/env node
++/**
++ * PGO 훈련 — 계측 빌드(PGO_GENERATE=1)의 WASM 을 Node 에서 띄워 대표 국면을 풀게 하고, END 로 끝내 프로파일을
++ * 디스크에 떨군다(tools/pgo/profdump.js 가 Module.onExit 에서 꺼낸다).
++ *
++ *   RAPFI_PROFRAW=out.profraw node tools/pgo/train.mjs --dir <엔진 폴더> [--variant single-simd128]
++ *        [--positions a.json,b.json] [--nodes 200000] [--limit N]
++ *
++ * 국면: 배포가 실제로 도는 것 — 렌주 균형 개시 · 필승 묶음(표준 · 하드). 국면마다 해시를 비우고 노드 제한으로
++ * 푼다(계측 빌드는 2~3배 느려 시간 제한은 국면마다 깊이가 들쭉날쭉해진다). BENCH 는 넣지 않는다 — 렌주 전용
++ * .data 에서 BENCH 의 10국면 중 7개는 고전 평가로 폴백해 배포 핫패스를 대표하지 않는다.
++ */
++import { createRequire } from "node:module";
++import { existsSync, readFileSync } from "node:fs";
++import { resolve } from "node:path";
++
++const arg = (k, d) => {
++  const i = process.argv.indexOf(`--${k}`);
++  return i >= 0 ? process.argv[i + 1] : d;
++};
++const dir = resolve(arg("dir", "out/engine"));
++const variant = arg("variant", "single-simd128");
++const nodes = Number(arg("nodes", 200000));
++const limit = Number(arg("limit", 0));
++const files = arg(
++  "positions",
++  "bench/sprt/openings-balanced.json,bench/gomocalc/mate-suite.json,bench/gomocalc/mate-suite-hard.json",
++).split(",");
++
++const js = resolve(dir, `rapfi-${variant}.js`);
++const data = [resolve(dir, `rapfi-${variant}.data`), resolve(dir, "rapfi.data")].find((p) =>
++  existsSync(p),
++);
++if (!existsSync(js) || !data) {
++  console.error(`train: 엔진 파일이 없습니다 — ${js} · ${data ?? "(.data 없음)"}`);
++  process.exit(2);
++}
++let positions = files.flatMap((f) => {
++  const j = JSON.parse(readFileSync(f, "utf8"));
++  return (j.openings ?? j.positions).map((p) => p.moves);
++});
++if (limit) positions = positions.slice(0, limit);
++
++let lines = 0;
++let moves = 0;
++const factory = createRequire(import.meta.url)(js);
++const Module = await factory({
++  locateFile: (p) => (p.endsWith(".data") ? data : resolve(dir, p)),
++  onReceiveStdout: (l) => {
++    lines++;
++    if (/^\d+,\d+$/.test(l)) moves++;
++  },
++  onReceiveStderr: (l) => process.stderr.write(l + "\n"),
++  print: () => {},
++  printErr: () => {},
++});
++
++const send = (c) => Module.sendCommand(c);
++const t0 = Date.now();
++send("INFO RULE 4");
++send("START 15");
++send("INFO HASH_SIZE 131072");
++send("INFO THREAD_NUM 1");
++send("INFO TIMEOUT_TURN 3600000");
++send("INFO TIMEOUT_MATCH 0");
++send(`INFO MAX_NODE ${nodes}`);
++for (const [i, ms] of positions.entries()) {
++  send("YXHASHCLEAR");
++  const toMove = ms.length % 2;
++  send(
++    ["BOARD", ...ms.map(([x, y], k) => `${x},${y},${k % 2 === toMove ? 1 : 2}`), "DONE"].join("\n"),
++  );
++  if ((i + 1) % 25 === 0)
++    console.log(`  ${i + 1}/${positions.length} · ${((Date.now() - t0) / 1000).toFixed(0)}s`);
++}
++console.log(
++  `훈련 국면 ${positions.length}개 · 국면당 ${nodes} 노드 · 수 ${moves}개 · 출력 ${lines}줄 · ${((Date.now() - t0) / 1000).toFixed(0)}s`,
++);
++if (moves !== positions.length) {
++  console.error(
++    `수가 ${moves}개 — 국면 수(${positions.length})와 다르다. 탐색이 끝나지 않은 국면이 있다`,
++  );
++  process.exitCode = 1;
++}
++// END → emscripten_force_exit → atexit(프로파일 기록) → onExit(profdump.js 가 디스크로) → process.exit
++try {
++  send("END");
++} catch (e) {
++  if (!(e && (e.name === "ExitStatus" || typeof e.status === "number"))) throw e;
++}
+-- 
+2.56.0.windows.4
+

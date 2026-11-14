@@ -32,7 +32,7 @@ interface Component {
 }
 
 /**
- * 데스크톱이 동봉하는 네이티브 Rapfi — 공식 릴리스를 손대지 않고 싣는다(desktop.yml `RAPFI_NATIVE_TAG`).
+ * 데스크톱이 동봉하는 네이티브 Rapfi — 공식 릴리스를 손대지 않고 싣는다(Zenyth-desktop 의 desktop.yml `RAPFI_NATIVE_TAG`).
  * 대응 소스는 그 릴리스의 태그다. 설치 폴더 `engine/SOURCE.txt` 에도 같은 안내가 있다.
  */
 const RAPFI_NATIVE_TAG = "250615";
@@ -52,7 +52,7 @@ const WASM_RAPFI: Component = {
 };
 
 const COMPONENTS: readonly Component[] = [
-  // 데스크톱은 WASM 을 싣지 않는다(desktop.yml «WASM 엔진 빼기»).
+  // 데스크톱은 WASM 을 싣지 않는다(Zenyth-desktop 의 desktop.yml «WASM 엔진 빼기»).
   IS_DESKTOP ? NATIVE_RAPFI : WASM_RAPFI,
   {
     name: "rapfi-networks",

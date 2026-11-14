@@ -3,7 +3,7 @@
  * 프로세스 → 셸 준비 → 웹 내비 시작 → 창 표시 → 첫 페인트를 나눠 재고, 웹뷰 프로세스 트리의 메모리를 잰다.
  * Windows 전용이고 CI 에는 걸지 않는다(창이 뜬다) — 개발 기기에서 산출물을 받아 돌린다.
  *
- *   gh run download <desktop.yml 실행> -D <폴더>
+ *   gh run download -R lowqen/Zenyth-desktop <desktop.yml 실행> -D <폴더>
  *   pnpm exec tsx scripts/perf-shell.ts <폴더>/…/zenyth-desktop.exe [회수=3]
  *
  * - 시각은 셸의 `boot_marks`(main.rs — `main` 진입이 0)와 웹의 `performance.timeOrigin` 을 맞대 본다.

@@ -130,8 +130,8 @@ export type EnginePreference =
   "auto" | "multi" | "relaxed" | "simd" | "native" | `native-${NativeBuild}` | "remote";
 
 /**
- * 데스크톱이 동봉한 공식 Rapfi 의 Windows 빌드 — 빠른 순. 셸 `BUILDS`(`desktop/src-tauri/src/engine.rs`)와 같은
- * id · 같은 순서다(tauri-config.test.ts 가 대조). SSE 는 하한선이라 어느 x64 CPU 에서나 돈다.
+ * 데스크톱이 동봉한 공식 Rapfi 의 Windows 빌드 — 빠른 순. 셸 `BUILDS`(`Zenyth-desktop/src-tauri/src/engine.rs`)와 같은
+ * id · 같은 순서다(Zenyth-desktop 의 tests/tauri-config.test.ts 가 대조). SSE 는 하한선이라 어느 x64 CPU 에서나 돈다.
  */
 export const NATIVE_BUILDS = ["avx512vnni", "avx512", "avxvnni", "avx2", "sse"] as const;
 export type NativeBuild = (typeof NATIVE_BUILDS)[number];

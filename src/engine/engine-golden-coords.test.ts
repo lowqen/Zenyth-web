@@ -17,7 +17,7 @@ import { CoordMapper, serialize } from "./engine-protocol";
  * `coord_conversion_mode` 를 바꿔도 같은 국면의 주석이 보이고, 자식 칸의 좌표는 질의한 틀을 따른다.
  */
 
-const GOLDEN = join(__dirname, "../../desktop/baseline/golden");
+const GOLDEN = join(__dirname, "../../tools/yixin-golden/golden");
 const coord = new CoordMapper(15);
 
 function guiLines(): string[] {

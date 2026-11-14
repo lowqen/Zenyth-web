@@ -70,7 +70,7 @@
 | P3-1 | 위협 수 축소 완화 | **불채택** — SPRT 782판 Elo −6.7(−21.8 ~ +8.4) |
 | P3-3 | 정책 헤드 얕은 노드 생략 | **불채택** — SPRT H0 · Elo −19.4 |
 | P3-4 | 2 스레드 깊이 분산 | **불채택** — 잡음 바닥 안 |
-| P3-5 | WASM PGO | **불채택** — NPS 개선 없음(브랜치 `feature/p3-5-wasm-pgo` 에 남김) |
+| P3-5 | WASM PGO | **불채택** — NPS 개선 없음(커밋은 `tools/archive/p3-5-wasm-pgo/` 에 패치로 보관 — 2026-11-14 브랜치 정리) |
 | P4-1 | 주기 노드 카운터(출력 전용) | **채택** — 격리 멀티의 NODE 멈춤 해소 |
 | M1 | cachegrind 결정적 비용 지표 | **완료** — 같은 빌드 Ir 차 2×10⁻⁹ |
 | M3 | 500ms 속도-Elo 환산 | **완료** — 속도 2배 = **+105.7 Elo**(+82.1 ~ +130.4) → **+1% ≈ +1.5 Elo**. 환산 = Elo(2배) × ln(1+p)/ln 2 |
@@ -411,3 +411,20 @@ dhbloo/rapfi → **dotb1ue/rapfi** 로 이름이 바뀌었다(옛 주소는 넘�
   불변이라 엔진을 올리면 주소가 바뀐다. 헤더만 바꿔서는 이미 1년짜리로 캐시된 파일을 못 비킨다.
 - **감시.** `upstream-watch.yml`(매주 월요일)이 upstream 기본 브랜치 · 최신 릴리스를 고정값과 견주고, 뒤처졌으면 라벨 `upstream-watch`
   이슈 하나에 커밋 목록 · Networks 변화 · 배포 패치가 어디까지 그대로 얹히는지를 적는다(`tools/upstream-watch.sh`). 올리는 일은 하지 않는다.
+
+## §12. 저장소 정리 (2026-11-14)
+
+- **데스크톱 셸 분리 → [`lowqen/Zenyth-desktop`](https://github.com/lowqen/Zenyth-desktop).** `desktop/` 을 `git subtree split` 으로
+  이력째 옮기고(셸 `src-tauri/`), 옛 데스크톱(Yixin)과 엔진의 골든 녹취는 웹의 엔진 시험이 읽으므로 `tools/yixin-golden/` 으로 남겼다. `desktop.yml` · `scripts/tauri-config.test.ts` 도 그쪽으로 갔다. **화면은 한 벌이다** —
+  그쪽 CI 가 이 저장소를 `web/` 에 받아 `pnpm build` 로 굽는다(수동 실행의 `web_ref`, 기본 `main`). 데스크톱 전용 화면 코드
+  (`src/app/desktop/` · 네이티브 엔진 전송)와 `@tauri-apps/api` · 플러그인 패키지는 이 저장소에 남고, `@tauri-apps/cli` 만 그쪽으로 갔다.
+  이 저장소의 푸시는 그쪽 CI 를 깨우지 않으니, 데스크톱 코드를 바꾸면 그쪽 워크플로를 손으로 돌린다.
+  자동 업데이트: 1.0.3 이하 설치는 이 저장소의 `desktop-latest` 를 읽으므로 그 릴리스와 `desktop-v1.0.3` 은 남긴다 —
+  그쪽에서 첫 판을 낸 뒤 그 `latest.json` 을 여기에도 한 번 올리면 옛 설치가 새 저장소로 넘어간다(그쪽 README «자동 업데이트 다리»).
+- **보안 알림** — Dependabot #22(`glib` 0.18, GHSA-wrw7-89jp-8q8g)는 Tauri 가 리눅스에서만 쓰는 gtk-rs 로 들어온 것이라 Windows 전용
+  셸에는 컴파일되지 않는다. `Cargo.lock` 이 이 저장소를 떠나며 닫히고, 데스크톱 저장소에서는 그 사유로 해제한다.
+- **CI** — 실험 워크플로 17개(엔진 최적화 · gomocalc 대조 · DB I/O)를 지웠다. 남은 것: web · deploy · screenshots · engine-release ·
+  engine-patch · upstream-watch. 지운 파일은 `70291a6` 이전 이력에 있다. 벤치 스크립트(`bench/` · `tools/` · `spike/`)는 남긴다.
+- **릴리스 · 태그** — 엔진은 배포판 `engine-1387d113-a6` 과 되돌리기용 `engine-3c94c2a9-a6` 만 남기고 실험 판 10개를 지웠다
+  (태그 불변 규칙은 지우는 동안만 풀었다). 데스크톱은 `desktop-v1.0.3` · `desktop-latest` 만 남겼다.
+- **브랜치** — 머지 뒤 자동 삭제를 켰고, 남은 작업 브랜치를 정리했다.

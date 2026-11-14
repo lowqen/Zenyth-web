@@ -1,7 +1,7 @@
 {
   "_": [
     "Color.kt 의 열네 램프를 톤 0..100 전부 덤프한 것. 웹 이식의 기준값이다.",
-    "생성: java tools/tone-dump/ToneDump.java  (.github/workflows/tone-dump.yml)",
+    "생성: java tools/tone-dump/ToneDump.java  (옛 .github/workflows/tone-dump.yml — 2026-11-14 정리, git 이력 70291a6)",
     "근거: Kotlin Float = Java float, kotlin.math = java.lang.Math,",
     "      Compose 의 sRGB Color 는 (v*255f + 0.5f).toInt() 로 8비트 패킹한다(반올림).",
     "검증점: Color.kt 가 못 박은 Clay 톤 76 = #DAB673 을 이 덤프가 재현하는가."
