@@ -1,0 +1,39 @@
+name: upstream 감시 (Rapfi)
+
+# 웹 엔진(WASM)이 고정한 upstream 커밋과 데스크톱이 동봉한 네이티브 Rapfi 릴리스가 upstream 최신인지 매주 본다.
+# 뒤처졌으면 «upstream-watch» 라벨 이슈 하나에 무엇이 바뀌었고 배포 패치가 어디까지 그대로 얹히는지 적어 두고,
+# 둘 다 최신이 되면 그 이슈를 닫는다. 엔진을 올리는 일 자체는 하지 않는다(패치 재조정 · 기준선 재측정은 사람이
+# 판단 — docs/engineering-notes.md §11). 내용은 tools/upstream-watch.sh.
+on:
+  schedule:
+    # 매주 월요일 00:17 UTC(한국 09:17). 정각을 피한다 — GitHub 예약 실행이 정각에 몰려 늦어진다.
+    - cron: "17 0 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "이슈를 건드리지 않고 본문만 로그에 찍기"
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: upstream-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: upstream 대조 · 이슈 갱신
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+          WORK: ${{ runner.temp }}/upstream-watch
+        run: |
+          mkdir -p "$WORK"
+          bash tools/upstream-watch.sh
