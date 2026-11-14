@@ -6,7 +6,7 @@
 #   1. 웹 엔진(WASM)이 고정한 upstream 커밋(tools/build_engine_wasm.sh 의 RAPFI_COMMIT)보다
 #      upstream 기본 브랜치가 앞섰는가. 앞섰다면 배포 패치(engine-release.yml 의 RAPFI_PATCHES)가
 #      그 최신 커밋 위에 차례로 얹히는지까지 시험한다 — 올리는 일의 크기를 미리 알 수 있게.
-#   2. 데스크톱이 동봉하는 네이티브 엔진(desktop.yml 의 RAPFI_NATIVE_TAG)보다 새 공식 릴리스가 있는가.
+#   2. 데스크톱이 동봉하는 네이티브 엔진(lowqen/Zenyth-desktop 의 desktop.yml RAPFI_NATIVE_TAG)보다 새 공식 릴리스가 있는가.
 #
 # 하나라도 뒤처졌으면 «upstream-watch» 라벨 이슈 하나를 열거나 본문을 갱신하고(upstream 최신 커밋이
 # 바뀌었을 때만 댓글로 알린다), 둘 다 최신이면 열린 이슈를 닫는다. 엔진을 실제로 올리지는 않는다 —
@@ -26,7 +26,10 @@ pin_of () { sed -n "s/^$1=\"\${$1:-\([0-9a-f]*\)}\"/\1/p" "$ROOT/tools/build_eng
 RAPFI_PIN="$(pin_of RAPFI_COMMIT)"
 NETWORKS_PIN="$(pin_of NETWORKS_COMMIT)"
 PATCHES="$(sed -n 's/^ *RAPFI_PATCHES: "\(.*\)"$/\1/p' "$ROOT/.github/workflows/engine-release.yml")"
-NATIVE_TAG="$(sed -n 's/^ *RAPFI_NATIVE_TAG: "\(.*\)"$/\1/p' "$ROOT/.github/workflows/desktop.yml")"
+# 데스크톱 셸은 2026-11-14 부터 따로 있는 저장소다(공개 — 기본 토큰으로 읽힌다).
+DESKTOP_REPO="lowqen/Zenyth-desktop"
+NATIVE_TAG="$(gh api "repos/$DESKTOP_REPO/contents/.github/workflows/desktop.yml" -H "Accept: application/vnd.github.raw" \
+  | sed -n 's/^ *RAPFI_NATIVE_TAG: "\(.*\)"$/\1/p')"
 for v in RAPFI_PIN NETWORKS_PIN PATCHES NATIVE_TAG; do
   [ -n "${!v}" ] || { echo "::error::$v 를 저장소에서 읽지 못했습니다 — 파일 형식이 바뀌었는지 확인하세요"; exit 1; }
 done
@@ -117,7 +120,7 @@ BODY="$WORK/issue.md"
   else
     echo "동봉 \`$NATIVE_TAG\` → **새 릴리스 [\`$LATEST_TAG\`](https://github.com/$REPO/releases/tag/$LATEST_TAG)**"
     echo
-    echo "\`desktop.yml\` 의 \`RAPFI_NATIVE_TAG\` · \`RAPFI_NATIVE_SHA256\`(릴리스 자산 digest)과 \`src/features/settings/AboutPanel.tsx\` 의 \`RAPFI_NATIVE_TAG\` 를 함께 바꿉니다(\`tauri-config.test.ts\` 가 대조)."
+    echo "[\`$DESKTOP_REPO\`](https://github.com/$DESKTOP_REPO) 의 \`desktop.yml\` \`RAPFI_NATIVE_TAG\` · \`RAPFI_NATIVE_SHA256\`(릴리스 자산 digest)과 이 저장소 \`src/features/settings/AboutPanel.tsx\` 의 \`RAPFI_NATIVE_TAG\` 를 함께 바꿉니다(Zenyth-desktop 의 \`tests/tauri-config.test.ts\` 가 대조)."
   fi
 } > "$BODY"
 

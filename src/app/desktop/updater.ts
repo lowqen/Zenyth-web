@@ -6,10 +6,10 @@ import { t } from "../../i18n/i18n";
 import { useUpdateStore } from "./updateStore";
 
 /**
- * 자동 업데이트(데스크톱 Z7) — 셸 짝은 `desktop/src-tauri/src/main.rs`(`tauri-plugin-updater` · `is_portable`).
+ * 자동 업데이트(데스크톱 Z7) — 셸 짝은 `Zenyth-desktop/src-tauri/src/main.rs`(`tauri-plugin-updater` · `is_portable`).
  * `bridge.ts` 가 셸 안에서만 불러온다 — 웹 번들은 이 파일과 `@tauri-apps/plugin-updater` 를 받지 않는다.
  *
- * 업데이트 정보는 GitHub 릴리스 `desktop-latest` 의 `latest.json`(desktop.yml «릴리스» 잡이 올린다)이고, 설치
+ * 업데이트 정보는 GitHub 릴리스 `desktop-latest` 의 `latest.json`(lowqen/Zenyth-desktop 의 desktop.yml «릴리스» 잡이 올린다)이고, 설치
  * 파일의 서명은 tauri.conf.json 의 공개키로 셸이 검증한다. 개인키는 저장소에 없다(CI 시크릿).
  */
 

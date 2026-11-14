@@ -39,8 +39,8 @@ Z3에서 엔진 연결부를 `EngineTransport`로 나누고 네이티브 · 원�
   DB는 건드리지 않는다.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File desktop/baseline/recorder/record.ps1 -Name analysis-basic
-powershell -ExecutionPolicy Bypass -File desktop/baseline/recorder/record.ps1 -Name server-db -Engine engine_bak.exe -WithDb
+powershell -ExecutionPolicy Bypass -File tools/yixin-golden/recorder/record.ps1 -Name analysis-basic
+powershell -ExecutionPolicy Bypass -File tools/yixin-golden/recorder/record.ps1 -Name server-db -Engine engine_bak.exe -WithDb
 ```
 
 `engine.exe`는 로컬 Rapfi이고, `engine_bak.exe`는 Tailscale 서버 프록시다.

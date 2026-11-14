@@ -23,7 +23,7 @@ import {
  * 웹 ↔ Tauri 셸 연결(데스크톱 Z2). `main.tsx` 가 `IS_DESKTOP` 일 때만 동적 import 로 부른다 —
  * 웹 배포 번들은 이 파일과 `@tauri-apps/api` 를 받지 않는다.
  *
- * 셸 쪽 짝은 `desktop/src-tauri/src/main.rs`(파일 연결 · 단일 인스턴스 · 창 상태)다.
+ * 셸 쪽 짝은 `Zenyth-desktop/src-tauri/src/main.rs`(파일 연결 · 단일 인스턴스 · 창 상태)다.
  */
 
 /** 셸이 명령줄로 받은 기보 — main.rs `OpenFile` 과 같은 모양. */

@@ -10,7 +10,7 @@ import type { FromWorker, ToWorker } from "./engine-types";
  *   - WASM 멀티 경로(지금까지의 기준): 글루가 줄 하나씩, UTF-8 바이트를 글자 하나씩 넘긴다(`onReceiveStdout`).
  *   - 네이티브 경로: 셸이 16ms 프레임으로 묶은 줄을 `wireIn` 으로 넘긴다 — 여기서는 묶음 크기를 무작위로 흔든다.
  * 두 경로가 내는 콘솔 줄 · DB 줄 · 금수 · 마지막 스냅샷이 같아야 하고, 콘솔 줄은 녹취의 원문과 같아야 한다
- * (한글이 깨지지 않는다). 녹취는 Yixin(C/GTK)이 실제 엔진(0.43.01)과 주고받은 줄이다(`desktop/baseline/golden`).
+ * (한글이 깨지지 않는다). 녹취는 Yixin(C/GTK)이 실제 엔진(0.43.01)과 주고받은 줄이다(`tools/yixin-golden/golden`).
  */
 
 type Handler = (ev: { data: ToWorker }) => void;
@@ -26,7 +26,7 @@ async function until(cond: () => boolean, timeoutMs = 5000) {
   }
 }
 
-const GOLDEN = join(__dirname, "../../desktop/baseline/golden");
+const GOLDEN = join(__dirname, "../../tools/yixin-golden/golden");
 const goldenFiles = readdirSync(GOLDEN).filter((f) => f.endsWith(".jsonl"));
 
 function engineLines(file: string): string[] {
