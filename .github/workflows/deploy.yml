@@ -24,10 +24,9 @@ on:
       - "tools/**"
       - "bench/**"
       - "**/*.md"
-      - ".github/workflows/bench-*.yml"
-      - ".github/workflows/n1-*.yml"
-      - ".github/workflows/tone-dump.yml"
       - ".github/workflows/engine-release.yml"
+      - ".github/workflows/engine-patch.yml"
+      - ".github/workflows/upstream-watch.yml"
   workflow_dispatch:
     inputs:
       target:

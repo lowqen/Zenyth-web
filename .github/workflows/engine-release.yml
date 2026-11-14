@@ -82,7 +82,7 @@ jobs:
           node-version: "26"
 
       - name: 시스템 도구
-        # sprt.yml 과 같은 방식 — 있으면 건너뛰고, 없으면 sudo -n(암호를 묻지 않음)으로 설치를 시도한다.
+        # 있으면 건너뛰고, 없으면 sudo -n(암호를 묻지 않음)으로 설치를 시도한다.
         run: |
           missing=()
           for t in git cmake ninja ccache file python3 xz; do command -v "$t" > /dev/null || missing+=("$t"); done
