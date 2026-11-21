@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type ComponentType } from "react";
 import { Link, Navigate, NavLink, useNavigate, useParams } from "react-router-dom";
-import { useDesktopSplit } from "../../app/useDesktopSplit";
+import { useDesktopSplit } from "../../app/layout";
 import { useGameStore, type BoardMode } from "../board/gameStore";
 import { useBoardStore } from "../board/boardStore";
 import { useThemeStore, type ThemeMode } from "../../app/theme";

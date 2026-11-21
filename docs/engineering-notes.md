@@ -428,3 +428,24 @@ dhbloo/rapfi → **dotb1ue/rapfi** 로 이름이 바뀌었다(옛 주소는 넘�
 - **릴리스 · 태그** — 엔진은 배포판 `engine-1387d113-a6` 과 되돌리기용 `engine-3c94c2a9-a6` 만 남기고 실험 판 10개를 지웠다
   (태그 불변 규칙은 지우는 동안만 풀었다). 데스크톱은 `desktop-v1.0.3` · `desktop-latest` 만 남겼다.
 - **브랜치** — 머지 뒤 자동 삭제를 켰고, 남은 작업 브랜치를 정리했다.
+
+## §13. 웹 · 데스크톱 한 벌 규칙 (2026-11-21)
+
+화면 코드는 이 저장소 하나다(§12). 한 번 고치면 두 쪽에 같이 들어가도록 분기를 두 종류로만 둔다.
+
+| 묻는 것 | 쓰는 것 | 예 |
+|---|---|---|
+| **배치** — 화면을 데스크톱 문법(펼친 레일 · 인스펙터 · 2열 · 밀도)으로 그리는가 | CSS `:root[data-desktop]` 이 먼저, 컴포넌트가 꼭 알아야 하면 `src/app/layout.ts` 의 훅(`useDeskLayout` · `useDesktopSplit`) · `DESKTOP_LAYOUT` | 레일 펼침, 보드 인스펙터, 연구 화면 2열 |
+| **기능** — Tauri API · 셸에만 있는 것을 쓰는가 | `IS_DESKTOP`(`src/app/desktop/platform.ts`), 무거운 코드는 `src/app/desktop/` 에서 동적 import | 타이틀바, 단축키 · 명령 팔레트, 대국 시계, 네이티브 엔진, 업데이트 |
+
+- 폭 분기점은 `tokens.ts`(`LAYOUT` · `DESKTOP`)에서만 읽는다. `matchMedia` 로 폭을 묻는 훅을 새로 만들지 말고 `layout.ts` 에 더한다.
+- 데스크톱만의 색 · 반경 · 움직임은 만들지 않는다(tokens.ts 데스크톱 절). 다른 것은 치수 · 밀도 · 크롬뿐이다.
+- **미리 보기**: `pnpm dev` 뒤 `http://localhost:5173/?desktop` — 데스크톱 배치로 그린다(탭을 닫을 때까지, `?desktop=0` 으로 끔).
+  셸 기능(`IS_DESKTOP`)은 꺼진 그대로라 타이틀바 칸은 비어 있다 — 스크린샷 골든(`scripts/shots.ts` 의 `desktop` 폭)과 같은 상태.
+  배포 주소에서는 켜지지 않는다(`public/theme-init.js` 가 localhost 일 때만 읽는다).
+- **셸 빌드**: main 에 화면 파일이 바뀌면 `desktop-dispatch.yml` 이 Zenyth-desktop 의 `desktop.yml` 을 깨운다(시크릿
+  `DESKTOP_DISPATCH_TOKEN` — 그 파일 머리 주석). 거기서 셸을 굽고 셸 ↔ 웹 대조 시험을 돌린다. 릴리스는 여전히 `desktop-v*` 태그로만.
+- **로컬 대조 시험**: Zenyth-desktop 을 이 저장소 옆에 클론하고 `pnpm link-web`(그 저장소의 `web/` 을 이 폴더로 잇는 정션) 뒤
+  `pnpm test`. 셸 빌드(`tauri dev`)는 Rust · MSVC 가 필요해 개발 기기에서는 하지 않는다(2026-11-08 결정).
+- 정리: 같은 `matchMedia` 구독을 넷이 따로 갖던 `useIsCompact` · `useSheetLayout`/`useDeskLayout` · `useDesktopSplit` 을
+  `layout.ts` 하나로 모았다(1024 는 `LAYOUT.boardStack`). 레일의 `Ctrl+n` 풍선 도움말은 단축키가 셸에만 있으므로 `IS_DESKTOP` 으로.

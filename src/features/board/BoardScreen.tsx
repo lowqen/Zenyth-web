@@ -19,7 +19,7 @@ import { MoveToolbar } from "./MoveToolbar";
 import { SummaryLine } from "./SummaryLine";
 import { RunLine } from "./RunLine";
 import { BoardSheet } from "./BoardSheet";
-import { useDeskLayout, useSheetLayout } from "./useSheetLayout";
+import { useDeskLayout, useSheetLayout } from "../../app/layout";
 import { StatusCapsule } from "./StatusCapsule";
 import { Inspector } from "./Inspector";
 import { useBoardNotice } from "./boardNotice";

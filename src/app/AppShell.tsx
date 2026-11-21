@@ -7,7 +7,7 @@ import { BottomTabs } from "./BottomTabs";
 import { TopBar } from "./TopBar";
 import { ResearchTabs } from "../features/research/ResearchTabs";
 import { titleFor } from "./destinations";
-import { useIsCompact } from "./useIsCompact";
+import { useIsCompact } from "./layout";
 import { useAutoBoot } from "./useAutoBoot";
 import { RifImportLayer } from "../features/research/rif/RifImportLayer";
 import { CopySheetHost } from "../components/CopySheet";

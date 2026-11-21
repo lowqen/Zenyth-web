@@ -1,0 +1,45 @@
+name: 데스크톱 빌드 깨우기
+
+# 화면은 웹과 한 벌이다(docs/engineering-notes.md §12 · §13). main 에 화면이 바뀌면 lowqen/Zenyth-desktop 의
+# desktop.yml 을 repository_dispatch(«web-main»)로 깨워, 이 커밋의 화면으로 셸을 굽고 셸 ↔ 웹 대조 시험을 돌린다.
+# 거기서는 빌드 · 시험 · 아티팩트까지만 — 릴리스는 desktop-v* 태그로만 난다.
+#
+# 시크릿 DESKTOP_DISPATCH_TOKEN: fine-grained PAT, 저장소 lowqen/Zenyth-desktop 하나, 권한 Contents: Read and write
+# (repository_dispatch 는 contents 쓰기 권한을 요구한다). 없으면 알림만 남기고 넘어간다.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "vite.config.ts"
+      - "scripts/gen-tokens.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-dispatch
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Zenyth-desktop 깨우기
+        env:
+          GH_TOKEN: ${{ secrets.DESKTOP_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::DESKTOP_DISPATCH_TOKEN 이 없어 데스크톱 빌드를 깨우지 않았다 — Zenyth-desktop 워크플로를 손으로 돌릴 것."
+            exit 0
+          fi
+          printf '{"event_type":"web-main","client_payload":{"web_ref":"%s"}}' "$GITHUB_SHA" |
+            gh api repos/lowqen/Zenyth-desktop/dispatches --input -
+          echo "### Zenyth-desktop 빌드를 깨웠다 (화면 Zenyth-web@${GITHUB_SHA::7})" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/lowqen/Zenyth-desktop/actions/workflows/desktop.yml" >> "$GITHUB_STEP_SUMMARY"

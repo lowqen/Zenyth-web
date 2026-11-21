@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NumberField, Segmented, Switch } from "../../components/controls";
 import { ConfirmBox } from "../../components/ConfirmBox";
-import { useDesktopSplit } from "../../app/useDesktopSplit";
+import { useDesktopSplit } from "../../app/layout";
 import { Disclosure } from "../../components/Disclosure";
 import { downloadBlob, stamp } from "../../app/download";
 import { BoardCanvas } from "../../core/board/BoardCanvas";

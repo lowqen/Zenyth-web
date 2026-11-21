@@ -116,6 +116,8 @@ export const LAYOUT = {
   compactMax: 640,
   railWide: 1280,
   railIconOnly: 1024,
+  /** 이 폭 이하 세로 창은 판 밑으로 쌓는다(base.css `max-width: 1024px and portrait`) — 데스크톱 보드 배치의 하한. */
+  boardStack: 1024,
 } as const;
 
 // ── 데스크톱 셸(zenyth-desktop) ──────────────────────────────────────────────────────────────────
@@ -130,7 +132,7 @@ export const LAYOUT = {
  * 창 크롬의 치수(px). Mornye 데스크톱 셸(`desktop_navigation.dart` · `desktop_inspector.dart`)을 참고했다.
  *
  * 브레이크포인트는 CSS 변수가 될 수 없으므로(`@media` 안에서 `var()` 를 못 쓴다) 이 상수를 `matchMedia`
- * 쪽에서 읽는다 — `useIsCompact` 가 `LAYOUT.compactMax` 를 읽는 것과 같다.
+ * 쪽에서 읽는다 — `src/app/layout.ts` 가 모아 읽는다.
  */
 export const DESKTOP = {
   /** 커스텀 타이틀바. Windows 캡션 버튼(46×32)을 세로 가운데 담고, 드래그 영역이 손에 잡히는 높이. */

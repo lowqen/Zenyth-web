@@ -13,7 +13,8 @@ export const IS_DESKTOP: boolean = typeof window !== "undefined" && "__TAURI_INT
  *
  * `IS_DESKTOP` 과 나눈 이유: 그것은 Tauri API 를 불러도 되는가이고, 이것은 화면을 데스크톱 문법(펼친 레일 ·
  * 인스펙터 · 상태 캡슐)으로 그리는가다. 스크린샷 골든(`scripts/shots.ts` 의 `desktop` 폭)은 일반 브라우저에서
- * 속성만 붙여 배치를 찍는다 — 셸 API 없이. 웹 배포에서는 둘 다 언제나 거짓이다.
+ * 속성만 붙여 배치를 찍는다 — 셸 API 없이. 개발 서버의 `?desktop` 미리 보기도 같다. 웹 배포에서는 둘 다 언제나
+ * 거짓이다. 폭과 엮인 판정은 `src/app/layout.ts` 의 훅을 쓴다(engineering-notes §13).
  */
 export const DESKTOP_LAYOUT: boolean =
   typeof document !== "undefined" && document.documentElement.hasAttribute("data-desktop");

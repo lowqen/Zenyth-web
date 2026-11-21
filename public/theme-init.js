@@ -18,6 +18,18 @@ if ("__TAURI_INTERNALS__" in window) {
       ).catch(() => {});
     }),
   );
+} else if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+  // 데스크톱 배치 미리 보기(engineering-notes §13) — 개발 서버에서만. `?desktop` 으로 켜고 `?desktop=0` 으로 끈다.
+  // 탭을 닫을 때까지 기억한다(sessionStorage). 배치(DESKTOP_LAYOUT)만 바뀌고 셸 기능(IS_DESKTOP)은 꺼진 그대로다 —
+  // scripts/shots.ts 의 데스크톱 폭 골든과 같은 상태. 배포 주소에서는 이 갈래에 들어오지 않는다.
+  try {
+    const q = new URLSearchParams(location.search).get("desktop");
+    if (q !== null) sessionStorage.setItem("zenyth.desktopPreview", q === "0" ? "0" : "1");
+    if (sessionStorage.getItem("zenyth.desktopPreview") === "1")
+      document.documentElement.dataset.desktop = "";
+  } catch {
+    /* 저장소를 막은 브라우저 — 미리 보기 없이 웹 배치 */
+  }
 }
 try {
   const t = localStorage.getItem("rapfi.theme");

@@ -8,7 +8,7 @@ import { budgetLabel, dateStamp, fixed } from "../../../core/review/report";
 import { reportOf, useReviewStore } from "./reviewStore";
 import { ReportView } from "./ReportView";
 import { ProveSection } from "../prove/ProveSection";
-import { useDesktopSplit } from "../../../app/useDesktopSplit";
+import { useDesktopSplit } from "../../../app/layout";
 import { t } from "../../../i18n/i18n";
 
 /**

@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useDesktopSplit } from "../../../app/useDesktopSplit";
+import { useDesktopSplit } from "../../../app/layout";
 import { Chip, ChipGroup } from "../../../components/controls";
 import { ConfirmBox } from "../../../components/ConfirmBox";
 import { Disclosure } from "../../../components/Disclosure";
