@@ -28,8 +28,9 @@ body {
    밝게(surface-container, 라이트 95 · 다크 18 · 검은 배경 10). 경계는 면과 페이지의 차이 하나다(≥ 1.06:1, 시험).
    카드 안에 깔리는 것(칸 · 버튼 · 표 머리)은 한 단 위(surface-container-high)를 써야 면에 묻히지 않는다. */
 :root,
-[data-wood] {
-  /* [data-wood] 에서 다시 선언한다 — 사용자 속성의 var() 는 선언한 요소에서 풀려 상속되므로, 나무 칸 안에서
+[data-wood],
+[data-cov] {
+  /* [data-wood] · [data-cov](라이브러리 커버로 물든 칸)에서 다시 선언한다 — 사용자 속성의 var() 는 선언한 요소에서 풀려 상속되므로, 나무 칸 안에서
      면 토큰이 바뀌어도 :root 에서 풀린 값이 내려온다. */
   --c-card: var(--c-surface-container);
   --c-card-hover: var(--c-surface-container-high);
@@ -6490,6 +6491,564 @@ a.slink:hover {
 }
 .settings__groups {
   display: contents;
+}
+
+/* ── 라이브러리(라이브러리 계획 §6 · L2) ─────────────────────────────────
+   격자(커버 minmax 148) · 지금 붙은 DB · 상세(커버 색으로 물든 칸 — [data-cov], tokens.css). 데스크톱 2열은
+   useDesktopSplit 이 정하고 여기서는 칸만 나눈다. 새 색 · 반경은 없다 — 커버의 색은 covers.ts 의 표에서 온다. */
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.library__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  min-width: 0;
+}
+.library[data-split] {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(var(--inspector-min), 34vw, 480px);
+  gap: var(--space-xxl);
+  align-items: start;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+}
+.library[data-split] > .library__main,
+.library__side {
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-outline-variant) transparent;
+}
+.shell__content:has(> .library[data-split]) {
+  overflow: hidden;
+  container-type: size;
+}
+.library__bar,
+.library__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-m);
+  align-items: center;
+  justify-content: space-between;
+}
+.library__actions {
+  margin-top: 0;
+}
+
+.dbcover {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+}
+
+/* 지금 붙은 DB — 음악 앱의 «지금 재생 중». */
+.libnow__body {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: var(--space-xl);
+  align-items: center;
+  margin-top: var(--space-l);
+}
+.libnow__title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-l);
+  align-items: baseline;
+  font: var(--type-title-large);
+  color: var(--c-on-surface);
+  overflow-wrap: anywhere;
+}
+.libnow__status {
+  display: inline-flex;
+  gap: var(--space-s);
+  align-items: center;
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.libnow__status::before {
+  width: 8px;
+  height: 8px;
+  content: "";
+  background: var(--c-outline);
+  border-radius: 50%;
+}
+.libnow__status[data-status="on"]::before {
+  background: var(--c-positive);
+}
+.libnow__status[data-status="error"]::before {
+  background: var(--c-error);
+}
+.libnow__sub {
+  margin-top: var(--space-s);
+  font: var(--type-body-medium);
+  color: var(--c-on-surface-variant);
+}
+.libnow .panel__actions {
+  margin-top: var(--space-m);
+}
+
+/* 격자 — 커버 · 제목 17 · 부제. 넓은 화면은 hover 의 ▶ 가 바로 붙이기. */
+.libgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--space-xl) var(--space-l);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.libgrid__item {
+  position: relative;
+  min-width: 0;
+}
+.libgrid__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  border-radius: var(--radius-card);
+}
+.libgrid__card .dbcover {
+  transition: filter var(--motion-quick) ease-out;
+}
+.libgrid__card:hover .dbcover {
+  filter: brightness(1.04);
+}
+.libgrid__card[aria-current] .dbcover {
+  outline: 3px solid var(--c-primary);
+  outline-offset: 2px;
+}
+.libgrid__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  min-height: 44px;
+}
+.libgrid__title {
+  overflow: hidden;
+  font: 500 17px/24px var(--font-sans);
+  color: var(--c-on-surface);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.libgrid__sub {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.libgrid__on {
+  position: absolute;
+  top: var(--space-m);
+  left: var(--space-m);
+  padding: 2px var(--space-m);
+  font: var(--type-label-medium);
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-radius: var(--radius-xl);
+}
+.libgrid__play {
+  position: absolute;
+  right: var(--space-m);
+  bottom: calc(44px + var(--space-m) * 2);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+  transition: opacity var(--motion-quick) ease-out;
+}
+.libgrid__play .icon {
+  width: 22px;
+  height: 22px;
+}
+@media (hover: hover) {
+  .libgrid__play {
+    opacity: 0;
+  }
+  .libgrid__item:hover .libgrid__play,
+  .libgrid__play:focus-visible {
+    opacity: 1;
+  }
+}
+@media (hover: none) {
+  .libgrid__play {
+    display: none;
+  }
+}
+.libgrid--list {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-s);
+}
+.libgrid--list .libgrid__card {
+  flex-direction: row;
+  gap: var(--space-l);
+  align-items: center;
+  padding: var(--space-m);
+  background: var(--c-card);
+}
+.libgrid--list .libgrid__card:hover {
+  background: var(--c-card-hover);
+}
+.libgrid--list .dbcover {
+  flex: none;
+  width: 56px;
+  border-radius: var(--radius-m);
+}
+.libgrid--list .libgrid__text {
+  justify-content: center;
+  padding-right: 56px;
+}
+.libgrid--list .libgrid__on {
+  position: static;
+  margin-left: auto;
+}
+.libgrid--list .libgrid__play {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+
+/* 휴지통 · 되돌리기. */
+.libtrash {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  margin: var(--space-m) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.libtrash__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-m);
+  align-items: center;
+}
+.libtrash__title {
+  flex: 1;
+  min-width: 8em;
+  font: var(--type-body-medium);
+  color: var(--c-on-surface);
+}
+.libtrash__date {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.libtrash__row .panel__actions {
+  margin-top: 0;
+}
+.libundo {
+  position: sticky;
+  bottom: var(--space-l);
+  z-index: 5;
+  display: flex;
+  gap: var(--space-xl);
+  align-items: center;
+  align-self: center;
+  padding: var(--space-m) var(--space-xl);
+  font: var(--type-label-large);
+  color: var(--c-inverse-on-surface);
+  background: var(--c-inverse-surface);
+  border-radius: var(--radius-m);
+  animation: fade-in var(--motion-quick) ease-out;
+}
+.libundo .linkish {
+  color: var(--c-inverse-primary);
+}
+.library[data-split] > .libundo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 상세 — 칸 전체가 커버 색으로 물든다(data-cov). 머리는 커버의 컨테이너 톤 그라데이션. */
+.libdetail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  padding: var(--space-m);
+  color: var(--c-on-background);
+  background: var(--c-background);
+  border-radius: var(--radius-card);
+}
+.libdetail__head {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: var(--space-l) var(--space-xl);
+  align-items: center;
+  padding: var(--card-padding);
+  color: var(--c-on-surface);
+  background: linear-gradient(135deg, var(--c-cov-a), var(--c-cov-b));
+  border-radius: var(--radius-card);
+}
+.libdetail__back {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.libdetail__cover {
+  width: 120px;
+  padding: 0;
+  border-radius: var(--radius-card);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.18);
+}
+.libdetail__titles {
+  min-width: 0;
+}
+.libdetail__title {
+  padding: 0;
+  font: var(--type-headline-small);
+  color: var(--c-on-surface);
+  text-align: left;
+  overflow-wrap: anywhere;
+  text-decoration: underline dotted transparent;
+  text-underline-offset: 4px;
+  transition: text-decoration-color var(--motion-quick) ease-out;
+}
+.libdetail__title:hover {
+  text-decoration-color: currentcolor;
+}
+.libdetail__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  margin: var(--space-m) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.libchip {
+  padding: 2px var(--space-m);
+  font: var(--type-label-medium);
+  color: var(--c-on-surface);
+  border: 1px solid var(--c-cov-rim);
+  border-radius: var(--radius-xl);
+}
+.libchip--on {
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+.libdetail__primary {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+@media (max-width: 420px) {
+  .libdetail__head {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+  .libdetail__cover {
+    width: 88px;
+  }
+}
+.libdetail__scan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+/* 주형 분포 — 미니 커버 · 이름 · 막대(그 주형의 색) · 수. */
+.libopenings {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--space-m) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.libopenings__row {
+  display: grid;
+  grid-template-columns: 32px minmax(5.5em, 8em) minmax(0, 1fr) 4.5em;
+  gap: var(--space-l);
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-s) var(--space-m);
+  text-align: left;
+  border-radius: var(--radius-m);
+}
+button.libopenings__row:hover:not(:disabled) {
+  background: var(--c-surface-container-high);
+}
+.libopenings__row .dbcover {
+  width: 32px;
+  border-radius: var(--radius-s);
+}
+.libopenings__none {
+  width: 32px;
+  height: 32px;
+  border: 1px dashed var(--c-outline);
+  border-radius: var(--radius-s);
+}
+.libopenings__name {
+  overflow: hidden;
+  font: var(--type-body-medium);
+  color: var(--c-on-surface);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.libopenings__bar {
+  height: 6px;
+  overflow: hidden;
+  background: var(--c-surface-container-highest);
+  border-radius: 999px;
+}
+.libopenings__bar > span {
+  display: block;
+  height: 100%;
+  background: var(--c-cov-line, var(--c-outline));
+  border-radius: 999px;
+}
+.libopenings__n {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+  text-align: right;
+}
+
+/* 뿌리 국면 — 판 전체의 작은 그림 · 수 · 아래 국면 수. */
+.libroots {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--space-m) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.libroots__row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: var(--space-l);
+  align-items: center;
+  width: 100%;
+  min-height: 64px;
+  padding: var(--space-s) var(--space-m);
+  text-align: left;
+  border-radius: var(--radius-m);
+}
+.libroots__row:hover:not(:disabled) {
+  background: var(--c-surface-container-high);
+}
+.libroots__row:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.posthumb {
+  display: block;
+  width: 56px;
+  height: 56px;
+}
+.libroots__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.libroots__title {
+  font: var(--type-title-small);
+  color: var(--c-on-surface);
+}
+.libroots__sub {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.libroots__chev {
+  width: 20px;
+  height: 20px;
+  color: var(--c-on-surface-variant);
+}
+
+/* 기록 — W · L · D · 주석. */
+.librecords {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-m);
+  margin: var(--space-l) 0 0;
+}
+.librecords div {
+  padding: var(--space-m) var(--space-l);
+  background: var(--c-surface-container-high);
+  border-radius: var(--radius-m);
+}
+.librecords dt {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.librecords dd {
+  margin: 0;
+  font: var(--type-title-medium);
+  color: var(--c-on-surface);
+}
+
+/* 커버 시트 — 미리 보기 · [자동] [일식] · 直 13 / 間 13. */
+.coversheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-l);
+}
+.coversheet__preview {
+  width: 128px;
+  margin: 0 auto;
+}
+.coversheet__group {
+  font: var(--type-title-small);
+  color: var(--c-on-surface);
+}
+.coversheet__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: var(--space-m);
+}
+.coversheet__cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  align-items: center;
+  padding: 0;
+}
+.coversheet__cell .dbcover {
+  border-radius: var(--radius-m);
+}
+.coversheet__cell[aria-checked="true"] .dbcover {
+  outline: 3px solid var(--c-primary);
+  outline-offset: 2px;
+}
+.coversheet__check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-radius: 50%;
+}
+.coversheet__check .icon {
+  width: 16px;
+  height: 16px;
+}
+.coversheet__name {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.db__back {
+  margin-top: calc(-1 * var(--space-m));
 }
 
 /* 감속 모드면 전부 끈다 — 위의 전역 규칙은 길이만 줄이므로 지연(스태거)과 스프링 모양도 걷는다. */

@@ -18,6 +18,7 @@ import { useBoardNotice } from "./features/board/boardNotice";
 import { DEFAULT_SIZE } from "./core/model/move";
 import { loadOpeningTables } from "./data/opening-tables";
 import { wireDatabase } from "./features/database/dbStore";
+import { purgeLibraryTrash } from "./features/library/library";
 import { t } from "./i18n/i18n";
 import { Root } from "./app/Root";
 import { IS_DESKTOP } from "./app/desktop/platform";
@@ -42,6 +43,8 @@ void loadOpeningTables();
 
 // 엔진 DB(W8): 엔진이 뜰 때마다 저장된 rapfi.db 를 다시 붙이고, 자동 저장을 돌린다.
 wireDatabase();
+// 라이브러리 휴지통(L2) — 30일 지난 것을 치운다. 첫 화면과 다투지 않게 조금 뒤에.
+setTimeout(() => void purgeLibraryTrash().catch(() => 0), 5_000);
 
 // 국면 딥링크(`?p=…`)가 있으면 그 국면으로, 없으면 지난 판을 되살린다. 이 뒤로 판이
 // 바뀔 때마다 IndexedDB 에 남긴다. 링크는 읽고 나서 주소에서 걷어낸다 — 새로고침이

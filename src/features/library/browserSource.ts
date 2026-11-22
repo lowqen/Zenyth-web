@@ -9,7 +9,7 @@ import type { FileWrite, LibraryFileInfo, LibraryManifest, LibrarySource } from 
  * 휴지통은 앱 안(`.trash/` 앞붙이) — 지운 시각은 줄의 `savedAt` 에 둔다. 30일이 지나면 `purgeTrash` 가 치운다.
  */
 
-const TRASH = ".trash/";
+export const TRASH = ".trash/";
 export const TRASH_DAYS = 30;
 
 export class BrowserSource implements LibrarySource {

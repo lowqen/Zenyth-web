@@ -42,7 +42,8 @@ const SCENES: ReadonlyArray<{ name: string; path: string; lands?: string }> = [
   { name: "sequence", path: "/research/sequence" },
   { name: "ranking", path: "/research/ranking" },
   { name: "joseki", path: "/joseki" },
-  { name: "database", path: "/database" },
+  { name: "library", path: "/library" },
+  { name: "library-edit", path: "/library/edit" },
   { name: "board-log", path: "/engine", lands: "/board" },
   { name: "settings", path: "/settings" },
   // 설정 하위 화면(Z5) — 미리보기 카드 · 테마 단추 · 체크 원이 있는 둘.

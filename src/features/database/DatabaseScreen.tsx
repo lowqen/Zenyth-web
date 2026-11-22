@@ -25,9 +25,13 @@ import { DB_FILE, useDbStore } from "./dbStore";
 import { dbCellTag, dbValueText } from "./dbTags";
 import { msg, t } from "../../i18n/i18n";
 import { PageTitle } from "../../app/PageTitle";
+import { useProMode } from "../../app/proMode";
+import { Link } from "react-router-dom";
 
 /**
- * 데이터베이스(W8) — 엔진의 yixindb. 앱 `DatabaseScreen` · 데스크톱 `show_database` 의 이식.
+ * 국면 편집기(W8 의 DB 화면, 라이브러리 L2 부터 `/library/edit`) — 엔진의 yixindb. 앱 `DatabaseScreen` · 데스크톱
+ * `show_database` 의 이식. 라이브러리에서 고른 DB(«지금 붙은 DB»)를 고친다. 보기 · 고치기는 모두에게, 아래 분기
+ * 일괄 삭제만 고급 사용자 모드 뒤다(라이브러리 계획 §0 «위험한 쓰기만»).
  *
  * 판은 보드의 지금 판(무른 수 제외)이고, 빈 칸마다 DB 에 적힌 자식 값(태그)이나 칸 글자를 그린다.
  * 칸을 누르면 그 칸을 고른다 — 칸 글자를 적거나, 그 수를 보드에 두어 한 수 들어간다.
@@ -48,6 +52,7 @@ export function DatabaseScreen() {
   const s = useDbStore();
   const engineStatus = useEngineStore((e) => e.status);
   const owner = useEngineStore((e) => e.owner);
+  const pro = useProMode();
   const board = useBoardStore((b) => b.render);
   const [notice, setNotice] = useState<string | null>(null);
   const [picked, setPicked] = useState<Move | null>(null);
@@ -332,69 +337,71 @@ export function DatabaseScreen() {
             </button>
           </div>
 
-          <div className="panel__fold">
-            <Disclosure id="db-bulk" level={3} title={t("아래 분기 일괄 삭제")}>
-              <div className="review__row">
-                <span className="review__label">{t("대상")}</span>
-                <select
-                  aria-label={t("일괄 삭제 대상")}
-                  value={scope.filter}
-                  disabled={ro}
-                  onChange={(e) => {
-                    const filter = e.currentTarget.value as DbDeleteScope["filter"];
-                    setScope((x) => ({ ...x, filter }));
-                  }}
-                >
-                  {DELETE_FILTERS.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {t(f.title)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {scope.filter !== "all" && (
+          {pro && (
+            <div className="panel__fold">
+              <Disclosure id="db-bulk" level={3} title={t("아래 분기 일괄 삭제")}>
                 <div className="review__row">
-                  <span className="review__label">{t("하위 분기까지")}</span>
-                  <Switch
-                    label={t("하위 분기까지")}
-                    on={scope.recursive}
-                    onChange={(recursive) => setScope((x) => ({ ...x, recursive }))}
+                  <span className="review__label">{t("대상")}</span>
+                  <select
+                    aria-label={t("일괄 삭제 대상")}
+                    value={scope.filter}
                     disabled={ro}
-                  />
+                    onChange={(e) => {
+                      const filter = e.currentTarget.value as DbDeleteScope["filter"];
+                      setScope((x) => ({ ...x, filter }));
+                    }}
+                  >
+                    {DELETE_FILTERS.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {t(f.title)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              )}
-              {scope.filter === "wlinstep" && (
-                <div className="review__row">
-                  <span className="review__label">{t("수")}</span>
-                  <NumberField
-                    label={t("N수 이내")}
-                    value={scope.step}
-                    min={1}
-                    max={225}
-                    onCommit={(step) => setScope((x) => ({ ...x, step }))}
-                    disabled={ro}
-                  />
+                {scope.filter !== "all" && (
+                  <div className="review__row">
+                    <span className="review__label">{t("하위 분기까지")}</span>
+                    <Switch
+                      label={t("하위 분기까지")}
+                      on={scope.recursive}
+                      onChange={(recursive) => setScope((x) => ({ ...x, recursive }))}
+                      disabled={ro}
+                    />
+                  </div>
+                )}
+                {scope.filter === "wlinstep" && (
+                  <div className="review__row">
+                    <span className="review__label">{t("수")}</span>
+                    <NumberField
+                      label={t("N수 이내")}
+                      value={scope.step}
+                      min={1}
+                      max={225}
+                      onCommit={(step) => setScope((x) => ({ ...x, step }))}
+                      disabled={ro}
+                    />
+                  </div>
+                )}
+                <div className="panel__actions">
+                  <button
+                    type="button"
+                    className="btn--danger"
+                    disabled={ro || s.busy}
+                    onClick={() =>
+                      ask(
+                        t("이 국면 아래의 «{scope}»를 지웁니다. 되돌릴 수 없습니다.", {
+                          scope: deleteScopeTitle(scope),
+                        }),
+                        () => s.deleteAll(stones, scope),
+                      )
+                    }
+                  >
+                    {t("일괄 삭제")}
+                  </button>
                 </div>
-              )}
-              <div className="panel__actions">
-                <button
-                  type="button"
-                  className="btn--danger"
-                  disabled={ro || s.busy}
-                  onClick={() =>
-                    ask(
-                      t("이 국면 아래의 «{scope}»를 지웁니다. 되돌릴 수 없습니다.", {
-                        scope: deleteScopeTitle(scope),
-                      }),
-                      () => s.deleteAll(stones, scope),
-                    )
-                  }
-                >
-                  {t("일괄 삭제")}
-                </button>
-              </div>
-            </Disclosure>
-          </div>
+              </Disclosure>
+            </div>
+          )}
         </>
       )}
       {owner && on && (
@@ -409,7 +416,13 @@ export function DatabaseScreen() {
 
   const body = (
     <>
-      <PageTitle>DB</PageTitle>
+      <PageTitle>{t("국면 편집기")}</PageTitle>
+      <p className="panel__hint db__back">
+        <Link to={s.active ? `/library/${s.active.id}` : "/library"} className="linkish">
+          {t("라이브러리로")}
+        </Link>
+        {s.active ? ` · ${s.active.title}` : ""}
+      </p>
       <section className="panel" aria-label={t("데이터베이스")} aria-busy={s.busy}>
         <h2 className="panel__title">
           {t("데이터베이스")} (yixindb){" "}

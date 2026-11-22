@@ -248,9 +248,12 @@ export function appCommands(): AppCommand[] {
 
 /**
  * 걷힌 명령 id → 지금의 것. 사용자 명령(`@id` 단계)은 이 브라우저에 저장되어 있어, id 가 사라지면 «모르는 앱 명령»이
- * 된다. `nav.engine` 은 엔진 탭이 있던 때의 레일 명령이다(U2).
+ * 된다. `nav.engine` 은 엔진 탭이 있던 때의 레일 명령이다(U2), `nav.database` 는 DB 탭이 라이브러리가 되기 전(L2).
  */
-const RENAMED: Readonly<Record<string, string>> = { "nav.engine": "engine.log" };
+const RENAMED: Readonly<Record<string, string>> = {
+  "nav.engine": "engine.log",
+  "nav.database": "nav.library",
+};
 
 export function findCommand(id: string): AppCommand | undefined {
   const want = RENAMED[id] ?? id;

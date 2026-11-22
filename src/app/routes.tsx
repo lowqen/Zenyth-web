@@ -7,6 +7,7 @@ import {
   CurriculumStudio,
   DatabaseScreen,
   JosekiScreen,
+  LibraryScreen,
   OpeningExplorer,
   RankingScreen,
   ReviewScreen,
@@ -78,8 +79,12 @@ export const router = createBrowserRouter(
           ),
         },
 
-        // W8: 엔진 yixindb — 파일은 IndexedDB, 엔진이 뜰 때 메모리 FS 로 올린다.
-        { path: "database", element: <DatabaseScreen /> },
+        // 라이브러리(라이브러리 계획 L2) — yixindb 파일들의 격자 · 상세. 국면 편집기(W8 의 DB 화면)는 그 아래.
+        { path: "library", element: <LibraryScreen /> },
+        { path: "library/edit", element: <DatabaseScreen /> },
+        { path: "library/:id", element: <LibraryScreen /> },
+        // 옛 DB 탭 주소 — 편집기로 넘긴다(국면 딥링크 `?p=` 는 main.tsx 가 이미 읽었다).
+        { path: "database", element: <Navigate to="/library/edit" replace /> },
 
         // 엔진 상태 · 콘솔은 보드 «로그» 칸이 됐다(라이브러리 계획 U2). 옛 주소는 그 칸으로 넘긴다.
         { path: "engine", element: <EngineLogRedirect /> },

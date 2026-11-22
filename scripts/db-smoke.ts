@@ -34,6 +34,7 @@ interface DbView {
   status: string;
   message: string | null;
   stored: { size: number; savedAt: number } | null;
+  active: { id: string; title: string } | null;
   moves: number | null;
   cells: { x: number; y: number; tag: string; text: string }[];
   comment: string | null;
@@ -141,7 +142,7 @@ page.on("console", (m) => {
 
 try {
   // h8 i9 j10 — 흑 차례가 아닌 백 차례 국면.
-  await page.goto(`${BASE}/database?p=h8i9j10`);
+  await page.goto(`${BASE}/library/edit?p=h8i9j10`);
   await page.locator(".database").waitFor({ timeout: 15_000 });
 
   console.log("1. 엔진을 띄우고 DB 를 켠다");
@@ -204,7 +205,7 @@ try {
   );
   ok(`IndexedDB 에 ${saved.stored!.size} 바이트`);
 
-  await page.goto(`${BASE}/database?p=h8i9j10`);
+  await page.goto(`${BASE}/library/edit?p=h8i9j10`);
   await page.locator(".database").waitFor({ timeout: 15_000 });
   await startEngineAndAttach(page);
   const v2 = await until(
@@ -274,6 +275,53 @@ try {
     20_000,
   );
   ok(`평가 바가 DB 값을 그린다 — «${meterText}»`);
+
+  // 라이브러리(L2) — 워커가 저장된 파일의 통계를 세고, 새 DB 로 바꿔 붙였다가 다시 돌아온다(dbStore.switchTo).
+  console.log("6. 라이브러리 — 통계 · 새 DB 로 바꾸기 · 돌아오기");
+  await page.locator(".rail__link", { hasText: "라이브러리" }).click();
+  const mine = page.locator(".libgrid__item", { hasText: "내 DB" });
+  await mine.waitFor({ timeout: 15_000 });
+  const sub = await until(
+    page,
+    "라이브러리 통계(워커)",
+    () =>
+      mine
+        .locator(".libgrid__sub")
+        .innerText()
+        .catch(() => ""),
+    (t) => t.includes("국면"),
+    30_000,
+  );
+  ok(`«내 DB» 카드가 워커가 센 통계를 보인다 — «${sub}»`);
+  await page.locator('[data-k="library-new"]').click();
+  await page
+    .locator('[data-k="library-detail"]', { hasText: "새 DB" })
+    .waitFor({ timeout: 10_000 });
+  await page.locator('[data-k="library-open"]').click();
+  await page.locator(".boardscreen").waitFor({ timeout: 15_000 });
+  await until(
+    page,
+    "새 DB 로 바꿔 붙기",
+    () => dbView(page),
+    (v) => v.status === "on" && v.active?.title === "새 DB",
+    20_000,
+  );
+  ok("새 DB 로 바꿔 붙었다");
+  await page.locator(".rail__link", { hasText: "라이브러리" }).click();
+  await mine.locator(".libgrid__card").click();
+  await page
+    .locator('[data-k="library-detail"]', { hasText: "내 DB" })
+    .waitFor({ timeout: 10_000 });
+  await page.locator('[data-k="library-open"]').click();
+  await page.locator(".boardscreen").waitFor({ timeout: 15_000 });
+  await until(
+    page,
+    "«내 DB» 로 돌아오기",
+    () => dbView(page),
+    (v) => v.status === "on" && v.active?.title === "내 DB",
+    20_000,
+  );
+  ok("«내 DB» 로 돌아와 다시 붙었다");
 } catch (e) {
   fail(e instanceof Error ? e.message : String(e));
   try {

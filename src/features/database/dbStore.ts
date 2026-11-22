@@ -82,7 +82,7 @@ export const DB_FILE = "rapfi.db";
 /** db6 저널 — 엔진이 `<db>.journal` 로 쓴다. */
 export const JOURNAL_FILE = journalOf(DB_FILE);
 /** 저널 머리(`RYDBJNL1` · 본 파일 크기 · 해시) — 이보다 크면 접히지 않은 변경이 있다. */
-const JOURNAL_HEADER = 32;
+export const JOURNAL_HEADER = 32;
 const CSV_FILE = "rapfi.csv";
 const SETTINGS_KEY = "rapfi.db";
 const LOG_LIMIT = 120;

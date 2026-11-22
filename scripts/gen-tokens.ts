@@ -45,6 +45,7 @@ import {
 } from "../src/core/design/tokens.ts";
 
 import { SPRINGS, SPRING_FALLBACK, springEasing } from "../src/core/design/springs.ts";
+import { COVER_KEYS, coverArt, coverTint } from "../src/core/design/covers.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(HERE, "../src/styles/tokens.css");
@@ -137,6 +138,32 @@ ${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
 }`;
 }
 
+/**
+ * 라이브러리 커버(covers.ts) — `[data-cov]` 마다 그림 토큰(`--c-cov-*`)과 물들이기(Material 역할). «일식»은 그림만.
+ * 검은 배경은 면만 검정으로 되돌린다(나무와 같다).
+ */
+function coverBlocks(): string {
+  const one = (dark: boolean, indent: string, sel: (k: string) => string) =>
+    COVER_KEYS.map((k) => {
+      const s = { ...coverArt(k, dark), ...coverTint(k, dark) };
+      return `${indent}${sel(String(k))} {\n${colorBlock(s, indent + "  ")}\n${indent}}`;
+    }).join("\n");
+  return `${one(false, "", (k) => `[data-cov="${k}"]`)}
+
+@media (prefers-color-scheme: dark) {
+${one(true, "  ", (k) => `:root:not([data-theme="light"]) [data-cov="${k}"]`)}
+  :root[data-amoled]:not([data-theme="light"]) [data-cov] {
+${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
+  }
+}
+
+${one(true, "", (k) => `:root[data-theme="dark"] [data-cov="${k}"]`)}
+
+:root[data-theme="dark"][data-amoled] [data-cov] {
+${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
+}`;
+}
+
 const css = `/* 생성물입니다 — 손으로 고치지 마세요.
  * 원본: src/core/design/{ramps,scheme,tokens}.ts
  * 다시 굽기: pnpm gen:tokens   (CI 는 --check 로 최신 여부를 강제합니다)
@@ -201,6 +228,9 @@ ${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
 /* 보드 화면의 나무색 팔레트(scheme.ts woodScheme, 앱 WoodTheme) — data-wood 를 단 칸(셸이 보드에서 붙인다)
  * 안에서만. 판 스킨 · 값 색은 바꾸지 않는다. 검은 배경에서는 면은 검정 그대로, 강조만 나무. */
 ${woodBlocks(WoodLight, WoodDark)}
+
+/* 라이브러리 커버(covers.ts) — 26주형 · «일식» 둘. 그림 토큰은 DbCover 가, 물들이기는 커버를 단 상세 칸이 쓴다. */
+${coverBlocks()}
 `;
 
 mkdirSync(dirname(OUT), { recursive: true });

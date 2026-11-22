@@ -1,10 +1,12 @@
 import { db } from "../../data/db";
 import {
   defaultEntryTitle,
+  journalOf,
   newBrowserEntry,
   type Fingerprint,
   type LibraryMetaRow,
 } from "../../data/library";
+import { browserSource, TRASH, TRASH_DAYS } from "./browserSource";
 
 /**
  * 라이브러리 항목 — 고르기 · 만들기 · 고치기(라이브러리 계획 §3 · L1). 붙은 항목(«지금 재생 중»)의 id 는
@@ -70,15 +72,75 @@ export async function ensureActive(): Promise<LibraryMetaRow | null> {
   return createEntry(defaultEntryTitle());
 }
 
-/** 파일 없는 새 항목을 만들고 고른다. 저장소가 없으면 null. */
-export async function createEntry(title: string): Promise<LibraryMetaRow | null> {
+/**
+ * 파일 없는 새 항목을 만든다 — `select` 면 붙을 항목으로 고른다(처음 쓰는 사람의 «내 DB»). 라이브러리 화면의
+ * [새 DB] · 가져오기는 고르지 않는다(붙은 DB 는 그대로). 저장소가 없으면 null.
+ */
+export async function createEntry(
+  title: string,
+  { select = true }: { select?: boolean } = {},
+): Promise<LibraryMetaRow | null> {
   const d = db();
   if (!d) return null;
   const e = newBrowserEntry(title);
-  e.lastOpenedAt = e.createdAt;
+  if (select) e.lastOpenedAt = e.createdAt;
   await d.libraryMeta.put(e);
-  writeActiveId(e.id);
+  if (select) writeActiveId(e.id);
   return e;
+}
+
+/** 휴지통의 항목 — 최근에 지운 순. */
+export async function listTrashed(): Promise<LibraryMetaRow[]> {
+  const d = db();
+  if (!d) return [];
+  const rows = await d.libraryMeta.toArray();
+  return rows.filter((e) => e.trashedAt).sort((a, b) => b.trashedAt! - a.trashedAt!);
+}
+
+/** 항목을 휴지통으로 — 파일(+ 저널)도 `.trash/` 로. 붙을 항목이면 고른 것을 놓는다(다음에 연 것으로 물러선다). */
+export async function trashEntry(id: string, now = Date.now()): Promise<void> {
+  const e = await getEntry(id);
+  if (!e) return;
+  if ((await browserSource.open(e.file)) !== null) await browserSource.trash(e.file);
+  await updateEntry(id, { trashedAt: now });
+  if (readActiveId() === id) writeActiveId(null);
+}
+
+/** 휴지통에서 되돌린다 — 파일이 휴지통에 없으면(파일 없이 지운 새 DB) 항목만. */
+export async function restoreEntry(id: string): Promise<void> {
+  const d = db();
+  const e = await d?.libraryMeta.get(id);
+  if (!d || !e?.trashedAt) return;
+  const files = await d.dbfiles.get(TRASH + e.file);
+  if (files) await browserSource.restore(e.file);
+  await d.libraryMeta
+    .where("id")
+    .equals(id)
+    .modify((row) => {
+      delete row.trashedAt;
+    });
+}
+
+/** 휴지통에서 아주 지운다(파일까지). */
+export async function purgeEntry(id: string): Promise<void> {
+  const d = db();
+  const e = await d?.libraryMeta.get(id);
+  if (!d || !e?.trashedAt) return;
+  await d.transaction("rw", d.dbfiles, d.libraryMeta, async () => {
+    await d.dbfiles.bulkDelete([TRASH + e.file, TRASH + journalOf(e.file)]);
+    await d.libraryMeta.delete(id);
+  });
+}
+
+/** 기동 때 — 30일 지난 휴지통(파일 · 항목)을 치운다. 치운 항목 수. */
+export async function purgeLibraryTrash(now = Date.now()): Promise<number> {
+  const d = db();
+  if (!d) return 0;
+  const before = now - TRASH_DAYS * 86_400_000;
+  await browserSource.purgeTrash(before);
+  const old = (await d.libraryMeta.toArray()).filter((e) => e.trashedAt && e.trashedAt < before);
+  await d.libraryMeta.bulkDelete(old.map((e) => e.id));
+  return old.length;
 }
 
 export async function updateEntry(

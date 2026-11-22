@@ -8,11 +8,16 @@ import {
   ensureActive,
   getEntry,
   listEntries,
+  listTrashed,
+  purgeEntry,
+  purgeLibraryTrash,
   readActiveId,
   recordSaved,
   resetLibraryForTest,
   resolveActive,
+  restoreEntry,
   selectEntry,
+  trashEntry,
   updateEntry,
 } from "./library";
 
@@ -141,5 +146,56 @@ describe("항목 고르기", () => {
 
     await recordSaved(a.id, 70, null);
     expect(await getEntry(a.id)).not.toHaveProperty("fingerprint");
+  });
+});
+
+describe("휴지통 항목(L2)", () => {
+  it("createEntry({ select: false }) 는 붙을 항목을 바꾸지 않는다", async () => {
+    const a = await createEntry("A");
+    await createEntry("B", { select: false });
+    expect(readActiveId()).toBe(a!.id);
+  });
+
+  it("지우기 → 휴지통 목록, 되돌리기 → 파일과 항목이 돌아온다", async () => {
+    const e = (await createEntry("A", { select: false }))!;
+    await src.writeAtomic([
+      { name: e.file, data: blob(10) },
+      { name: journalOf(e.file), data: blob(4) },
+    ]);
+    await trashEntry(e.id, 1000);
+    expect(await getEntry(e.id)).toBeNull();
+    expect((await listTrashed()).map((x) => x.id)).toEqual([e.id]);
+    expect(await size(e.file)).toBeNull();
+    await restoreEntry(e.id);
+    expect((await getEntry(e.id))?.title).toBe("A");
+    expect(await size(e.file)).toBe(10);
+    expect(await size(journalOf(e.file))).toBe(4);
+    expect(await listTrashed()).toEqual([]);
+  });
+
+  it("붙을 항목을 지우면 고른 것을 놓고, 파일 없는 항목도 지우고 되돌린다", async () => {
+    const e = (await createEntry("빈 DB"))!;
+    expect(readActiveId()).toBe(e.id);
+    await trashEntry(e.id);
+    expect(readActiveId()).toBeNull();
+    await restoreEntry(e.id);
+    expect((await getEntry(e.id))?.title).toBe("빈 DB");
+  });
+
+  it("아주 지우기 · 30일 정리 — 휴지통 파일과 항목이 함께 사라진다", async () => {
+    const a = (await createEntry("A", { select: false }))!;
+    const b = (await createEntry("B", { select: false }))!;
+    await src.writeAtomic([{ name: a.file, data: blob(3) }]);
+    await src.writeAtomic([{ name: b.file, data: blob(3) }]);
+    await trashEntry(a.id);
+    await purgeEntry(a.id);
+    expect(await db()!.libraryMeta.get(a.id)).toBeUndefined();
+    expect((await src.list()).some((f) => f.name.includes(a.id))).toBe(false);
+    expect((await db()!.dbfiles.toArray()).some((f) => f.name.includes(a.id))).toBe(false);
+
+    const day = 86_400_000;
+    await trashEntry(b.id, Date.now() - 31 * day);
+    expect(await purgeLibraryTrash()).toBe(1);
+    expect(await db()!.libraryMeta.get(b.id)).toBeUndefined();
   });
 });

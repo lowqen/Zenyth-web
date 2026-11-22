@@ -71,12 +71,12 @@ try {
   await page.waitForURL("**/board", { timeout: 5_000 }).catch(() => undefined);
   if (!page.url().endsWith("/board")) fail(`루트가 /board 로 가지 않았습니다: ${page.url()}`);
 
-  // 2. 레일 네 항목 — 고급 사용자 모드가 꺼져 있으면 DB 가 없다(앱과 같다, Z3). 켜면 다섯(아래 9.).
-  // 엔진 탭은 보드 «로그» 칸으로 옮겼다(라이브러리 계획 U2 — 그 자리는 L2 의 라이브러리가 받는다).
+  // 2. 레일 다섯 항목 — 보드 · 연구 · 정석 · 라이브러리 · 설정(라이브러리 계획 L2). 엔진 탭은 보드 «로그» 칸으로
+  // 옮겼고(U2) 그 자리를 라이브러리가 받았다. 고급 사용자 모드여도 같다(아래 9.).
   const rail = await page.locator(".rail__link").allInnerTexts();
-  if (rail.length !== 4) fail(`레일 항목이 4개가 아닙니다: ${rail.length} (${rail.join(", ")})`);
-  if (rail.some((r) => r.trim() === "DB"))
-    fail("고급 사용자 모드가 꺼졌는데 레일에 DB 가 있습니다");
+  if (rail.length !== 5) fail(`레일 항목이 5개가 아닙니다: ${rail.length} (${rail.join(", ")})`);
+  if (!rail.some((r) => r.trim() === "라이브러리")) fail("레일에 라이브러리가 없습니다");
+  if (rail.some((r) => r.trim() === "DB")) fail("레일에 옛 DB 탭이 남아 있습니다");
   // 고른 항목은 채운 아이콘 + 알약(앱 M6) — 활성 항목이 하나이고 aria-current 를 단다.
   if ((await page.locator('.rail__link[aria-current="page"]').count()) !== 1)
     fail("레일에 지금 화면(aria-current)이 하나가 아닙니다");
@@ -119,7 +119,7 @@ try {
   await page.setViewportSize({ width: 480, height: 800 });
   await page.waitForTimeout(100);
   const bottom = await page.locator(".tabs__link").count();
-  if (bottom !== 4) fail(`좁은 폭에서 하단 탭이 4개가 아닙니다: ${bottom}`);
+  if (bottom !== 5) fail(`좁은 폭에서 하단 탭이 5개가 아닙니다: ${bottom}`);
   if ((await page.locator(".rail").count()) !== 0) fail("좁은 폭인데 레일이 남아 있습니다");
 
   // ── 8. 보드 (W2) ────────────────────────────────────────────────
@@ -476,11 +476,11 @@ try {
   if (moved !== 1) fail("«착수 시간» 검색이 대국·분석 길잡이 줄을 찾지 못합니다");
   await page.getByRole("searchbox", { name: "설정 검색" }).fill("");
 
-  // 고급 사용자 모드 — 레일에 DB, 첫 화면에 PC 설정 줄, 엔진 화면에 해시 · 스타일 … 줄.
+  // 고급 사용자 모드 — 레일은 그대로 다섯, 첫 화면에 PC 설정 줄, 엔진 화면에 해시 · 스타일 … 줄.
   await advSwitch.click();
   const railPro = await page.locator(".rail__link").allInnerTexts();
-  if (railPro.length !== 5 || !railPro.some((r) => r.trim() === "DB"))
-    fail(`고급 사용자 모드를 켰는데 레일이 DB 를 포함한 다섯이 아닙니다: ${railPro.join(", ")}`);
+  if (railPro.length !== 5)
+    fail(`고급 사용자 모드를 켰는데 레일이 다섯이 아닙니다: ${railPro.join(", ")}`);
   if ((await page.locator('[data-row="page-desktop"]').count()) !== 1)
     fail("고급 사용자 모드를 켰는데 PC 설정 줄이 없습니다");
   await settingsPage("page-engine", "engine");
@@ -595,7 +595,11 @@ try {
     fail("로그 칸에 엔진 상태 점이 없습니다");
   if ((await logPane.locator(".engineconsole").count()) !== 1) fail("로그 칸에 콘솔이 없습니다");
   // 콘솔 입력줄은 고급 사용자 모드에서만(계획 §0 «위험한 쓰기만 모드 뒤»). 읽기 · 거르기는 모두에게.
-  const proNow = (await page.locator(".rail__link", { hasText: "DB" }).count()) === 1;
+  const proNow = await page.evaluate(
+    () =>
+      (JSON.parse(localStorage.getItem("rapfi.settings") ?? "{}") as { showAdvanced?: boolean })
+        .showAdvanced === true,
+  );
   const inputs = await logPane.locator(".engineconsole__input").count();
   if (inputs !== (proNow ? 1 : 0))
     fail(`로그 칸 입력줄이 ${inputs}개입니다(고급 사용자 모드 ${proNow ? "켬" : "끔"})`);
@@ -684,7 +688,7 @@ try {
 
   if (!process.exitCode) {
     console.log(
-      "스모크 통과 — 레일 5(고급 6) · 연구 탭 4 · 라우팅 · 토큰(라이트/다크) · 좁은 폭 전환\n" +
+      "스모크 통과 — 레일 5(고급도 5) · 연구 탭 4 · 라우팅 · 토큰(라이트/다크) · 좁은 폭 전환\n" +
         `             자동 기동(${wantBoot}) · 상단 바 정리 · [분석]|[대국] 탭(기본 분석) · 탭 기억\n` +
         "             보드 2레이어 · 나무 렌더 · H8 착수 · 중복 착수 무시 · 다크 나무\n" +
         "             보드 옆 칸 · 툴바 · 평가 바(판 높이) · 설정 하위 화면(엔진 · 일반 · 디자인 · PC)·검색·고급·저장·좁은 폭 · 엔진 탭\n" +
