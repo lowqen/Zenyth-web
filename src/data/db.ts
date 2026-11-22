@@ -4,12 +4,16 @@ import type { PositionRecord } from "../core/review/move-quality";
 import type { ReviewBudget } from "../core/review/report";
 import type { JosekiTree } from "../core/joseki/tree";
 import type { RenjuPack } from "../core/rif/pack";
+import { migrateToV6, type DbFileRow, type LibraryMetaRow, type LibrarySourceRow } from "./library";
+
+export type { DbFileRow } from "./library";
 
 /**
  * 앱 자신의 데이터베이스 `rapfiweb` — 계획서 §4 의 Dexie 층.
  *
  * **v1 은 `games` 하나, v2 가 리뷰의 `reviews` · `queue` 를, v3 가 엔진 DB 파일 `dbfiles` 를,
- * v4 가 정석 `joseki` · `josekiIndex` 를, v5 가 `.rif` 변환 팩 `packs` 를 더했다(W6b · W8 · W9 · W7).** 계획서의 나머지
+ * v4 가 정석 `joseki` · `josekiIndex` 를, v5 가 `.rif` 변환 팩 `packs` 를, v6 이 라이브러리 `librarySources` ·
+ * `libraryMeta` 를 더하고 `dbfiles` 를 항목마다의 Blob(`lib/<id>`)으로 바꿨다(W6b · W8 · W9 · W7 · 라이브러리 L1).** 계획서의 나머지
  * 표(정석 · 팩 …)는 그 기능이 들어올 때 `version(n)` 을 올리며 더한다 — 쓰지 않는 표를 미리 파 두면 그 모양이
  * 실제 요구보다 먼저 굳는다. 이미 있는 표의 색인을 바꿀 때도 버전을 올린다.
  *
@@ -85,17 +89,6 @@ export interface ReviewRow {
 }
 
 /**
- * 엔진의 yixindb 파일 한 벌(W8) — 엔진 메모리 FS 의 `rapfi.db` 바이트 그대로. 엔진이 뜰 때
- * 메모리 FS 에 써 넣고(`info usedatabase 1` 이 그 파일을 연다), 저장할 때 엔진이 쓴 파일을
- * 읽어 여기 덮어쓴다. IDBFS 대신 이 길을 쓰는 까닭은 `features/database/dbStore.ts`.
- */
-export interface DbFileRow {
-  name: string;
-  bytes: Uint8Array;
-  savedAt: number;
-}
-
-/**
  * 정석 색인 한 줄(W9) — 마디 하나의 정규 국면 키(`PosKey.canonical`). 보드의 지금 국면이 어느
  * 정석의 어디인지를 키 하나로 찾는다(대칭 · 회전은 같은 키로 접힌다). 정석을 저장할 때마다 그
  * 정석의 줄을 통째로 다시 쓴다.
@@ -127,6 +120,8 @@ export class RapfiDb extends Dexie {
   joseki!: EntityTable<JosekiTree, "id">;
   josekiIndex!: EntityTable<JosekiIndexRow, "id">;
   packs!: EntityTable<PackRow, "name">;
+  librarySources!: EntityTable<LibrarySourceRow, "id">;
+  libraryMeta!: EntityTable<LibraryMetaRow, "id">;
 
   constructor(name = "rapfiweb") {
     super(name);
@@ -150,6 +145,13 @@ export class RapfiDb extends Dexie {
     this.version(5).stores({
       packs: "&name",
     });
+    // 라이브러리(L1) — 옛 `rapfi.db` 한 줄이 첫 항목 «내 DB» 가 된다(`migrateToV6`).
+    this.version(6)
+      .stores({
+        librarySources: "&id",
+        libraryMeta: "&id, source",
+      })
+      .upgrade(migrateToV6);
   }
 }
 

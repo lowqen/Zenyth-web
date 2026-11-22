@@ -518,7 +518,7 @@ export function DatabaseScreen() {
             <>
               {t("저장된 파일:")}{" "}
               {s.stored
-                ? `${DB_FILE} ${fmtSize(s.stored.size)} · ${new Date(s.stored.savedAt).toLocaleString()}`
+                ? `${s.active?.title ?? DB_FILE} ${fmtSize(s.stored.size)} · ${new Date(s.stored.savedAt).toLocaleString()}`
                 : t("없음(붙이면 빈 DB 로 시작)")}
             </>
           )}
@@ -587,7 +587,7 @@ export function DatabaseScreen() {
             onClick={() =>
               void s.exportFile().then((r) => {
                 if ("error" in r) tell(r.error);
-                else downloadBlob(`rapfi-${stamp()}.db`, r.bytes, "application/octet-stream");
+                else downloadBlob(`rapfi-${stamp()}.db`, r.file, "application/octet-stream");
               })
             }
           >
@@ -631,9 +631,8 @@ export function DatabaseScreen() {
               const f = e.currentTarget.files?.[0];
               e.currentTarget.value = "";
               if (!f) return;
-              void f
-                .arrayBuffer()
-                .then((b) => s.importFile(new Uint8Array(b)))
+              void s
+                .importFile(f)
                 .then((m) => tell(m, t("{name} 을(를) 가져왔습니다", { name: f.name })));
             }}
           />
