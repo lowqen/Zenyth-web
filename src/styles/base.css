@@ -272,10 +272,6 @@ a:focus-visible {
   :root[data-desktop] .rail__label {
     font: var(--type-label-large);
   }
-  :root[data-desktop] .rail__dot {
-    top: 0;
-    right: -2px;
-  }
   /* 연구 하위 메뉴는 펼친 레일의 오른쪽 끝에서 뜬다(위치는 그대로 left: 100%). */
 }
 
@@ -593,27 +589,6 @@ a:focus-visible {
 }
 .rail__label {
   font: var(--type-label-medium);
-}
-.rail__dot {
-  position: absolute;
-  top: 2px;
-  right: 12px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--c-outline);
-}
-.rail__dot[data-status="ready"] {
-  background: var(--c-positive);
-}
-.rail__dot[data-status="searching"] {
-  background: var(--c-caution);
-}
-.rail__dot[data-status="starting"] {
-  background: var(--c-caution);
-}
-.rail__dot[data-status="error"] {
-  background: var(--c-error);
 }
 
 /* 연구 hover 서브메뉴 — 다른 화면에서도 네 탭에 1클릭으로 닿게 한다.
@@ -1078,6 +1053,28 @@ a:focus-visible {
 .boardsheet .boardscreen__side {
   overflow: visible;
   padding: 0 var(--screen-padding) var(--screen-padding);
+}
+/* 시트 머리의 [개요 | 로그](라이브러리 계획 U2) — 넓은 보드 인스펙터의 세그먼트와 같은 모양, 폭을 반씩. */
+.boardsheet__tabs {
+  display: flex;
+  padding: 0 var(--screen-padding) var(--space-s);
+}
+.boardsheet__tabs > .panetabs {
+  flex: 1;
+}
+.boardsheet__tabs .modetabs__tab {
+  flex: 1;
+}
+/* 로그 칸은 시트 몸의 높이를 채운다 — 콘솔이 제 안에서 스크롤한다(시트 몸이 아니라). */
+.boardsheet__log {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 0 var(--screen-padding) var(--screen-padding);
+}
+.boardsheet[data-open] .boardsheet__body:has(> .boardsheet__log) {
+  overflow: hidden;
 }
 
 /* ── 수 이동 툴바(MoveToolbar) ─────────────────────────────────────
@@ -2031,23 +2028,39 @@ a:focus-visible {
   }
 }
 
-/* ── 엔진 화면 ──────────────────────────────────────────────────────
-   상태 카드 + 콘솔. 콘솔이 남은 높이를 다 쓴다. */
-.enginescreen {
-  display: grid;
-  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
-  gap: var(--space-xl);
-  align-items: start;
-  height: 100%;
+/* ── 보드 «로그» 칸(EngineLogPane, 라이브러리 계획 U2) ─────────────────────
+   엔진 상태 카드(점 · 낱말 · 단추 한 줄 + 접은 세부 수치) + 콘솔. 콘솔이 남은 높이를 다 쓴다. 새 색 · 반경 없음 —
+   카드는 개요 칸의 `.panel`, 상태 점은 `.panel__badge`, 단추는 기본 단추, 콘솔 면은 그대로. */
+.enginelog {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   min-height: 0;
 }
-.enginescreen__console {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 320px;
+.enginelog__status {
+  flex: none;
 }
-/* 엔진 콘솔(데스크톱 Z4) — 거르기 줄 · 원시 줄 · 명령 입력줄. 엔진 화면에서는 남는 높이를 다 쓴다. */
+.enginelog__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-m);
+  align-items: center;
+  min-height: 40px;
+}
+.enginelog__title {
+  font: var(--type-title-small);
+  color: var(--c-on-surface);
+}
+.enginelog__actions {
+  display: flex;
+  gap: var(--space-s);
+  margin-left: auto;
+}
+.enginelog__status .panel__hint,
+.enginelog__status .panel__error {
+  margin-top: var(--space-xs);
+}
+/* 엔진 콘솔(데스크톱 Z4) — 거르기 줄 · 원시 줄 · 명령 입력줄. 로그 칸에서는 남는 높이를 다 쓴다. */
 .engineconsole {
   display: flex;
   flex: 1;
@@ -2190,15 +2203,6 @@ a:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-@media (max-width: 900px) {
-  .enginescreen {
-    grid-template-columns: minmax(0, 1fr);
-    height: auto;
-  }
-  .enginescreen__console {
-    height: 60vh;
-  }
 }
 
 /* ── 분석 pane (W3) ─────────────────────────────────────────────── */

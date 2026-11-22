@@ -16,7 +16,6 @@ export const EN: Readonly<Record<string, string>> = {
   수순: "Move order",
   랭킹: "Rankings",
   "주 메뉴": "Main menu",
-  "엔진: {s}": "Engine: {s}",
   // 데스크톱 타이틀바(데스크톱 Z2)
   최소화: "Minimize",
   최대화: "Maximize",
@@ -929,7 +928,6 @@ export const EN: Readonly<Record<string, string>> = {
   "YXHASHCLEAR: 치환표를 지금 한 번 비웁니다":
     "YXHASHCLEAR: clears the transposition table once now",
   "해시 비우기": "Clear hash",
-  콘솔: "Console",
   "{n}줄": "{n} {n|line|lines}",
   "엔진이 아직 아무 말도 하지 않았습니다.": "The engine has not said anything yet.",
   "이 환경에서는 멀티스레드를 쓸 수 없어 단일 스레드로 띄웠습니다":
@@ -1455,6 +1453,7 @@ export const EN: Readonly<Record<string, string>> = {
   "판 그림 저장": "Save board image",
   "엔진 종료": "Stop engine",
   "엔진 다시 띄우기": "Restart engine",
+  "엔진 로그 보기": "Show engine log",
   "DB 저장": "Save DB",
   "{file}: 옮기지 못한 Yixin 명령 {list}": "{file}: Yixin commands not carried over: {list}",
   "Yixin 명령 {n}개를 가져왔습니다": "Imported {n} Yixin {n|command|commands}",

@@ -1,22 +1,21 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { RESEARCH_TABS, visibleRail } from "./destinations";
 import { useProMode } from "./proMode";
-import { useEngineStore } from "../engine/engine-state";
-import { msg, t } from "../i18n/i18n";
+import { t } from "../i18n/i18n";
 import { IS_DESKTOP } from "./desktop/platform";
 
 /**
- * 좌측 아이콘 레일 여섯 항목(고급 사용자 모드가 아니면 DB 를 뺀 다섯 — `visibleRail`).
+ * 좌측 아이콘 레일(고급 사용자 모드가 아니면 DB 를 뺀 것 — `visibleRail`).
  *
- * - **엔진 상태 점**은 «엔진» 항목에 붙는다 — 앱이 «연결» 탭에 붙이던 그 점이다.
- * - **두 묶음**: 보드 · 연구 · 정석이 위, 도구(DB · 엔진 · 설정)가 맨 아래로 떨어진다(`Dest.group`).
+ * - 엔진 상태 점은 없다 — 엔진 탭이 보드 «로그» 칸이 되며(라이브러리 계획 U2) 상태는 상단 바의 엔진 표시가
+ *   어느 화면에서든 말한다.
+ * - **두 묶음**: 보드 · 연구 · 정석이 위, 도구(DB · 설정)가 맨 아래로 떨어진다(`Dest.group`).
  * - **연구 hover 서브메뉴**: 다른 화면에서도 연구 네 탭에 1클릭으로 닿게 한다.
  *   터치 환경에서는 hover 가 없으므로 CSS `@media (hover: hover)` 로만 켠다 —
  *   터치에서는 «연구» 진입 후 상단 탭(2클릭)이고, 그게 앱과 같은 동작이다.
  */
 export function NavRail() {
   const { pathname } = useLocation();
-  const status = useEngineStore((s) => s.status);
   const rail = visibleRail(useProMode());
 
   return (
@@ -40,13 +39,6 @@ export function NavRail() {
                   <svg className="rail__icon" viewBox="0 0 24 24" aria-hidden="true">
                     <path d={on ? d.iconOn : d.icon} />
                   </svg>
-                  {d.path === "/engine" && (
-                    <span
-                      className="rail__dot"
-                      data-status={status}
-                      title={t("엔진: {s}", { s: t(ENGINE_STATUS_TEXT[status]) })}
-                    />
-                  )}
                 </span>
                 <span className="rail__label">{t(d.label)}</span>
               </NavLink>
@@ -74,11 +66,3 @@ export function NavRail() {
     </nav>
   );
 }
-
-const ENGINE_STATUS_TEXT = {
-  idle: msg("꺼짐"),
-  starting: msg("기동 중"),
-  ready: msg("대기"),
-  searching: msg("탐색 중"),
-  error: msg("오류"),
-} as const;

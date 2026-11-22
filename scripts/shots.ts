@@ -31,8 +31,11 @@ const GOLDEN = join(ROOT, "golden");
 const ACTUAL = join(ROOT, "actual");
 const DIFF = join(ROOT, "diff");
 
-/** 화면 아홉과 설정 하위 화면 둘 — 라우트 표(`src/app/routes.tsx`)의 실물 화면(관리자 스튜디오는 뺀다). */
-const SCENES: ReadonlyArray<{ name: string; path: string }> = [
+/**
+ * 화면 여덟과 설정 하위 화면 둘 — 라우트 표(`src/app/routes.tsx`)의 실물 화면(관리자 스튜디오는 뺀다) — 그리고 보드
+ * «로그» 칸(엔진 탭이 옮겨 온 자리, 라이브러리 계획 U2). 옛 `/engine` 주소로 열면 그 칸이 펴진 보드다.
+ */
+const SCENES: ReadonlyArray<{ name: string; path: string; lands?: string }> = [
   { name: "board", path: "/board" },
   { name: "review", path: "/research/review" },
   { name: "explorer", path: "/research/explorer" },
@@ -40,7 +43,7 @@ const SCENES: ReadonlyArray<{ name: string; path: string }> = [
   { name: "ranking", path: "/research/ranking" },
   { name: "joseki", path: "/joseki" },
   { name: "database", path: "/database" },
-  { name: "engine", path: "/engine" },
+  { name: "board-log", path: "/engine", lands: "/board" },
   { name: "settings", path: "/settings" },
   // 설정 하위 화면(Z5) — 미리보기 카드 · 테마 단추 · 체크 원이 있는 둘.
   { name: "settings-design", path: "/settings/design" },
@@ -122,7 +125,9 @@ async function shootVariant(browser: Browser, v: Variant) {
       },
     );
     if (!(v.desktop && scene.path === "/settings"))
-      await page.waitForURL(`**${scene.path}`, { timeout: 5_000 }).catch(() => undefined);
+      await page
+        .waitForURL(`**${scene.lands ?? scene.path}`, { timeout: 5_000 })
+        .catch(() => undefined);
     await page.evaluate(async () => {
       await document.fonts.ready;
       // 세그먼트의 선택 알약이 자리를 잡을 때까지(useSlidingPill — 한 프레임 뒤 data-pill="ready").

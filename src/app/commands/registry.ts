@@ -1,4 +1,5 @@
-import { RAIL } from "../destinations";
+import { visibleRail } from "../destinations";
+import { showEngineLog } from "../../features/board/inspectorPane";
 import { msg, t } from "../../i18n/i18n";
 import { useGameStore, REVIEW_BUSY } from "../../features/board/gameStore";
 import { useBoardStore } from "../../features/board/boardStore";
@@ -202,6 +203,16 @@ const BASE: readonly AppCommand[] = [
     run: () => engine().restart(),
   },
   {
+    // 엔진 탭이 하던 일(상태 · 기동/끄기 · 콘솔) — 보드 «로그» 칸을 펴고 보드로(라이브러리 계획 U2).
+    id: "engine.log",
+    title: msg("엔진 로그 보기"),
+    group: G.engine,
+    run: async () => {
+      showEngineLog();
+      await toBoard();
+    },
+  },
+  {
     id: "engine.hash-clear",
     title: msg("해시 비우기"),
     group: G.engine,
@@ -221,8 +232,7 @@ const BASE: readonly AppCommand[] = [
 
 /** 레일의 화면들 — 보이는 레일과 같은 번호(Ctrl+1…). */
 function navCommands(): AppCommand[] {
-  const pro = useSettingsStore.getState().showAdvanced;
-  return RAIL.filter((d) => pro || !d.pro).map((d, i) => ({
+  return visibleRail(useSettingsStore.getState().showAdvanced).map((d, i) => ({
     id: `nav.${d.path.slice(1)}`,
     title: d.label,
     group: G.nav,
@@ -236,6 +246,13 @@ export function appCommands(): AppCommand[] {
   return [...BASE, ...navCommands()];
 }
 
+/**
+ * 걷힌 명령 id → 지금의 것. 사용자 명령(`@id` 단계)은 이 브라우저에 저장되어 있어, id 가 사라지면 «모르는 앱 명령»이
+ * 된다. `nav.engine` 은 엔진 탭이 있던 때의 레일 명령이다(U2).
+ */
+const RENAMED: Readonly<Record<string, string>> = { "nav.engine": "engine.log" };
+
 export function findCommand(id: string): AppCommand | undefined {
-  return appCommands().find((c) => c.id === id);
+  const want = RENAMED[id] ?? id;
+  return appCommands().find((c) => c.id === want);
 }

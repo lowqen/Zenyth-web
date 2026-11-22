@@ -24,13 +24,19 @@ const FLING = 0.5;
  * - 손잡이는 버튼이다 — 누르면 펼치고 접는다(`aria-expanded`). 키보드 · 화면 낭독기도 같은 길로.
  * - 위치는 끄는 동안 손가락을 그대로 따라가고(전환 없음), 놓으면 가까운 쪽(빠르게 튕겼으면 그 방향)으로
  *   스프링처럼 붙는다. 판 영역이 아니라 크롬이라 미끄러짐이 허용된다(앱 결정 D6).
+ * - 머리의 요약 줄 밑에 `tabs`(보드는 [개요 | 로그] 세그먼트 — 라이브러리 계획 U2). 최소 피크(88)에는 들지
+ *   않는다 — 판 크기를 그대로 두려고. 보통 폰은 피크가 그보다 커서 쉬는 동안에도 보이고, 아주 낮은 창에서는
+ *   시트를 올려야 보인다.
  */
 export function BoardSheet({
   summary,
+  tabs,
   children,
   anchorRef,
 }: {
   summary: ReactNode;
+  /** 요약 줄 밑, 머리 안의 세그먼트(끌어 내리는 자리에 함께 든다). */
+  tabs?: ReactNode;
   children: ReactNode;
   /** 시트가 쉬는 자리의 기준 — 툴바. 그 아래 끝이 피크의 윗변이다. */
   anchorRef: RefObject<HTMLElement | null>;
@@ -152,6 +158,7 @@ export function BoardSheet({
           <span className="boardsheet__grip" aria-hidden="true" />
         </button>
         {summary}
+        {tabs && <div className="boardsheet__tabs">{tabs}</div>}
       </div>
       <div className="boardsheet__body">{children}</div>
     </div>

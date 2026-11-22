@@ -5,7 +5,7 @@
  *
  * 「빌드가 됐다」와 「화면이 뜬다」는 다르다. 라우터 설정 오류, CSS 변수 오타,
  * 워커 URL 실수는 전부 빌드를 통과하고 빈 화면으로 끝난다. 그래서 이 단계가 있다.
- * 지금은 W1 이라 확인하는 것도 W1 만큼이다: 레일 여섯 항목, 상단 바 제목,
+ * 지금은 W1 이라 확인하는 것도 W1 만큼이다: 레일 항목, 상단 바 제목,
  * 라우팅 이동, 다크 토큰이 실제로 적용되는지.
  */
 import { chromium } from "playwright";
@@ -71,9 +71,10 @@ try {
   await page.waitForURL("**/board", { timeout: 5_000 }).catch(() => undefined);
   if (!page.url().endsWith("/board")) fail(`루트가 /board 로 가지 않았습니다: ${page.url()}`);
 
-  // 2. 레일 다섯 항목 — 고급 사용자 모드가 꺼져 있으면 DB 가 없다(앱과 같다, Z3). 켜면 여섯(아래 9.).
+  // 2. 레일 네 항목 — 고급 사용자 모드가 꺼져 있으면 DB 가 없다(앱과 같다, Z3). 켜면 다섯(아래 9.).
+  // 엔진 탭은 보드 «로그» 칸으로 옮겼다(라이브러리 계획 U2 — 그 자리는 L2 의 라이브러리가 받는다).
   const rail = await page.locator(".rail__link").allInnerTexts();
-  if (rail.length !== 5) fail(`레일 항목이 5개가 아닙니다: ${rail.length} (${rail.join(", ")})`);
+  if (rail.length !== 4) fail(`레일 항목이 4개가 아닙니다: ${rail.length} (${rail.join(", ")})`);
   if (rail.some((r) => r.trim() === "DB"))
     fail("고급 사용자 모드가 꺼졌는데 레일에 DB 가 있습니다");
   // 고른 항목은 채운 아이콘 + 알약(앱 M6) — 활성 항목이 하나이고 aria-current 를 단다.
@@ -118,7 +119,7 @@ try {
   await page.setViewportSize({ width: 480, height: 800 });
   await page.waitForTimeout(100);
   const bottom = await page.locator(".tabs__link").count();
-  if (bottom !== 5) fail(`좁은 폭에서 하단 탭이 5개가 아닙니다: ${bottom}`);
+  if (bottom !== 4) fail(`좁은 폭에서 하단 탭이 4개가 아닙니다: ${bottom}`);
   if ((await page.locator(".rail").count()) !== 0) fail("좁은 폭인데 레일이 남아 있습니다");
 
   // ── 8. 보드 (W2) ────────────────────────────────────────────────
@@ -478,8 +479,8 @@ try {
   // 고급 사용자 모드 — 레일에 DB, 첫 화면에 PC 설정 줄, 엔진 화면에 해시 · 스타일 … 줄.
   await advSwitch.click();
   const railPro = await page.locator(".rail__link").allInnerTexts();
-  if (railPro.length !== 6 || !railPro.some((r) => r.trim() === "DB"))
-    fail(`고급 사용자 모드를 켰는데 레일이 DB 를 포함한 여섯이 아닙니다: ${railPro.join(", ")}`);
+  if (railPro.length !== 5 || !railPro.some((r) => r.trim() === "DB"))
+    fail(`고급 사용자 모드를 켰는데 레일이 DB 를 포함한 다섯이 아닙니다: ${railPro.join(", ")}`);
   if ((await page.locator('[data-row="page-desktop"]').count()) !== 1)
     fail("고급 사용자 모드를 켰는데 PC 설정 줄이 없습니다");
   await settingsPage("page-engine", "engine");
@@ -580,28 +581,51 @@ try {
   if (topOverflow > 1) fail(`좁은 폭 상단 바가 ${topOverflow}px 넘칩니다`);
   await page.setViewportSize({ width: 1440, height: 900 });
 
-  // ── 10. 엔진 탭 ───────────────────────────────────────────────────
-  await page.locator(".rail__link", { hasText: "엔진" }).click();
-  await page.waitForURL("**/engine");
-  await page.locator(".enginescreen").waitFor();
-  if ((await page.locator(".enginescreen .panel__badge").count()) !== 1) {
-    fail("엔진 탭에 상태 표시가 없습니다");
-  }
-  // 콘솔은 고급 사용자 모드에서만(앱: 엔진 화면은 연결만, Z3). 꺼진 채로는 없고, 켜면 있다.
+  // ── 10. 보드 «로그» 칸 — 엔진 탭을 옮겼다(라이브러리 계획 U2) ───────────────
+  // 레일에 엔진이 없고, 옛 /engine 주소는 보드로 넘어가 옆 칸을 «로그»로 편다.
+  if ((await page.locator(".rail__link", { hasText: "엔진" }).count()) !== 0)
+    fail("레일에 엔진 탭이 남아 있습니다 — 보드 «로그» 칸으로 옮겼습니다");
+  await page.goto(`http://localhost:${PORT}/engine`, { waitUntil: "networkidle" });
+  await page.waitForURL("**/board", { timeout: 5_000 }).catch(() => undefined);
+  if (!page.url().endsWith("/board")) fail(`/engine 이 보드로 넘어가지 않았습니다: ${page.url()}`);
+  const logPane = page.locator(".inspector__log .enginelog");
+  await logPane.waitFor({ timeout: 5_000 }).catch(() => undefined);
+  if ((await logPane.count()) !== 1) fail("/engine 으로 왔는데 보드 «로그» 칸이 펴지지 않았습니다");
+  if ((await logPane.locator(".panel__badge").count()) !== 1)
+    fail("로그 칸에 엔진 상태 점이 없습니다");
+  if ((await logPane.locator(".engineconsole").count()) !== 1) fail("로그 칸에 콘솔이 없습니다");
+  // 콘솔 입력줄은 고급 사용자 모드에서만(계획 §0 «위험한 쓰기만 모드 뒤»). 읽기 · 거르기는 모두에게.
   const proNow = (await page.locator(".rail__link", { hasText: "DB" }).count()) === 1;
-  const consoles = await page.locator(".enginescreen__console").count();
-  if (consoles !== (proNow ? 1 : 0))
-    fail(`엔진 탭 콘솔이 ${consoles}개입니다(고급 사용자 모드 ${proNow ? "켬" : "끔"})`);
+  const inputs = await logPane.locator(".engineconsole__input").count();
+  if (inputs !== (proNow ? 1 : 0))
+    fail(`로그 칸 입력줄이 ${inputs}개입니다(고급 사용자 모드 ${proNow ? "켬" : "끔"})`);
   if (!proNow) {
     await page.evaluate(() => {
       const raw = JSON.parse(localStorage.getItem("rapfi.settings") ?? "{}") as object;
       localStorage.setItem("rapfi.settings", JSON.stringify({ ...raw, showAdvanced: true }));
     });
     await page.reload({ waitUntil: "networkidle" });
-    await page.locator(".enginescreen").waitFor();
-    if ((await page.locator(".enginescreen__console").count()) !== 1)
-      fail("고급 사용자 모드를 켰는데 엔진 탭에 콘솔 카드가 없습니다");
+    await logPane.waitFor({ timeout: 5_000 }).catch(() => undefined);
+    if ((await logPane.locator(".engineconsole__input").count()) !== 1)
+      fail("고급 사용자 모드를 켰는데 로그 칸에 콘솔 입력줄이 없습니다");
   }
+  // 휴대폰 세로 — 같은 세그먼트가 시트 머리에 있고, 고른 칸(로그)이 그대로 이어진다.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const sheetTabs = page.locator('.boardsheet__tabs [role="tab"]');
+  await sheetTabs
+    .first()
+    .waitFor({ timeout: 5_000 })
+    .catch(() => undefined);
+  if ((await sheetTabs.count()) !== 2) fail("휴대폰 세로 시트 머리에 [개요 | 로그] 가 없습니다");
+  if ((await page.locator(".boardsheet__log .enginelog").count()) !== 1)
+    fail("시트에서 «로그» 칸이 이어지지 않았습니다(넓은 화면에서 고른 칸)");
+  await page.locator('.boardsheet__tabs [data-pane="overview"]').click();
+  if ((await page.locator(".boardsheet__log").count()) !== 0)
+    fail("시트 머리에서 «개요»를 골랐는데 로그 칸이 남아 있습니다");
+  // 고른 칸은 기억된다 — 개요로 돌려 둔다.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  if ((await page.locator(".inspector__log").count()) !== 0)
+    fail("시트에서 고른 «개요»가 넓은 화면 인스펙터에 이어지지 않았습니다");
 
   // ── 11. 첫 방문 · 새로워진 점(Z8) ─────────────────────────────────
   // 웹에는 첫 방문 환영 · 둘러보기가 없다(2026-11-02 걷음) — 처음 온 사람은 곧바로 보드이고 엔진도 바로 뜬다.

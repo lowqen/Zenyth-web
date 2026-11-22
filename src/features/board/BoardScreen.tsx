@@ -3,8 +3,7 @@ import { BoardCanvas } from "../../core/board/BoardCanvas";
 import { useBoardStore } from "./boardStore";
 import { useGameStore, type BoardMode } from "./gameStore";
 import { AnalysisOptions, AnalysisPanel } from "./AnalysisPanel";
-import { EngineLogPanel } from "../engine/EngineConsole";
-import { DESKTOP_LAYOUT } from "../../app/desktop/platform";
+import { EngineLogPane } from "../engine/EngineLogPane";
 import { EvalBar } from "./EvalBar";
 import { EvalGraph } from "./EvalGraph";
 import { GamePanel } from "./GamePanel";
@@ -21,7 +20,8 @@ import { RunLine } from "./RunLine";
 import { BoardSheet } from "./BoardSheet";
 import { useDeskLayout, useSheetLayout } from "../../app/layout";
 import { StatusCapsule } from "./StatusCapsule";
-import { Inspector } from "./Inspector";
+import { Inspector, PaneTabs } from "./Inspector";
+import { useInspectorPane } from "./inspectorPane";
 import { useBoardNotice } from "./boardNotice";
 import { useCurrentAnalysis } from "./currentAnalysis";
 import { openGameFile } from "./gameFileActions";
@@ -110,6 +110,7 @@ export function BoardScreen() {
 
   const sheet = useSheetLayout();
   const desk = useDeskLayout();
+  const pane = useInspectorPane((s) => s.pane);
   const toolbarRef = useRef<HTMLElement>(null);
   const modeLabel = mode === "game" ? t("대국") : t("분석");
   // 옆 칸의 카드들 — 인스펙터 «개요»와 휴대폰 시트가 같은 것을 쓴다(화면을 두 벌로 만들지 않는다).
@@ -127,9 +128,6 @@ export function BoardScreen() {
           <AnalysisPanel />
           <EvalGraph />
           <AnalysisOptions />
-          {/* 로그는 인스펙터의 제 칸이다(Inspector). 시트 배치만 아직 칸이 없어 데스크톱 창은 접이식 그대로
-              (라이브러리 계획 U2 에서 시트 머리 [개요 | 로그] 로 옮긴다). */}
-          {DESKTOP_LAYOUT && sheet && <EngineLogPanel />}
         </>
       )}
     </>
@@ -174,10 +172,15 @@ export function BoardScreen() {
   }
 
   // 넓은 화면(웹 · 좁은 데스크톱 창)의 옆 칸도 데스크톱과 같은 인스펙터 [개요 | 로그](라이브러리 계획 U1).
-  // 휴대폰 세로는 시트에 카드만 — 세그먼트는 U2 에서 시트 머리로.
+  // 휴대폰 세로는 같은 세그먼트가 시트 머리에 있고(U2), 시트 몸이 고른 칸을 펼친다.
   const side = sheet ? (
-    <aside id={MODE_PANEL_ID} className="boardscreen__side" role="tabpanel" aria-label={modeLabel}>
-      {cards}
+    <aside
+      id={MODE_PANEL_ID}
+      className={pane === "log" ? "boardsheet__log" : "boardscreen__side"}
+      role="tabpanel"
+      aria-label={modeLabel}
+    >
+      {pane === "log" ? <EngineLogPane /> : cards}
     </aside>
   ) : (
     <Inspector id={MODE_PANEL_ID} label={modeLabel}>
@@ -219,6 +222,7 @@ export function BoardScreen() {
       {sheet ? (
         <BoardSheet
           anchorRef={toolbarRef}
+          tabs={<PaneTabs />}
           summary={
             <>
               <SummaryLine />

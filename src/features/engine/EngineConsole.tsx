@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useEngineStore } from "../../engine/engine-state";
 import { downloadBlob } from "../../app/download";
-import { Disclosure } from "../../components/Disclosure";
 import { Segmented } from "../../components/controls";
 import { useRememberedOpen } from "../../components/useRememberedOpen";
 import { localized, msg, t } from "../../i18n/i18n";
@@ -15,8 +14,8 @@ import {
 } from "./consoleMessages";
 
 /**
- * 엔진 콘솔 — 로그 보기 + 거르기 + 저장 + **명령 입력줄**(데스크톱 Z4). 엔진 화면(전체)과 데스크톱 보드
- * 옆 «엔진 로그»(작게)가 함께 쓴다.
+ * 엔진 콘솔 — 로그 보기 + 거르기 + 저장 + **명령 입력줄**(데스크톱 Z4). 보드 «로그» 칸(`EngineLogPane`)이 칸
+ * 높이를 다 주어 쓴다. 입력줄은 고급 사용자 모드에서만(`input`) — 엔진에 아무 줄이나 보내는 위험한 쓰기다.
  *
  * 입력줄은 piskvork 줄을 그대로 보낸다(`raw`) — Rapfi 확장 명령(`YXHASHDUMP` · `YXDBTOTXTALL` …)을 손으로
  * 부를 자리다. 위 · 아래 화살표로 앞서 보낸 줄을 다시 부른다. 보낸 줄은 워커가 `> ` 머리로 콘솔에 남긴다.
@@ -24,7 +23,7 @@ import {
  * 보기는 둘이다(기억된다). **메시지**(기본): 엔진이 사람에게 한 `MESSAGE` 줄만, 깊이 · 평가값 · 수순을 칸으로
  * 나눠서(`consoleMessages.ts`). **전체**: 보낸 줄 · INFO 블록까지 원시 줄 그대로 — 프로토콜을 좇을 때.
  */
-export function EngineConsole({ compact = false }: { compact?: boolean }) {
+export function EngineConsole({ input }: { input: boolean }) {
   const lines = useEngineStore((s) => s.console);
   const status = useEngineStore((s) => s.status);
   const send = useEngineStore((s) => s.send);
@@ -36,7 +35,7 @@ export function EngineConsole({ compact = false }: { compact?: boolean }) {
   const running = status !== "idle" && status !== "error";
 
   return (
-    <div className="engineconsole" data-compact={compact || undefined}>
+    <div className="engineconsole">
       <div className="engineconsole__bar">
         <Segmented
           label={t("로그 보기")}
@@ -83,19 +82,16 @@ export function EngineConsole({ compact = false }: { compact?: boolean }) {
         onChange={(e) => setQuery(e.target.value)}
       />
       {raw ? (
-        <ConsoleView lines={shown} visible={compact ? 120 : 400} full={!compact} />
+        <ConsoleView lines={shown} />
       ) : (
-        <MessageLog
-          lines={shown}
-          visible={compact ? 80 : 300}
-          full={!compact}
-          empty={lines.length > 0 && pool.length === 0}
+        <MessageLog lines={shown} empty={lines.length > 0 && pool.length === 0} />
+      )}
+      {input && (
+        <CommandLine
+          disabled={!running}
+          onSend={(cmds) => cmds.forEach((line) => send({ kind: "raw", line }))}
         />
       )}
-      <CommandLine
-        disabled={!running}
-        onSend={(cmds) => cmds.forEach((line) => send({ kind: "raw", line }))}
-      />
     </div>
   );
 }
@@ -178,6 +174,10 @@ function CommandLine({
   );
 }
 
+/** 그리는 줄 수의 끝 — 콘솔 버퍼는 더 길지만 DOM 은 이만큼만(«전체»는 원시 줄, «메시지»는 칸으로 나눈 행). */
+const RAW_VISIBLE = 400;
+const MESSAGE_VISIBLE = 300;
+
 /** 맨 아래를 보고 있을 때만 새 줄을 따라 내려간다 — 위로 올려 읽는 중에 끌려 내려가면 읽을 수가 없다. */
 function useFollowScroll(ref: RefObject<HTMLElement | null>, lines: readonly string[]) {
   const [follow, setFollow] = useState(true);
@@ -194,15 +194,7 @@ function useFollowScroll(ref: RefObject<HTMLElement | null>, lines: readonly str
 /**
  * «전체» 보기 — 원시 줄 그대로. 줄바꿈하지 않고 가로로 스크롤한다 — 접히면 프로토콜을 눈으로 좇을 수 없게 된다.
  */
-function ConsoleView({
-  lines,
-  visible,
-  full,
-}: {
-  lines: readonly string[];
-  visible: number;
-  full: boolean;
-}) {
+function ConsoleView({ lines }: { lines: readonly string[] }) {
   const ref = useRef<HTMLPreElement>(null);
   const onScroll = useFollowScroll(ref, lines);
 
@@ -210,8 +202,8 @@ function ConsoleView({
     return <p className="panel__hint">{t("엔진이 아직 아무 말도 하지 않았습니다.")}</p>;
   }
   return (
-    <pre ref={ref} className={full ? "console console--full" : "console"} onScroll={onScroll}>
-      {lines.slice(-visible).join("\n")}
+    <pre ref={ref} className="console console--full" onScroll={onScroll}>
+      {lines.slice(-RAW_VISIBLE).join("\n")}
     </pre>
   );
 }
@@ -269,19 +261,15 @@ function MessageRow({ m }: { m: ParsedMessage }) {
  */
 function MessageLog({
   lines,
-  visible,
-  full,
   empty,
 }: {
   lines: readonly string[];
-  visible: number;
-  full: boolean;
   /** 원시 줄은 있는데 사람용 메시지가 하나도 없다. */
   empty: boolean;
 }) {
   const ref = useRef<HTMLOListElement>(null);
   const onScroll = useFollowScroll(ref, lines);
-  const rows = useMemo(() => lines.slice(-visible).map(parseMessage), [lines, visible]);
+  const rows = useMemo(() => lines.slice(-MESSAGE_VISIBLE).map(parseMessage), [lines]);
 
   if (lines.length === 0) {
     return (
@@ -293,34 +281,10 @@ function MessageLog({
     );
   }
   return (
-    <ol
-      ref={ref}
-      className={full ? "msglog msglog--full" : "msglog"}
-      aria-label={t("엔진 메시지")}
-      onScroll={onScroll}
-    >
+    <ol ref={ref} className="msglog msglog--full" aria-label={t("엔진 메시지")} onScroll={onScroll}>
       {rows.map((m, i) => (
         <MessageRow key={lines.length - rows.length + i} m={m} />
       ))}
     </ol>
-  );
-}
-
-/**
- * 보드 시트의 접이식 «엔진 로그» — 접혀 있다가 열면 작은 콘솔. 넓은 보드는 인스펙터의 «로그» 칸이 맡고, 이것은
- * 데스크톱 창이 휴대폰 세로 폭으로 좁아졌을 때만 남는다(라이브러리 계획 U2 에서 시트 머리 세그먼트로 바뀐다).
- */
-export function EngineLogPanel() {
-  const n = useEngineStore((s) => s.console.length);
-  return (
-    <section className="panel panel--disclosure">
-      <Disclosure
-        id="engine-log"
-        title={t("엔진 로그")}
-        summary={t("{n}줄", { n: n.toLocaleString() })}
-      >
-        <EngineConsole compact />
-      </Disclosure>
-    </section>
   );
 }

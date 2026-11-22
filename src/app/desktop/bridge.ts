@@ -2,7 +2,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { router } from "../routes";
-import { RAIL } from "../destinations";
+import { visibleRail } from "../destinations";
 import { useThemeStore, type ThemeMode } from "../theme";
 import { desktopAction, isWindows11 } from "./keys";
 import { startUpdater } from "./updater";
@@ -101,8 +101,7 @@ async function onKey(e: KeyboardEvent): Promise<void> {
     }
     case "rail": {
       // 보이는 레일과 같은 순서 — 고급 사용자 모드가 아니면 DB 가 빠진다(NavRail 과 같다).
-      const pro = useSettingsStore.getState().showAdvanced;
-      const dest = RAIL.filter((d) => pro || !d.pro)[action.index];
+      const dest = visibleRail(useSettingsStore.getState().showAdvanced)[action.index];
       if (dest) await router.navigate(dest.path);
       return;
     }

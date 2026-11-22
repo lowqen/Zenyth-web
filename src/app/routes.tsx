@@ -2,10 +2,10 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppShell } from "./AppShell";
 import { BoardScreen } from "../features/board/BoardScreen";
 import { RenjuOnly } from "../features/board/RenjuOnly";
+import { EngineLogRedirect } from "../features/board/EngineLogRedirect";
 import {
   CurriculumStudio,
   DatabaseScreen,
-  EngineScreen,
   JosekiScreen,
   OpeningExplorer,
   RankingScreen,
@@ -15,7 +15,8 @@ import {
 } from "./screens";
 
 /**
- * 아홉 화면. 계획서 §6 의 라우트 표를 그대로 옮긴 것이다.
+ * 여덟 화면(+ 관리자 스튜디오). 계획서 §6 의 라우트 표를 옮긴 것이다 — 엔진 화면은 라이브러리 계획 U2 에서
+ * 보드 «로그» 칸으로 들어갔다.
  *
  * 국면 딥링크 `?p=…` 는 **전 화면 공통 쿼리**로 둔다 — 앱의 «국면 문자열» 기능이
  * 웹에서 자연스럽게 갖는 등가물이고, 링크로 국면을 주고받을 수 있게 된다.
@@ -80,8 +81,8 @@ export const router = createBrowserRouter(
         // W8: 엔진 yixindb — 파일은 IndexedDB, 엔진이 뜰 때 메모리 FS 로 올린다.
         { path: "database", element: <DatabaseScreen /> },
 
-        // 엔진 상태와 piskvork 콘솔. 콘솔은 보드 옆 칸에서 이리로 왔다.
-        { path: "engine", element: <EngineScreen /> },
+        // 엔진 상태 · 콘솔은 보드 «로그» 칸이 됐다(라이브러리 계획 U2). 옛 주소는 그 칸으로 넘긴다.
+        { path: "engine", element: <EngineLogRedirect /> },
 
         // W9: 정석 — 수순 입력(판 · 글), 분기, 메모(마크다운), 분류 자동, 국면으로 찾기.
         {

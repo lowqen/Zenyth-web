@@ -441,7 +441,9 @@ dhbloo/rapfi → **dotb1ue/rapfi** 로 이름이 바뀌었다(옛 주소는 넘�
 - 폭 분기점은 `tokens.ts`(`LAYOUT` · `DESKTOP`)에서만 읽는다. `matchMedia` 로 폭을 묻는 훅을 새로 만들지 말고 `layout.ts` 에 더한다.
 - 데스크톱만의 색 · 반경 · 움직임은 만들지 않는다(tokens.ts 데스크톱 절). 다른 것은 치수 · 밀도 · 크롬뿐이다.
   마지막 예외였던 보드 나무 채도 · 무대 절반은 2026-11-22 웹도 같게 했다(`WOOD_CHROMA`, 라이브러리 계획 U1). 보드 옆 칸
-  인스펙터 [개요 | 로그]도 넓은 보드면 웹 · 데스크톱 모두 쓴다 — 배치 분기는 판 밑 독(`useDeskLayout`)뿐이다.
+  인스펙터 [개요 | 로그]도 넓은 보드면 웹 · 데스크톱 모두 쓴다 — 배치 분기는 판 밑 독(`useDeskLayout`)뿐이다. 휴대폰
+  세로는 같은 세그먼트를 시트 머리에 둔다(U2, 고른 칸은 `features/board/inspectorPane.ts` 하나). 엔진 탭은 U2 에서 걷혀
+  «로그» 칸이 됐다 — 레일 번호(`Ctrl+n`) · 명령 팔레트 · 셸 단축키는 모두 `visibleRail` 하나를 본다.
 - **미리 보기**: `pnpm dev` 뒤 `http://localhost:5173/?desktop` — 데스크톱 배치로 그린다(탭을 닫을 때까지, `?desktop=0` 으로 끔).
   셸 기능(`IS_DESKTOP`)은 꺼진 그대로라 타이틀바 칸은 비어 있다 — 스크린샷 골든(`scripts/shots.ts` 의 `desktop` 폭)과 같은 상태.
   배포 주소에서는 켜지지 않는다(`public/theme-init.js` 가 localhost 일 때만 읽는다).

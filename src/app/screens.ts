@@ -40,10 +40,6 @@ export const DatabaseScreen = lazyScreen(
   () => import("../features/database/DatabaseScreen"),
   "DatabaseScreen",
 );
-export const EngineScreen = lazyScreen(
-  () => import("../features/engine/EngineScreen"),
-  "EngineScreen",
-);
 export const JosekiScreen = lazyScreen(
   () => import("../features/joseki/JosekiScreen"),
   "JosekiScreen",

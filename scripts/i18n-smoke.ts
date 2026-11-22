@@ -41,6 +41,7 @@ const ROUTES: readonly { path: string; prepare?: (p: Page) => Promise<void> }[] 
   { path: "/research/sequence" },
   { path: "/research/ranking" },
   { path: "/database" },
+  // 보드 «로그» 칸 — 옛 /engine 주소가 그 칸을 펴고 보드로 넘긴다(라이브러리 계획 U2).
   { path: "/engine" },
   // 정석은 [공식 커리큘럼] 탭으로 연다 — 코스 목록, 코스, 레슨의 살펴보기 · 학습, 그리고 [내 정석]의 편집기.
   {
