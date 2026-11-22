@@ -16,7 +16,7 @@
  * 애니메이션 · 전환 · 캐럿을 끄고, 언어 · 시간대 · 배율을 고정한다. 장면마다 새 브라우저 문맥이라
  * IndexedDB · localStorage 는 늘 처음 온 사람의 것이다.
  */
-import { chromium, type Browser } from "playwright";
+import { chromium, type Browser, type Page } from "playwright";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,7 +35,15 @@ const DIFF = join(ROOT, "diff");
  * 화면 여덟과 설정 하위 화면 둘 — 라우트 표(`src/app/routes.tsx`)의 실물 화면(관리자 스튜디오는 뺀다) — 그리고 보드
  * «로그» 칸(엔진 탭이 옮겨 온 자리, 라이브러리 계획 U2). 옛 `/engine` 주소로 열면 그 칸이 펴진 보드다.
  */
-const SCENES: ReadonlyArray<{ name: string; path: string; lands?: string }> = [
+interface Scene {
+  name: string;
+  path: string;
+  lands?: string;
+  /** 찍기 전에 화면을 펼친다. 이 장면은 시계 · `Math.random` 을 고정한다(만든 날짜 · «일식» 무늬가 흔들리지 않게). */
+  prepare?: (page: Page) => Promise<void>;
+}
+
+const SCENES: ReadonlyArray<Scene> = [
   { name: "board", path: "/board" },
   { name: "review", path: "/research/review" },
   { name: "explorer", path: "/research/explorer" },
@@ -44,6 +52,17 @@ const SCENES: ReadonlyArray<{ name: string; path: string; lands?: string }> = [
   { name: "joseki", path: "/joseki" },
   { name: "library", path: "/library" },
   { name: "library-edit", path: "/library/edit" },
+  // 커버 시트 — 26주형 커버 × 테마(라이브러리 L2 의 대비 표를 그림으로). 새 DB 를 만들어 그 상세에서 연다.
+  {
+    name: "library-covers",
+    path: "/library",
+    prepare: async (page) => {
+      await page.locator('[data-k="library-new"]').click();
+      await page.locator('[data-k="library-detail"]').waitFor({ timeout: 5_000 });
+      await page.locator(".libdetail__cover").click();
+      await page.locator('[data-k="cover-sheet"][open]').waitFor({ timeout: 5_000 });
+    },
+  },
   { name: "board-log", path: "/engine", lands: "/board" },
   { name: "settings", path: "/settings" },
   // 설정 하위 화면(Z5) — 미리보기 카드 · 테마 단추 · 체크 원이 있는 둘.
@@ -116,6 +135,13 @@ async function shootVariant(browser: Browser, v: Variant) {
     // 처음 열 때 한 번 뜨는 것들 — 데이터 시트(Z7) · 새로워진 점(Z8) — 은 본 것으로 두고 화면 자체를 찍는다.
     await context.addInitScript(() => localStorage.setItem("rapfi.dataPrompt.sheet", "1"));
     await context.addInitScript(SEEN_INTRO);
+    if (scene.prepare) {
+      await context.clock.setFixedTime(new Date("2026-11-22T12:00:00+09:00"));
+      await context.addInitScript(() => {
+        let s = 12345;
+        Math.random = () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x80000000;
+      });
+    }
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
@@ -129,6 +155,7 @@ async function shootVariant(browser: Browser, v: Variant) {
       await page
         .waitForURL(`**${scene.lands ?? scene.path}`, { timeout: 5_000 })
         .catch(() => undefined);
+    if (scene.prepare) await scene.prepare(page);
     await page.evaluate(async () => {
       await document.fonts.ready;
       // 세그먼트의 선택 알약이 자리를 잡을 때까지(useSlidingPill — 한 프레임 뒤 data-pill="ready").
