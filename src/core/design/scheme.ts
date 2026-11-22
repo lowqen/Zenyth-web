@@ -153,13 +153,21 @@ export const AMOLED_KEYS = Object.keys(AmoledScheme).filter(
 );
 
 /**
+ * 나무 팔레트의 채도 배율 — 앱 `WoodTheme` 의 절반. 데스크톱이 먼저 절반으로 갔고(2026-11-09 사용자 요청: 판은 나무
+ * 그대로, 판 밖 배경만 덜 누렇게 — 넓은 창에서 페이지 전체가 물들면 누렇게 읽혔다), 2026-11-22 웹도 같게 했다
+ * (라이브러리 계획 U1). 판 스킨(`--c-board-*`)은 손대지 않는다. 안드로이드는 L5 에서 따른다.
+ */
+const WOOD_CHROMA = 0.5;
+
+/**
  * 보드 화면의 나무색 팔레트 — 앱 `WoodTheme`/`woodScheme`(UI 개편 2차 M5 보정 · 판 색 요청, 2026-10-29).
  *
  * Mornye 가 재생 화면을 앨범 색으로 물들이듯 보드 화면 전체(페이지 · 카드 · 툴바 키 · ▶)를 판의 나무
  * 색상각(Maple 70°)으로. 따뜻한 판과 차가운 보라 시트 · 배경의 색온도가 부딪쳤던 것(실기 검토)을 푼다.
  * 다른 화면은 보라 그대로다.
  *
- * - 종이(paper)는 Maple 색상각의 아주 낮은 채도(라이트 0.014 · 다크 0.012), 잉크(ink)는 0.018.
+ * - 종이(paper)는 Maple 색상각의 아주 낮은 채도(라이트 0.014 · 다크 0.012), 잉크(ink)는 0.018 — 여기에
+ *   `WOOD_CHROMA`(절반)를 곱한다.
  * - ▶(primary)는 판의 또 다른 재료 — **돌**의 색: 낮에는 흑돌 먹색, 밤에는 백돌 흰색. 처음에는 나무 램프의
  *   어두운 톤에서 뽑았더니 겨자 갈색(«똥색»)이었다.
  * - ‹ › · 선택(secondary-container)은 연한 메이플(라이트, 채도 0.035) / 종이 그 자체(다크 — 어두운 톤은 채도가
@@ -170,7 +178,8 @@ export const AMOLED_KEYS = Object.keys(AmoledScheme).filter(
  * 램프는 앱처럼 그 자리에서 만든다(앱 `Color.kt` 의 이름 있는 램프가 아니므로 톤 골든 밖이다 — 같은
  * `TonalRamp` 계산이라 값은 앱과 같다).
  */
-function woodScheme(dark: boolean, chroma = 1): Scheme {
+function woodScheme(dark: boolean): Scheme {
+  const chroma = WOOD_CHROMA;
   const paper = ramp(Maple.hue, (dark ? 0.012 : 0.014) * chroma);
   const ink = ramp(Maple.hue, 0.018 * chroma);
   const pale = ramp(Maple.hue, 0.035 * chroma);
@@ -219,15 +228,6 @@ function woodScheme(dark: boolean, chroma = 1): Scheme {
  */
 export const WoodLight: Scheme = woodScheme(false);
 export const WoodDark: Scheme = woodScheme(true);
-
-/**
- * 데스크톱의 보드 화면 팔레트 — 같은 나무 색상각에 **채도 절반**(2026-11-09 사용자 요청: 판은 나무 그대로, 판 밖
- * 배경만 덜 누렇게). 레일 · 인스펙터 · 타이틀바가 중성인 넓은 창에서는 페이지 전체가 물들면 누렇게 읽혔다.
- * 판 스킨(`--c-board-*`)은 손대지 않는다. 생성기가 `:root[data-desktop] [data-wood]` 아래로 굽는다.
- */
-export const DESKTOP_WOOD_CHROMA = 0.5;
-export const DesktopWoodLight: Scheme = woodScheme(false, DESKTOP_WOOD_CHROMA);
-export const DesktopWoodDark: Scheme = woodScheme(true, DESKTOP_WOOD_CHROMA);
 
 /** 대비 시험이 보는 쌍 — 앱의 테마 시험이 지키던 성질을 그대로 옮긴다. */
 export const CONTRAST_PAIRS: ReadonlyArray<readonly [string, string]> = [

@@ -207,7 +207,7 @@ try {
   if (woodDark === woodLight) fail(`다크에서 나무 색이 그대로입니다: ${woodDark}`);
 
   // 보드 옆 칸 — 기본(분석) 탭은 국면 · 엔진 · 형세 그래프 · 분석 설정 넷이다. 대국 설정은 대국 탭,
-  // 콘솔은 엔진 탭으로 갔고 대국 시계는 없앴다 — 옆 칸에 다시 쌓이기 시작하면 여기서 잡는다.
+  // 콘솔은 인스펙터의 «로그» 칸이고 대국 시계는 없앴다 — 옆 칸에 다시 쌓이기 시작하면 여기서 잡는다.
   const sideCards = await page.locator(".boardscreen__side > .panel").count();
   if (sideCards !== 4) fail(`분석 탭 옆 칸 카드가 넷이 아닙니다: ${sideCards}`);
   if ((await page.locator(".clock, .clocks").count()) !== 0) fail("보드에 시계가 남아 있습니다");

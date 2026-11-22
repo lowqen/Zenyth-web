@@ -112,7 +112,7 @@ export function BoardScreen() {
   const desk = useDeskLayout();
   const toolbarRef = useRef<HTMLElement>(null);
   const modeLabel = mode === "game" ? t("대국") : t("분석");
-  // 옆 칸의 카드들 — 웹 옆 칸과 데스크톱 인스펙터 «개요»가 같은 것을 쓴다(화면을 두 벌로 만들지 않는다).
+  // 옆 칸의 카드들 — 인스펙터 «개요»와 휴대폰 시트가 같은 것을 쓴다(화면을 두 벌로 만들지 않는다).
   const cards = (
     <>
       {/* 물음은 맨 위 — 답하기 전까지 판이 잠기므로 가장 먼저 보여야 한다. 두 탭 모두. */}
@@ -127,8 +127,9 @@ export function BoardScreen() {
           <AnalysisPanel />
           <EvalGraph />
           <AnalysisOptions />
-          {/* 데스크톱 보드에서는 로그가 인스펙터의 제 칸이다(Inspector). 좁은 데스크톱 창은 접이식 그대로. */}
-          {DESKTOP_LAYOUT && !desk && <EngineLogPanel />}
+          {/* 로그는 인스펙터의 제 칸이다(Inspector). 시트 배치만 아직 칸이 없어 데스크톱 창은 접이식 그대로
+              (라이브러리 계획 U2 에서 시트 머리 [개요 | 로그] 로 옮긴다). */}
+          {DESKTOP_LAYOUT && sheet && <EngineLogPanel />}
         </>
       )}
     </>
@@ -172,10 +173,16 @@ export function BoardScreen() {
     );
   }
 
-  const side = (
+  // 넓은 화면(웹 · 좁은 데스크톱 창)의 옆 칸도 데스크톱과 같은 인스펙터 [개요 | 로그](라이브러리 계획 U1).
+  // 휴대폰 세로는 시트에 카드만 — 세그먼트는 U2 에서 시트 머리로.
+  const side = sheet ? (
     <aside id={MODE_PANEL_ID} className="boardscreen__side" role="tabpanel" aria-label={modeLabel}>
       {cards}
     </aside>
+  ) : (
+    <Inspector id={MODE_PANEL_ID} label={modeLabel}>
+      {cards}
+    </Inspector>
   );
 
   return (

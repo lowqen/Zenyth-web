@@ -370,8 +370,9 @@ a:focus-visible {
   text-overflow: ellipsis;
 }
 
-/* 인스펙터 — 세그먼트(개요 · 로그) + 칸. 개요는 웹 옆 칸의 카드 그대로(.boardscreen__side 의 간격 · 스크롤). */
-.boardscreen[data-desk] > .inspector {
+/* 인스펙터 — 세그먼트(개요 · 로그) + 칸. 개요는 옆 칸의 카드 그대로(.boardscreen__side 의 간격 · 스크롤).
+   데스크톱 보드와 넓은 웹 보드가 같다(라이브러리 계획 U1). */
+.boardscreen > .inspector {
   grid-area: side;
 }
 .inspector {
@@ -894,37 +895,26 @@ a:focus-visible {
   background:
     radial-gradient(
       circle at 4% 10%,
-      color-mix(in srgb, var(--c-board-wood) var(--stage-a, 24%), transparent),
+      color-mix(in srgb, var(--c-board-wood) var(--stage-a), transparent),
       transparent 70%
     ),
     radial-gradient(
       circle at 95% 60%,
-      color-mix(in srgb, var(--c-board-wood-edge) var(--stage-b, 14%), transparent),
+      color-mix(in srgb, var(--c-board-wood-edge) var(--stage-b), transparent),
       transparent 60%
     );
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .shell__content:has(> .boardscreen) {
-    --stage-a: 16%;
-    --stage-b: 12%;
-  }
-}
-:root[data-theme="dark"] .shell__content:has(> .boardscreen) {
-  --stage-a: 16%;
-  --stage-b: 12%;
-}
-/* 데스크톱은 무대도 절반(2026-11-09 — 넓은 창에서 판 밖 배경이 누렇게 읽혔다. 판 색은 그대로, scheme.ts DesktopWood*). */
-:root[data-desktop] .shell__content:has(> .boardscreen) {
+  /* 세기는 앱(24 · 14 / 다크 16 · 12)의 절반쯤 — 넓은 창에서 판 밖 배경이 누렇게 읽혔다(데스크톱 2026-11-09,
+     웹도 2026-11-22 라이브러리 계획 U1). 판 색은 그대로다(scheme.ts WOOD_CHROMA). */
   --stage-a: 12%;
   --stage-b: 7%;
 }
 @media (prefers-color-scheme: dark) {
-  :root[data-desktop]:not([data-theme="light"]) .shell__content:has(> .boardscreen) {
+  :root:not([data-theme="light"]) .shell__content:has(> .boardscreen) {
     --stage-a: 8%;
     --stage-b: 6%;
   }
 }
-:root[data-desktop][data-theme="dark"] .shell__content:has(> .boardscreen) {
+:root[data-theme="dark"] .shell__content:has(> .boardscreen) {
   --stage-a: 8%;
   --stage-b: 6%;
 }

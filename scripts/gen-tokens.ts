@@ -27,8 +27,6 @@ import {
   AMOLED_KEYS,
   WoodLight,
   WoodDark,
-  DesktopWoodLight,
-  DesktopWoodDark,
   type Scheme,
   type TokenValue,
 } from "../src/core/design/scheme.ts";
@@ -115,27 +113,26 @@ function desktopBlock(): string {
   return lines.join("\n");
 }
 
-/** 나무 팔레트 한 벌(라이트 · 다크 · 검은 배경) — `root` 는 :root 에 덧붙일 선택자(데스크톱이면 [data-desktop]). */
-function woodBlocks(root: string, light: Scheme, dark: Scheme): string {
-  // 웹의 라이트 블록은 예전 그대로 맨 [data-wood](데스크톱은 :root[data-desktop] 을 앞에 붙여 이긴다).
-  return `${root ? `:root${root} ` : ""}[data-wood] {
+/** 나무 팔레트 한 벌(라이트 · 다크 · 검은 배경). 웹 · 데스크톱이 같다(scheme.ts WOOD_CHROMA). */
+function woodBlocks(light: Scheme, dark: Scheme): string {
+  return `[data-wood] {
 ${colorBlock(light, "  ")}
 }
 
 @media (prefers-color-scheme: dark) {
-  :root${root}:not([data-theme="light"]) [data-wood] {
+  :root:not([data-theme="light"]) [data-wood] {
 ${colorBlock(dark, "    ")}
   }
-  :root${root}[data-amoled]:not([data-theme="light"]) [data-wood] {
+  :root[data-amoled]:not([data-theme="light"]) [data-wood] {
 ${colorBlock(AmoledScheme, "    ", AMOLED_KEYS)}
   }
 }
 
-:root${root}[data-theme="dark"] [data-wood] {
+:root[data-theme="dark"] [data-wood] {
 ${colorBlock(dark, "  ")}
 }
 
-:root${root}[data-theme="dark"][data-amoled] [data-wood] {
+:root[data-theme="dark"][data-amoled] [data-wood] {
 ${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
 }`;
 }
@@ -203,11 +200,7 @@ ${colorBlock(AmoledScheme, "  ", AMOLED_KEYS)}
 
 /* 보드 화면의 나무색 팔레트(scheme.ts woodScheme, 앱 WoodTheme) — data-wood 를 단 칸(셸이 보드에서 붙인다)
  * 안에서만. 판 스킨 · 값 색은 바꾸지 않는다. 검은 배경에서는 면은 검정 그대로, 강조만 나무. */
-${woodBlocks("", WoodLight, WoodDark)}
-
-/* 데스크톱(data-desktop)은 같은 나무에 채도 절반(scheme.ts DesktopWood*) — 판 밖 배경이 덜 누렇다. 위 블록과
- * 같은 모양에 :root 쪽 선택자만 한 단 무거워 언제나 이기고, 그 안의 라이트 → 다크 → 검은 배경 순서도 그대로다. */
-${woodBlocks("[data-desktop]", DesktopWoodLight, DesktopWoodDark)}
+${woodBlocks(WoodLight, WoodDark)}
 `;
 
 mkdirSync(dirname(OUT), { recursive: true });
