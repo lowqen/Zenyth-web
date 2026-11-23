@@ -282,7 +282,7 @@ export function LibraryDetail({
             className="button--primary"
             disabled={busy}
             data-k="library-open"
-            onClick={() => void go(null, "/board")}
+            onClick={() => void go("start", "/board")}
           >
             <Icon d={ICON.play} />
             {t("이 DB 열기")}

@@ -5,7 +5,7 @@ import { useBoardStore } from "./boardStore";
 import { useGameStore } from "./gameStore";
 import { RapfiDb } from "../../data/db";
 import { readAutosave, readSlot, writeAutosave, writeSlot } from "../../data/games";
-import { useLinkBackup } from "./linkBackup";
+import { keepBoardBefore, useLinkBackup } from "./linkBackup";
 import { useEngineStore } from "../../engine/engine-state";
 import { move } from "../../core/model/move";
 
@@ -21,7 +21,7 @@ const game = () => useGameStore.getState();
 
 beforeEach(() => {
   d = new RapfiDb(`autosave-${Math.random()}`);
-  useLinkBackup.setState({ backup: null });
+  useLinkBackup.setState({ backup: null, from: "link" });
   useEngineStore.setState({ status: "idle", send: () => {} });
   board().clear();
   // 아래 시험의 대부분은 [대국] 판(`"autosave"` 자리)의 것이다 — 분석 판은 «두 탭의 판» 묶음이 본다.
@@ -229,6 +229,60 @@ describe("국면 딥링크", () => {
     a = startAutosave(d, 0, []);
     await a.ready;
     expect(board().render.stones).toEqual([]);
+  });
+});
+
+describe("라이브러리에서 DB 열기", () => {
+  /** 라이브러리의 `open` 과 같은 순서 — 보관 → 판 갈아 끼우기. */
+  const openDb = async (target: ReturnType<typeof move>[]) => {
+    await keepBoardBefore(target);
+    game().loadMoves(target, { name: "DB" });
+  };
+
+  it("두던 판을 보관하고 DB 의 시작 국면으로 간다 — 돌아가면 두던 판", async () => {
+    a = startAutosave(d, 10_000);
+    await a.ready;
+    game().loadMoves([move(1, 1), move(2, 2)], { future: [move(3, 3)], name: "mine" });
+    await openDb([move(7, 7)]);
+    expect(board().render.stones).toEqual([move(7, 7)]);
+    const kept = { name: "mine", size: 15, moves: [move(1, 1), move(2, 2)], future: [move(3, 3)] };
+    expect(useLinkBackup.getState()).toMatchObject({ backup: kept, from: "library" });
+    expect(await readSlot(d, "beforeLink")).toEqual({ ...kept, from: "library" });
+    await useLinkBackup.getState().restore();
+    expect(board().render.stones).toEqual(kept.moves);
+    expect(board().future).toEqual(kept.future);
+    expect(await readSlot(d, "beforeLink")).toBeNull();
+  });
+
+  it("올린 국면을 손대지 않고 다른 DB 를 열면 먼저 보관한 판이 남는다", async () => {
+    a = startAutosave(d, 10_000);
+    await a.ready;
+    game().loadMoves([move(1, 1)]);
+    await openDb([move(7, 7)]);
+    await openDb([move(7, 7), move(8, 8)]);
+    expect(useLinkBackup.getState().backup?.moves).toEqual([move(1, 1)]);
+    // 손댄 뒤에 열면 그 판을 보관한다.
+    game().tap(move(9, 9));
+    await openDb([]);
+    expect(useLinkBackup.getState().backup?.moves).toEqual([move(7, 7), move(8, 8), move(9, 9)]);
+  });
+
+  it("빈 판이거나 같은 국면이면 보관하지 않는다", async () => {
+    a = startAutosave(d, 10_000);
+    await a.ready;
+    await openDb([move(7, 7)]);
+    expect(useLinkBackup.getState().backup).toBeNull();
+    useLinkBackup.setState({ backup: null });
+    await keepBoardBefore([move(7, 7)]);
+    expect(useLinkBackup.getState().backup).toBeNull();
+  });
+
+  it("보관판을 남긴 채 새로고침하면 «DB 를 열기 전» 으로 다시 묻는다", async () => {
+    const kept = { name: "", size: 15, moves: [move(4, 4)], future: [], from: "library" as const };
+    await writeSlot(d, "beforeLink", kept);
+    a = startAutosave(d, 10_000);
+    await a.ready;
+    expect(useLinkBackup.getState()).toMatchObject({ backup: kept, from: "library" });
   });
 });
 

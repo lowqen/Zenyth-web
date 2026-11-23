@@ -4,7 +4,7 @@ import { keyOfMoves, keyToHex } from "../../core/database/yxdbkey";
 import { RULE_RENJU } from "../../core/database/yxdbfile";
 import { move } from "../../core/model/move";
 import { coverKeyOf, dominantOpening } from "./cover";
-import { movesOfKey } from "./libraryStore";
+import { movesOfKey, startMovesOf } from "./libraryStore";
 
 const stats = (openings?: number[]): DbStats => ({
   records: 10,
@@ -50,5 +50,20 @@ describe("뿌리 키 → 판에 놓을 수", () => {
     expect(movesOfKey(keyToHex(keyOfMoves(RULE_RENJU, 15, [])), 15)).toEqual([]);
     expect(movesOfKey(keyToHex(keyOfMoves(RULE_RENJU, 20, [move(1, 1)])), 15)).toBeNull();
     expect(movesOfKey("zz", 15)).toBeNull();
+  });
+});
+
+describe("DB 의 시작 국면", () => {
+  it("이 판 크기로 읽히는 가장 큰 뿌리 — 뿌리가 없으면 null", () => {
+    const big = [move(7, 7), move(8, 8), move(9, 7)];
+    const roots = [
+      { key: keyToHex(keyOfMoves(RULE_RENJU, 20, [move(1, 1)])), subtree: 900 },
+      { key: keyToHex(keyOfMoves(RULE_RENJU, 15, big)), subtree: 500 },
+      { key: keyToHex(keyOfMoves(RULE_RENJU, 15, [])), subtree: 10 },
+    ];
+    const out = startMovesOf({ ...stats(), roots }, 15)!;
+    expect(keyToHex(keyOfMoves(RULE_RENJU, 15, out))).toBe(roots[1]!.key);
+    expect(startMovesOf(stats(), 15)).toBeNull();
+    expect(startMovesOf(undefined, 15)).toBeNull();
   });
 });

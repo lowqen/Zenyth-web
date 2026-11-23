@@ -9,6 +9,8 @@ export interface AutosaveState {
   future: readonly Move[];
   /** 분석 판(`"analysis"` 자리)만 — 갈라져 나온 대국 수순. */
   base?: readonly Move[];
+  /** `"beforeLink"` 자리만 — 라이브러리의 DB 를 열며 덮였다(없으면 링크). */
+  from?: "library";
 }
 
 /** 자리 하나를 읽는다. 없으면 `null`. */
@@ -17,6 +19,7 @@ export async function readSlot(d: RapfiDb, slot: GameSlot): Promise<AutosaveStat
   if (!r) return null;
   const s: AutosaveState = { name: r.name, size: r.size, moves: r.moves, future: r.future };
   if (r.base) s.base = r.base;
+  if (r.from) s.from = r.from;
   return s;
 }
 
@@ -37,6 +40,7 @@ export async function writeSlot(d: RapfiDb, slot: GameSlot, s: AutosaveState): P
       slot,
     };
     if (s.base) rec.base = s.base.map(({ x, y }) => ({ x, y }));
+    if (s.from) rec.from = s.from;
     if (prev?.id !== undefined) rec.id = prev.id;
     await d.games.put(rec);
   });

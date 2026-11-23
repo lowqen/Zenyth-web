@@ -35,9 +35,11 @@ export interface GameRecord {
    * 없다(색인에 걸리지 않는다).
    *   `"autosave"`   보드 [대국] 탭의 판(대국 기보)
    *   `"analysis"`   보드 [분석] 탭의 판 — `base` 는 이 판이 갈라져 나온 대국 수순
-   *   `"beforeLink"` 국면 딥링크를 열기 직전에 두던 판 — 되돌리거나 버릴 때까지 남는다
+   *   `"beforeLink"` 국면 딥링크(또는 라이브러리의 DB)를 열기 직전에 두던 판 — 되돌리거나 버릴 때까지 남는다
    */
   slot?: GameSlot;
+  /** `"beforeLink"` 자리만 — 무엇이 판을 덮었는가. 없으면 링크. */
+  from?: "library";
   /** `"analysis"` 자리만 — 분석 판이 갈라져 나온 대국 수순. 색인하지 않는다(판본 그대로). */
   base?: Move[];
 }

@@ -182,6 +182,8 @@ export const EN: Readonly<Record<string, string>> = {
   "{cell} 은 흑의 금수입니다.": "{cell} is a forbidden move for Black.",
   "링크를 열기 전 판": "Game before the link",
   "링크의 국면을 열었습니다": "Opened the position from the link",
+  "라이브러리의 DB 를 열었습니다": "Opened a database from the Library",
+  "DB 를 열기 전 판": "Game before the database",
   "두던 판({what})은 따로 보관해 두었습니다.": "Your previous game ({what}) has been kept aside.",
   "무른 수 {n}": "{n} undone",
   "두던 판으로 돌아가기": "Back to my game",
@@ -1583,6 +1585,8 @@ export const EN: Readonly<Record<string, string>> = {
   "붙어 있는 DB 는 지울 수 없습니다. 다른 DB 를 먼저 여세요":
     "The open DB cannot be deleted. Open another DB first",
   "라이브러리에서 {n}수 국면으로": "From the Library: {n} {n|move|moves}",
+  "라이브러리에서 «{title}»의 시작 국면({n}수)으로":
+    "From the Library: start of “{title}” ({n} {n|move|moves})",
   "대조하는 중": "Verifying",
   "쓰는 중": "Writing",
   "정렬하는 중": "Sorting",

@@ -16,6 +16,8 @@ import {
 } from "../../data/library";
 import { t } from "../../i18n/i18n";
 import { useGameStore } from "../board/gameStore";
+import { useBoardStore } from "../board/boardStore";
+import { keepBoardBefore } from "../board/linkBackup";
 import { JOURNAL_HEADER, useDbStore } from "../database/dbStore";
 import { saveManifest, syncFolder } from "./folderSync";
 import {
@@ -155,8 +157,12 @@ interface LibraryState {
   restore: (id: string) => Promise<void>;
   purge: (id: string) => Promise<void>;
   exportFile: (id: string) => Promise<{ file: Blob; name: string } | { error: string }>;
-  /** 이 DB 를 붙이고 국면을 연다 — `moves === null` 이면 판은 그대로, `"edit"` 는 편집기로. 오류 글 또는 null. */
-  open: (id: string, moves: readonly Move[] | null) => Promise<string | null>;
+  /**
+   * 이 DB 를 붙이고 국면을 연다 — `moves === null` 이면 판은 그대로(편집기로 갈 때), `"start"` 는 DB 의 기록이
+   * 시작되는 국면(가장 큰 뿌리 — 통계가 없으면 판은 그대로). 판을 바꾸면 두던 판은 보관한다(`keepBoardBefore`).
+   * 오류 글 또는 null.
+   */
+  open: (id: string, moves: readonly Move[] | null | "start") => Promise<string | null>;
   cancelScan: () => void;
   /** 세지 못한 항목을 다시 센다. */
   rescan: (id: string) => void;
@@ -219,6 +225,15 @@ async function roomFor(bytes: number): Promise<string | null> {
 }
 
 /** DB 국면 키 → 판에 놓을 수(흑 · 백을 번갈아). 판 크기가 다르거나 패스 칸이 있으면 null. */
+/** DB 의 기록이 시작되는 국면 — 이 판 크기로 읽히는 가장 큰 뿌리. 통계(뿌리)가 없으면 null. */
+export function startMovesOf(stats: DbStats | undefined, size: number): Move[] | null {
+  for (const r of stats?.roots ?? []) {
+    const m = movesOfKey(r.key, size);
+    if (m) return m;
+  }
+  return null;
+}
+
 export function movesOfKey(hex: string, size: number): Move[] | null {
   let k;
   try {
@@ -727,11 +742,22 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
         const e2 = await useDbStore.getState().setSettings({ enabled: true });
         if (e2) return e2;
       }
-      if (moves) {
+      const target =
+        moves === "start"
+          ? startMovesOf(
+              get().entries.find((e) => e.id === id)?.stats,
+              useBoardStore.getState().render.size,
+            )
+          : moves;
+      if (target) {
         const title = (await getEntry(id))?.title ?? "";
-        useGameStore.getState().loadMoves(moves, {
+        await keepBoardBefore(target);
+        useGameStore.getState().loadMoves(target, {
           name: title,
-          what: t("라이브러리에서 {n}수 국면으로", { n: moves.length }),
+          what:
+            moves === "start"
+              ? t("라이브러리에서 «{title}»의 시작 국면({n}수)으로", { title, n: target.length })
+              : t("라이브러리에서 {n}수 국면으로", { n: target.length }),
         });
       }
       await refresh();

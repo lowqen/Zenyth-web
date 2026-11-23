@@ -114,7 +114,7 @@ export function LibraryScreen() {
   const selecting = lib.selected.length > 0;
   const quickOpen = async (e: LibraryMetaRow) => {
     setNotice(null);
-    const err = await lib.open(e.id, null);
+    const err = await lib.open(e.id, "start");
     if (err) setNotice(err);
     else navigate("/board");
   };
