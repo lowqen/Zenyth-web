@@ -1,6 +1,13 @@
 import { YxdbCancelled } from "../../core/database/yxdbfile";
 import type { ScanProgress, ScanResult } from "../../core/database/yxdbindex";
-import type { FromLibraryWorker, ScanJobOptions, ToLibraryWorker } from "./protocol";
+import type { JobProgress } from "../../core/database/yxdbmerge";
+import type {
+  FromLibraryWorker,
+  LibraryJob,
+  LibraryJobResults,
+  ScanJobOptions,
+  ToLibraryWorker,
+} from "./protocol";
 
 /**
  * 라이브러리 워커 클라이언트 — 작업을 줄 세워 하나씩 맡긴다(§4 «작업 줄은 하나씩»). 워커는 처음 쓸 때 띄우고
@@ -11,11 +18,7 @@ export interface LibraryScanOptions extends ScanJobOptions {
   onProgress?: (p: ScanProgress) => void;
 }
 
-export interface LibraryScan {
-  /** 끝나면 결과, 취소되면 `YxdbCancelled`. */
-  readonly promise: Promise<ScanResult>;
-  cancel(): void;
-}
+export type LibraryScan = LibraryTask<ScanResult>;
 
 const CANCEL_GRACE_MS = 1500;
 
@@ -36,16 +39,27 @@ const sharedFlag = (): Int32Array | undefined =>
     ? new Int32Array(new SharedArrayBuffer(4))
     : undefined;
 
-/** 파일 하나의 통계(+ 색인). 앞 작업이 끝난 뒤에 시작한다. */
-export function scanLibraryFile(file: Blob, opts: LibraryScanOptions = {}): LibraryScan {
+/** 작업 하나 — 끝나면 결과, 취소되면 `YxdbCancelled`. */
+export interface LibraryTask<T> {
+  readonly promise: Promise<T>;
+  cancel(): void;
+}
+
+/**
+ * 줄에 세워 워커에 맡긴다. `message` 는 id · 플래그를 받아 보낼 말을 만들고, `accept` 는 받은 말이 끝(결과)이면
+ * 값을 돌려준다(진행이면 undefined).
+ */
+function enqueue<T>(
+  message: (id: number, flag: Int32Array | undefined) => ToLibraryWorker,
+  accept: (m: FromLibraryWorker) => { value: T } | undefined,
+): LibraryTask<T> {
   const id = nextId++;
   const flag = sharedFlag();
   let cancelled = false;
   let abort: (() => void) | null = null;
-  const { onProgress, ...options } = opts;
 
   const run = () =>
-    new Promise<ScanResult>((resolve, reject) => {
+    new Promise<T>((resolve, reject) => {
       if (cancelled) return reject(new YxdbCancelled());
       const w = (worker ??= spawn());
       let settled = false;
@@ -60,11 +74,18 @@ export function scanLibraryFile(file: Blob, opts: LibraryScanOptions = {}): Libr
       const onMessage = (ev: MessageEvent<FromLibraryWorker>) => {
         const m = ev.data;
         if (m.id !== id) return;
-        if (m.type === "progress") return onProgress?.(m.progress);
+        if (m.type === "cancelled") {
+          finish();
+          return reject(new YxdbCancelled());
+        }
+        if (m.type === "error") {
+          finish();
+          return reject(new Error(m.message));
+        }
+        const got = accept(m);
+        if (!got) return;
         finish();
-        if (m.type === "done") resolve(m.result);
-        else if (m.type === "cancelled") reject(new YxdbCancelled());
-        else reject(new Error(m.message));
+        resolve(got.value);
       };
       const onError = (e: ErrorEvent) => {
         finish();
@@ -86,9 +107,7 @@ export function scanLibraryFile(file: Blob, opts: LibraryScanOptions = {}): Libr
       };
       w.addEventListener("message", onMessage);
       w.addEventListener("error", onError);
-      const msg: ToLibraryWorker = { type: "scan", id, file, options };
-      if (flag) msg.cancelFlag = flag;
-      w.postMessage(msg);
+      w.postMessage(message(id, flag));
     });
 
   const promise = tail.then(run, run);
@@ -101,4 +120,38 @@ export function scanLibraryFile(file: Blob, opts: LibraryScanOptions = {}): Libr
       abort?.();
     },
   };
+}
+
+/** 파일 하나의 통계(+ 색인). 앞 작업이 끝난 뒤에 시작한다. */
+export function scanLibraryFile(file: Blob, opts: LibraryScanOptions = {}): LibraryScan {
+  const { onProgress, ...options } = opts;
+  return enqueue<ScanResult>(
+    (id, flag) => {
+      const msg: ToLibraryWorker = { type: "scan", id, file, options };
+      if (flag) msg.cancelFlag = flag;
+      return msg;
+    },
+    (m) => {
+      if (m.type === "progress") onProgress?.(m.progress);
+      return m.type === "done" ? { value: m.result } : undefined;
+    },
+  );
+}
+
+/** 병합 · 분리 작업(L3). 결과의 모양은 `job.kind` 가 정한다. */
+export function runLibraryJob<J extends LibraryJob>(
+  job: J,
+  onProgress?: (p: JobProgress) => void,
+): LibraryTask<LibraryJobResults[J["kind"]]> {
+  return enqueue<LibraryJobResults[J["kind"]]>(
+    (id, flag) => {
+      const msg: ToLibraryWorker = { type: "job", id, job };
+      if (flag) msg.cancelFlag = flag;
+      return msg;
+    },
+    (m) => {
+      if (m.type === "jobProgress") onProgress?.(m.progress);
+      return m.type === "result" ? { value: m.result as LibraryJobResults[J["kind"]] } : undefined;
+    },
+  );
 }

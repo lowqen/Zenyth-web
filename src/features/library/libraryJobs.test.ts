@@ -51,4 +51,35 @@ describe("libraryJobs", () => {
     await jobs.handle({ type: "scan", id: 3, file: smallDb(), options: {}, cancelFlag: flag });
     expect(got).toContainEqual({ type: "cancelled", id: 3 });
   });
+
+  it("병합 · 분리 작업(L3) — jobProgress … result, 쓰기는 대조한 Blob", async () => {
+    const got: FromLibraryWorker[] = [];
+    const jobs = createLibraryJobs((m) => got.push(m), { deviceMemory: 8 });
+    const opts = { policy: "deeper" as const, joinComments: true };
+    await jobs.handle({
+      type: "job",
+      id: 4,
+      job: { kind: "mergeCount", files: [smallDb(), smallDb()], options: opts },
+    });
+    const r = got.find((m) => m.type === "result");
+    if (r?.type !== "result" || !("summary" in r.result)) throw new Error("결과 없음");
+    expect(r.result.summary).toMatchObject({ records: 3, positions: 2, overlaps: 2, differing: 0 });
+    got.length = 0;
+    await jobs.handle({
+      type: "job",
+      id: 5,
+      job: { kind: "mergeWrite", sources: r.result.sources, options: opts, count: 3 },
+    });
+    const w = got.find((m) => m.type === "result");
+    expect(w?.type === "result" && "file" in w.result && w.result.records).toBe(3);
+    expect(got.some((m) => m.type === "jobProgress")).toBe(true);
+    got.length = 0;
+    await jobs.handle({
+      type: "job",
+      id: 6,
+      job: { kind: "splitCount", file: smallDb(), base: null, withOpenings: true },
+    });
+    const c = got.find((m) => m.type === "result");
+    expect(c?.type === "result" && "total" in c.result && c.result.solved).toBe(1);
+  });
 });
