@@ -12,6 +12,11 @@ import { t } from "../i18n/i18n";
 
 export const BROWSER_SOURCE_ID = "browser";
 
+/** 폴더 소스의 메타데이터 사이드카 — 폴더를 옮기거나 안드로이드에서 열어도 이름 · 커버가 따라간다(계획 §3). */
+export const MANIFEST_FILE = "zenyth-library.json";
+/** 웹 폴더(FSA)의 휴지통 — 폴더 안의 숨은 폴더. 데스크톱은 OS 휴지통이다. */
+export const FOLDER_TRASH = ".zenyth-trash";
+
 /** 브라우저 소스의 파일 이름 — 제목이 바뀌어도 그대로다. */
 export const browserFileOf = (id: string) => `lib/${id}`;
 
@@ -68,6 +73,12 @@ export interface LibraryEntry {
   lastOpenedAt?: number;
   /** 휴지통에 넣은 시각(브라우저 소스는 앱 안 30일). */
   trashedAt?: number;
+  /** 휴지통 속 이름(소스가 정한다 — 되돌리기 · 아주 지우기에 쓴다). 없으면 브라우저 소스의 `.trash/<file>`. */
+  trashFile?: string;
+  /** 폴더에서 파일이 사라진 시각 — 앱 밖에서 지웠거나 옮겼다. 정체로 다시 짝지으면 걷고, 30일 뒤 정리한다. */
+  missingSince?: number;
+  /** 바꾸려던 파일 이름 — 다른 프로그램이 파일을 쥐고 있어 미뤘다(제목은 이미 바뀌었다). */
+  fileRenamePending?: string;
 }
 
 /** `libraryMeta` 한 줄 — 항목 + 어느 소스의 것인가. */
@@ -127,18 +138,36 @@ export function newEntryId(): string {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
-/** 새 브라우저 소스 항목(파일 없이) — 커버는 «일식», 무늬는 무작위. */
-export function newBrowserEntry(title: string, now = Date.now()): LibraryMetaRow {
+export const randomSeed = () => Math.floor(Math.random() * 0x7fffffff);
+
+/**
+ * 새 항목 — `file` 이 없으면 브라우저 소스의 `lib/<id>`. 커버는 기본 «일식»(빈 새 DB), 가져온 파일 · 폴더에서
+ * 새로 찾은 파일은 `"auto"`(통계 전 · 자유룰이면 일식으로 보이다가 주형이 잡히면 그 주형 — 2026-11-23 결정).
+ */
+export function newEntry(
+  source: string,
+  title: string,
+  {
+    file,
+    mode = "eclipse",
+    now = Date.now(),
+  }: { file?: string | undefined; mode?: LibraryCover["mode"]; now?: number } = {},
+): LibraryMetaRow {
   const id = newEntryId();
   return {
     id,
-    source: BROWSER_SOURCE_ID,
-    file: browserFileOf(id),
+    source,
+    file: file ?? browserFileOf(id),
     title,
-    cover: { mode: "eclipse", seed: Math.floor(Math.random() * 0x7fffffff) },
+    cover: { mode, seed: randomSeed() },
     createdAt: now,
     updatedAt: now,
   };
+}
+
+/** 새 브라우저 소스 항목(파일 없이) — 커버는 «일식», 무늬는 무작위. */
+export function newBrowserEntry(title: string, now = Date.now()): LibraryMetaRow {
+  return newEntry(BROWSER_SOURCE_ID, title, { now });
 }
 
 /** 첫 항목의 이름 — 이관한 옛 DB 와 처음 붙인 빈 DB. */

@@ -8,8 +8,16 @@ import {
   type LibraryMetaRow,
 } from "../../data/library";
 import { t } from "../../i18n/i18n";
-import { browserSource } from "./browserSource";
-import { createEntry, getEntry, recordSaved, trashEntry, updateEntry } from "./library";
+import {
+  createEntry,
+  discardEntry,
+  getEntry,
+  recordSaved,
+  trashEntry,
+  updateEntry,
+} from "./library";
+import type { LibrarySource } from "./source";
+import { sourceOf } from "./sources";
 import type { LibraryTask } from "./libraryWorker";
 import type { LibraryJob, LibraryJobResults, MergeJobOptions, MergeJobSource } from "./protocol";
 
@@ -33,15 +41,21 @@ export interface OpsEnv {
   onProgress?: (p: JobProgress) => void;
 }
 
+/** 항목의 소스 — 폴더를 라이브러리에서 뺐거나 아직 읽지 않았으면 까닭을 던진다. */
+export function sourceFor(e: LibraryMetaRow): LibrarySource {
+  const s = sourceOf(e.source);
+  if (!s) throw new Error(t("«{name}» 의 폴더를 열 수 없습니다", { name: e.title }));
+  return s;
+}
+
 /** 쉬는 파일(저널이 접힌 한 벌)을 연다. 파일이 없으면(저장 전 새 DB) null, 접히지 않은 저널이면 까닭. */
 export async function restingFile(
   e: LibraryMetaRow,
   journalHeader: number,
 ): Promise<Blob | null | { error: string }> {
-  const [base, journal] = await Promise.all([
-    browserSource.open(e.file),
-    browserSource.open(journalOf(e.file)),
-  ]);
+  const src = sourceFor(e);
+  // 저널은 크기만 본다 — 폴더 소스에서 통째로 읽지 않게.
+  const [base, journal] = await Promise.all([src.open(e.file), src.stat(journalOf(e.file))]);
   if (!base) return null;
   if (journal && journal.size > journalHeader)
     return {
@@ -100,12 +114,29 @@ async function inputsOf(
   return { entries, files };
 }
 
-/** 새 항목으로 놓는다 — 다 쓴 파일 하나를 한 트랜잭션에. */
-async function placeNew(title: string, cover: LibraryCover, file: Blob): Promise<LibraryMetaRow> {
-  const e = await createEntry(title, { select: false });
+/**
+ * 새 항목으로 놓는다 — 다 쓴 파일 하나를 `source` 에(브라우저는 한 트랜잭션, 폴더는 임시 파일 → 바꿔 끼우기).
+ * 놓다가 실패하면 만든 항목을 걷는다.
+ */
+export async function placeNew(
+  title: string,
+  cover: LibraryCover,
+  file: Blob,
+  source: string,
+): Promise<LibraryMetaRow> {
+  const src = sourceOf(source);
+  if (!src) throw new Error(t("라이브러리에 없는 폴더입니다"));
+  const e = await createEntry(title, { select: false, source });
   if (!e) throw new Error(t("이 브라우저는 저장소(IndexedDB)를 쓸 수 없습니다"));
-  const savedAt = Date.now();
-  await browserSource.writeAtomic([{ name: e.file, data: file }], savedAt);
+  try {
+    await src.writeAtomic([{ name: e.file, data: file }]);
+  } catch (err) {
+    await discardEntry(e.id);
+    throw err;
+  }
+  // 폴더 소스의 바꾼 시각은 파일 시스템이 정한다 — 사이드카의 정체가 다음 맞추기에서 그대로 맞게.
+  const st = await src.stat(e.file);
+  const savedAt = st?.mtime ?? Date.now();
   const fingerprint = await fingerprintOf(file, savedAt);
   await updateEntry(e.id, { cover, fingerprint, updatedAt: savedAt });
   return { ...e, cover, fingerprint, updatedAt: savedAt };
@@ -167,7 +198,10 @@ export function commitMerge(
       count: prep.summary.records,
     });
     if (sig.cancelled) throw new YxdbCancelled();
-    const entry = await placeNew(commit.title, commit.cover, r.file);
+    // 결과는 기준(맨 위)의 소스에 놓는다.
+    const base = (await getEntry(prep.ids[0]!))?.source;
+    if (!base) throw new Error(t("라이브러리에 없는 DB 입니다"));
+    const entry = await placeNew(commit.title, commit.cover, r.file, base);
     const trashed: string[] = [];
     if (commit.trashOriginals)
       for (const id of prep.ids) {
@@ -240,23 +274,26 @@ export function commitSplit(
     if (sig.cancelled) throw new YxdbCancelled();
     const entries: LibraryMetaRow[] = [];
     for (const [i, m] of commit.outputs.entries())
-      entries.push(await placeNew(m.title, m.cover, r.files[i]!));
+      entries.push(await placeNew(m.title, m.cover, r.files[i]!, src[0]!.source));
     let backup: string | null = null;
     if (commit.move) {
       const e = src[0]!;
       // 원본 사본 → 휴지통의 새 항목(되돌릴 수 있다), 그다음 원본 파일을 나머지로
-      const b = await placeNew(t("{name} (나누기 전)", { name: e.title }), e.cover, original);
+      const b = await placeNew(
+        t("{name} (나누기 전)", { name: e.title }),
+        e.cover,
+        original,
+        e.source,
+      );
       await trashEntry(b.id);
       backup = b.id;
       const rest = r.files[commit.plan.outputs.length]!;
-      const savedAt = Date.now();
-      await browserSource.writeAtomic(
-        [
-          { name: e.file, data: rest },
-          { name: journalOf(e.file), data: null },
-        ],
-        savedAt,
-      );
+      const store = sourceFor(e);
+      await store.writeAtomic([
+        { name: e.file, data: rest },
+        { name: journalOf(e.file), data: null },
+      ]);
+      const savedAt = (await store.stat(e.file))?.mtime ?? Date.now();
       // 본 파일이 바뀌었다 — 정체를 갈고 통계를 버린다(다시 센다)
       await recordSaved(e.id, savedAt, await fingerprintOf(rest, savedAt));
     }

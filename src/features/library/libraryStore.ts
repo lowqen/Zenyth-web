@@ -6,18 +6,22 @@ import { representative } from "../../core/opening/opening26";
 import type { Move } from "../../core/model/move";
 import { db } from "../../data/db";
 import {
+  BROWSER_SOURCE_ID,
   fingerprintOf,
   journalOf,
   sameFingerprint,
   type LibraryCover,
   type LibraryMetaRow,
+  type SourceKind,
 } from "../../data/library";
 import { t } from "../../i18n/i18n";
 import { useGameStore } from "../board/gameStore";
 import { JOURNAL_HEADER, useDbStore } from "../database/dbStore";
-import { browserSource } from "./browserSource";
+import { saveManifest, syncFolder } from "./folderSync";
 import {
   createEntry,
+  freeFileName,
+  discardEntry,
   getEntry,
   listEntries,
   listTrashed,
@@ -40,6 +44,15 @@ import {
 } from "./libraryOps";
 import { runLibraryJob, scanLibraryFile, type LibraryScan } from "./libraryWorker";
 import type { MergeJobOptions } from "./protocol";
+import { isFolderSource, type SourceAccess } from "./source";
+import {
+  addFolder,
+  canOpenFolders,
+  folderSources,
+  loadSources,
+  removeFolder,
+  sourceOf,
+} from "./sources";
 
 /**
  * 라이브러리 화면의 상태(라이브러리 계획 §6 · L2) — 항목 목록 · 파일 크기 · 통계 세기 · 휴지통, 그리고 «열기» 동선.
@@ -68,6 +81,16 @@ export interface LibraryJobState {
   fraction: number;
 }
 
+/** 소스 칩 하나 — 브라우저 소스와 폴더들. */
+export interface SourceView {
+  id: string;
+  kind: SourceKind;
+  /** 칩 글(폴더 이름). 브라우저 소스는 없다. */
+  label?: string;
+  /** 폴더에 닿을 수 있는가 — `prompt` 면 칩이 «다시 허용». */
+  access: SourceAccess;
+}
+
 /** 작업의 끝 — 값, 까닭, 또는 취소(`error: null`). */
 export type OpResult<T> = { ok: true; value: T } | { ok: false; error: string | null };
 
@@ -85,11 +108,29 @@ interface LibraryState {
   job: LibraryJobState | null;
   /** 여러 개 고르기 — 고른 순서(합치기의 기본 순서, 맨 앞이 기준). */
   selected: string[];
+  /** 소스 칩들 — 맨 앞은 늘 브라우저 소스. */
+  sources: SourceView[];
+  /** 고른 칩 — 격자 · [가져오기] · [새 DB] 가 이 소스를 본다. */
+  sourceId: string;
+  /** 이 화면에서 폴더를 열 수 있는가(데스크톱 · 웹 Chromium). */
+  canOpenFolders: boolean;
 
   load: () => Promise<void>;
   create: (title: string) => Promise<LibraryMetaRow | null>;
+  /** 고른 칩의 소스로 가져온다(폴더면 파일을 복사해 둔다). 커버는 «자동». */
   importFile: (file: File) => Promise<string | null>;
-  rename: (id: string, title: string) => Promise<void>;
+  /**
+   * 제목을 바꾼다 — `alsoFile` 이면 폴더 소스의 파일 이름도(저널 · 백업도 함께). 붙은 DB 면 저장 · 떼기 → 옮기기 →
+   * 다시 붙이기. 다른 프로그램이 쥐어 옮기지 못하면 제목만 바꾸고 파일 이름은 다음에 다시 시도한다. 알림 글 또는 null.
+   */
+  rename: (id: string, title: string, alsoFile?: boolean) => Promise<string | null>;
+  selectSource: (id: string) => void;
+  /** [+ 폴더 열기] — 웹은 클릭 안에서 불러야 한다. 알림 글 또는 null. */
+  addFolder: () => Promise<string | null>;
+  /** «폴더 다시 허용» — 웹은 클릭 안에서. */
+  grantFolder: (id: string) => Promise<string | null>;
+  /** 폴더를 라이브러리에서 뺀다(파일 · 사이드카는 그대로). */
+  removeFolder: (id: string) => Promise<string | null>;
   setCover: (id: string, cover: LibraryCover) => Promise<void>;
   trash: (id: string) => Promise<string | null>;
   /** 고른 것을 한꺼번에 휴지통으로 — 붙어 있거나 작업 중인 DB 는 건너뛴다. 건너뛴 까닭 또는 null. */
@@ -125,13 +166,42 @@ let current: LibraryScan | null = null;
 let pumping = false;
 let jobHandle: OpHandle<unknown> | null = null;
 
-async function fileSize(file: string): Promise<number> {
-  const [base, journal] = await Promise.all([
-    browserSource.open(file),
-    browserSource.open(journalOf(file)),
-  ]);
-  return (base?.size ?? 0) + (base ? (journal?.size ?? 0) : 0);
+const SOURCE_KEY = "rapfi.library.source";
+
+function readSourceId(): string {
+  try {
+    return localStorage.getItem(SOURCE_KEY) ?? BROWSER_SOURCE_ID;
+  } catch {
+    return BROWSER_SOURCE_ID;
+  }
 }
+
+function writeSourceId(id: string): void {
+  try {
+    localStorage.setItem(SOURCE_KEY, id);
+  } catch {
+    /* 이번 세션만 */
+  }
+}
+
+/** 본 파일 + 저널 크기 — 읽지 않는다. 소스에 닿을 수 없으면 0(통계 세기도 건너뛴다). */
+async function fileSize(e: LibraryMetaRow, access: Record<string, SourceAccess>): Promise<number> {
+  const src = sourceOf(e.source);
+  if (!src || (access[e.source] ?? "granted") !== "granted") return 0;
+  try {
+    const [base, journal] = await Promise.all([src.stat(e.file), src.stat(journalOf(e.file))]);
+    return (base?.size ?? 0) + (base ? (journal?.size ?? 0) : 0);
+  } catch {
+    return 0;
+  }
+}
+
+/** 이름 바꾸기 실패가 «다른 프로그램이 쥔 파일» 인가 — 셸은 `busy:` 로, 웹 폴더는 잠금 오류로 알린다. */
+const isBusyError = (e: unknown) => {
+  const m = e instanceof Error ? e.message : String(e);
+  const n = (e as { name?: string })?.name;
+  return m.startsWith("busy:") || n === "NoModificationAllowedError" || n === "InvalidStateError";
+};
 
 /** 쓰기 전에 — 처음이면 영속 저장을 청하고(지워지지 않게), 남은 자리가 모자라면 까닭. */
 async function roomFor(bytes: number): Promise<string | null> {
@@ -171,11 +241,65 @@ export function movesOfKey(hex: string, size: number): Move[] | null {
 export const openingMoves = (index: number): Move[] => representative(index);
 
 export const useLibraryStore = create<LibraryState>((set, get) => {
+  const accessMap = () => Object.fromEntries(get().sources.map((s) => [s.id, s.access]));
+
   const refresh = async () => {
     const [entries, trashed] = await Promise.all([listEntries(), listTrashed()]);
     const sizes: Record<string, number> = {};
-    await Promise.all(entries.map(async (e) => void (sizes[e.id] = await fileSize(e.file))));
+    const access = accessMap();
+    await Promise.all(entries.map(async (e) => void (sizes[e.id] = await fileSize(e, access))));
     set({ entries, trashed, sizes, loaded: true });
+  };
+
+  /** 소스 줄을 읽고 폴더마다 닿을 수 있는지 잰다. 고른 칩이 사라졌으면 브라우저로. */
+  const loadSourceViews = async () => {
+    const rows = await loadSources();
+    const views: SourceView[] = [{ id: BROWSER_SOURCE_ID, kind: "browser", access: "granted" }];
+    for (const r of rows) {
+      if (r.kind === "browser") continue;
+      const src = folderSources().find((s) => s.id === r.id);
+      views.push({
+        id: r.id,
+        kind: r.kind,
+        label: r.label ?? r.id,
+        access: src ? await src.access() : "missing",
+      });
+    }
+    const sourceId = views.some((v) => v.id === get().sourceId)
+      ? get().sourceId
+      : BROWSER_SOURCE_ID;
+    set({ sources: views, sourceId, canOpenFolders: canOpenFolders() });
+  };
+
+  /** 닿을 수 있는 폴더를 사이드카 · 파일과 맞추고, 미뤄 둔 파일 이름 바꾸기를 다시 해 본다. */
+  const syncFolders = async (only?: string) => {
+    for (const v of get().sources) {
+      if (v.kind === "browser" || v.access !== "granted" || (only && v.id !== only)) continue;
+      const src = sourceOf(v.id);
+      if (!src) continue;
+      try {
+        const rows = await syncFolder(src);
+        for (const r of rows)
+          if (r.fileRenamePending && !r.trashedAt && !r.missingSince) await retryFileRename(r);
+      } catch (e) {
+        console.warn("[library] 폴더를 맞추지 못했다", e);
+      }
+    }
+  };
+
+  /** 미뤄 둔 파일 이름 바꾸기 — 붙어 있지 않을 때만, 조용히. */
+  const retryFileRename = async (e: LibraryMetaRow) => {
+    const dbs = useDbStore.getState();
+    if (dbs.active?.id === e.id && dbs.status !== "off") return;
+    const src = sourceOf(e.source);
+    if (!src || !e.fileRenamePending) return;
+    try {
+      const want = await freeFileName(e.source, e.title, e.id);
+      if (want !== e.file) await src.rename(e.file, want);
+      await updateEntry(e.id, { file: want }, ["fileRenamePending"]);
+    } catch {
+      /* 아직 쥐고 있다 — 다음에 */
+    }
   };
 
   /** 통계가 없는(또는 정체가 바뀐) 항목을 하나씩 센다. 이미 돌고 있으면 그 줄이 이어서 집는다. */
@@ -198,9 +322,16 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
   };
 
   const scanOne = async (e: LibraryMetaRow) => {
-    const file = await browserSource.open(e.file);
-    if (!file) return;
-    const mtime = (await browserSource.mtime(e.file)) ?? e.updatedAt;
+    const src = sourceOf(e.source);
+    let file: Blob | null;
+    try {
+      file = (await src?.open(e.file)) ?? null;
+    } catch {
+      set((s) => ({ notes: { ...s.notes, [e.id]: "error" } }));
+      return;
+    }
+    if (!src || !file) return;
+    const mtime = (await src.stat(e.file))?.mtime ?? e.updatedAt;
     const before = await fingerprintOf(file, mtime);
     set({ scan: { id: e.id, phase: "stats", fraction: 0 } });
     let last = 0;
@@ -224,9 +355,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
     }
     // 세는 동안 저장이 있었으면 버린다 — 다음 차례가 새 파일로 다시 센다.
     const now = await getEntry(e.id);
-    const after = await browserSource.open(e.file);
-    if (!now || !after) return;
-    const fp = await fingerprintOf(after, (await browserSource.mtime(e.file)) ?? mtime);
+    const fp = now ? await src.fingerprint(now.file).catch(() => null) : null;
+    if (!now || !fp) return;
     if (!sameFingerprint(before, fp)) return;
     if (now.fingerprint && !sameFingerprint(now.fingerprint, fp)) return;
     const skipped = result.indexSkipped ?? result.openingsSkipped;
@@ -293,28 +423,45 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
     undo: null,
     job: null,
     selected: [],
+    sources: [{ id: BROWSER_SOURCE_ID, kind: "browser", access: "granted" }],
+    sourceId: readSourceId(),
+    canOpenFolders: false,
 
     load: async () => {
-      if (!db()) return set({ loaded: true });
+      if (!db()) return set({ loaded: true, canOpenFolders: canOpenFolders() });
+      await loadSourceViews();
+      await syncFolders();
       await refresh();
       void pump();
     },
 
     create: async (title) => {
-      const e = await createEntry(title, { select: false });
+      const e = await createEntry(title, { select: false, source: get().sourceId });
       await refresh();
       return e;
     },
 
     importFile: async (file) => {
       if (!db()) return t("이 브라우저는 저장소(IndexedDB)를 쓸 수 없습니다");
-      const room = await roomFor(file.size);
-      if (room) return room;
+      const source = get().sourceId;
+      const src = sourceOf(source);
+      if (!src) return t("라이브러리에 없는 폴더입니다");
+      if (source === BROWSER_SOURCE_ID) {
+        const room = await roomFor(file.size);
+        if (room) return room;
+      }
       const title = file.name.replace(/\.db$/i, "") || file.name;
-      const e = await createEntry(title, { select: false });
+      // 가져온 DB 의 커버는 «자동» — 통계 전 · 자유룰이면 일식, 주형이 잡히면 그 주형(2026-11-23 결정).
+      const e = await createEntry(title, { select: false, source, mode: "auto" });
       if (!e) return t("이 브라우저는 저장소(IndexedDB)를 쓸 수 없습니다");
-      const savedAt = Date.now();
-      await browserSource.writeAtomic([{ name: e.file, data: file }], savedAt);
+      try {
+        await src.writeAtomic([{ name: e.file, data: file }]);
+      } catch (err) {
+        await discardEntry(e.id);
+        await refresh();
+        return err instanceof Error ? err.message : String(err);
+      }
+      const savedAt = (await src.stat(e.file))?.mtime ?? Date.now();
       await updateEntry(e.id, {
         fingerprint: await fingerprintOf(file, savedAt),
         updatedAt: savedAt,
@@ -324,13 +471,107 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
       return null;
     },
 
-    rename: async (id, title) => {
+    rename: async (id, title, alsoFile = true) => {
       const clean = title.trim();
-      if (!clean || get().job?.ids.includes(id)) return;
+      if (!clean || get().job?.ids.includes(id)) return null;
+      const e = await getEntry(id);
+      if (!e) return null;
       await updateEntry(id, { title: clean, updatedAt: Date.now() });
-      set((s) => ({ entries: s.entries.map((e) => (e.id === id ? { ...e, title: clean } : e)) }));
+      set((s) => ({ entries: s.entries.map((x) => (x.id === id ? { ...x, title: clean } : x)) }));
       if (useDbStore.getState().active?.id === id)
         useDbStore.setState({ active: { id, title: clean } });
+      const src = sourceOf(e.source);
+      if (!alsoFile || !src || !isFolderSource(src)) return null;
+      const want = await freeFileName(e.source, clean, id);
+      if (want === e.file) {
+        if (e.fileRenamePending) await updateEntry(id, {}, ["fileRenamePending"]);
+        return null;
+      }
+      const dbs = useDbStore.getState();
+      const attached = dbs.active?.id === id && dbs.status === "on";
+      if (attached && dbs.busy) return t("DB 를 저장하는 중입니다. 끝난 뒤에 다시 하세요");
+      // 엔진이 쥔 파일(데스크톱) — 저장 · 접고 뗀 뒤 옮기고 새 경로로 다시 붙인다. 떼지 않으면 다음 저장이 옛 이름을
+      // 되살린다. 웹 엔진은 메모리 FS 의 사본이라 떼지 않는다(저장이 항목의 새 이름을 읽는다).
+      let released = false;
+      if (attached && dbs.location === "engine") {
+        const err = await dbs.release();
+        if (err) return err;
+        released = true;
+      }
+      let note: string | null = null;
+      try {
+        if (await src.stat(e.file)) await src.rename(e.file, want);
+        await updateEntry(id, { file: want }, ["fileRenamePending"]);
+      } catch (err) {
+        if (isBusyError(err)) {
+          await updateEntry(id, { fileRenamePending: want });
+          note = t(
+            "다른 프로그램이 파일을 쓰는 중이라 파일 이름은 그대로 두었습니다. 다음에 다시 시도합니다",
+          );
+        } else note = err instanceof Error ? err.message : String(err);
+      } finally {
+        if (released) {
+          const err = await useDbStore.getState().attach();
+          if (err) note = note ?? err;
+        }
+      }
+      await refresh();
+      return note;
+    },
+
+    selectSource: (id) => {
+      writeSourceId(id);
+      set({ sourceId: id, selected: [] });
+    },
+
+    addFolder: async () => {
+      try {
+        const row = await addFolder();
+        if (!row) return null;
+        await loadSourceViews();
+        get().selectSource(row.id);
+        await syncFolders(row.id);
+        await refresh();
+        void pump();
+        return null;
+      } catch (e) {
+        return e instanceof Error ? e.message : String(e);
+      }
+    },
+
+    grantFolder: async (id) => {
+      const src = folderSources().find((s) => s.id === id);
+      if (!src) return t("라이브러리에 없는 폴더입니다");
+      const access = await src.requestAccess();
+      set((s) => ({ sources: s.sources.map((v) => (v.id === id ? { ...v, access } : v)) }));
+      if (access !== "granted")
+        return access === "missing"
+          ? t("폴더 «{name}» 이(가) 없습니다", { name: src.label })
+          : t("폴더를 쓸 권한을 받지 못했습니다");
+      await syncFolders(id);
+      await refresh();
+      void pump();
+      // 붙을 DB 가 이 폴더의 것이었으면 이제 붙인다.
+      const dbs = useDbStore.getState();
+      if (
+        dbs.status === "error" &&
+        get().entries.some((e) => e.id === dbs.active?.id && e.source === id)
+      )
+        void dbs.attach();
+      return null;
+    },
+
+    removeFolder: async (id) => {
+      const dbs = useDbStore.getState();
+      const act = dbs.active ? get().entries.find((e) => e.id === dbs.active!.id) : null;
+      if (act?.source === id && dbs.status !== "off")
+        return t("붙어 있는 DB 의 폴더는 뺄 수 없습니다. 다른 DB 를 먼저 여세요");
+      if (get().job) return t("다른 작업이 진행 중입니다");
+      await saveManifest(id);
+      await removeFolder(id);
+      await loadSourceViews();
+      await refresh();
+      return null;
     },
 
     setCover: async (id, cover) => {
@@ -458,13 +699,19 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
       const name = `${e.title}.db`;
       const dbs = useDbStore.getState();
       if (dbs.active?.id === id && dbs.status === "on") {
-        const r = await dbs.exportFile();
-        return "error" in r ? r : { file: r.file, name };
+        if (dbs.location !== "engine") {
+          const r = await dbs.exportFile();
+          return "error" in r ? r : { file: r.file, name };
+        }
+        // 네이티브 엔진이 연 폴더의 파일 — 접어 저장시킨 뒤 그 파일을 읽는다.
+        if (!dbs.settings.readonly) {
+          const err = await dbs.save(t("내보내기 전 저장"), true);
+          if (err) return { error: err };
+        }
       }
-      const [base, journal] = await Promise.all([
-        browserSource.open(e.file),
-        browserSource.open(journalOf(e.file)),
-      ]);
+      const src = sourceOf(e.source);
+      if (!src) return { error: t("라이브러리에 없는 폴더입니다") };
+      const [base, journal] = await Promise.all([src.open(e.file), src.stat(journalOf(e.file))]);
       if (!base) return { error: t("저장된 DB 파일이 없습니다") };
       if (journal && journal.size > JOURNAL_HEADER)
         return { error: t("저널에 접히지 않은 변경이 있습니다. DB 를 붙인 뒤 내보내세요") };

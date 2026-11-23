@@ -17,8 +17,12 @@ import { MergeSheet } from "./MergeSheet";
 import { useLibraryStore, type LibrarySort } from "./libraryStore";
 
 /**
- * 라이브러리(라이브러리 계획 §6 · L2) — DB 탭이 된 화면. 이 브라우저의 yixindb 파일을 커버 격자로 늘어놓고, 고르면
- * 상세(통계 · 열람 동선)를 본다. 엔진에 붙는 DB 는 한 번에 하나라 맨 위에 «지금 붙은 DB»(음악 앱의 «지금 재생 중»).
+ * 라이브러리(라이브러리 계획 §6 · L2) — DB 탭이 된 화면. 고른 소스(이 브라우저 · 폴더)의 yixindb 파일을 커버 격자로
+ * 늘어놓고, 고르면 상세(통계 · 열람 동선)를 본다. 엔진에 붙는 DB 는 한 번에 하나라 맨 위에 «지금 붙은 DB»(음악 앱의
+ * «지금 재생 중»).
+ *
+ * - 소스 칩(L4): [이 브라우저] [폴더: …] [+ 폴더 열기]. 웹 폴더를 다시 찾아오면 칩이 «다시 허용»(클릭 = 사용자 몸짓).
+ *   Firefox · Safari 는 폴더를 열 수 없어 [+ 폴더 열기] 를 숨긴다.
  *
  * - `/library` 격자, `/library/:id` 상세. 데스크톱 2열(`useDesktopSplit`)이면 두 주소 모두 격자 | 상세 인스펙터.
  * - 넓은 화면은 커버 hover 의 ▶ 가 바로 붙이기 — 판으로 간다.
@@ -84,12 +88,15 @@ export function LibraryScreen() {
   }, [undo]);
 
   const sorted = useMemo(() => {
-    const rows = [...lib.entries];
+    const rows = lib.entries.filter((e) => e.source === lib.sourceId);
     if (view.sort === "name") rows.sort((a, b) => a.title.localeCompare(b.title));
     else if (view.sort === "size")
       rows.sort((a, b) => (lib.sizes[b.id] ?? 0) - (lib.sizes[a.id] ?? 0));
     return rows;
-  }, [lib.entries, lib.sizes, view.sort]);
+  }, [lib.entries, lib.sizes, lib.sourceId, view.sort]);
+  const trashed = lib.trashed.filter((e) => e.source === lib.sourceId);
+  const source = lib.sources.find((s) => s.id === lib.sourceId);
+  const folderBlocked = !!source && source.kind !== "browser" && source.access !== "granted";
 
   const setPrefs = (p: Partial<ViewPrefs>) => {
     const next = { ...view, ...p };
@@ -145,18 +152,39 @@ export function LibraryScreen() {
       <PageTitle>{t("라이브러리")}</PageTitle>
       <div className="library__bar">
         <ChipGroup label={t("소스")} row>
-          <Chip on onClick={() => undefined}>
-            {t("이 브라우저")}
-          </Chip>
+          {lib.sources.map((s) => (
+            <Chip
+              key={s.id}
+              on={s.id === lib.sourceId}
+              {...(s.kind === "browser" ? {} : { title: s.label ?? "" })}
+              onClick={() => lib.selectSource(s.id)}
+            >
+              {s.kind === "browser" ? t("이 브라우저") : t("폴더: {name}", { name: s.label ?? "" })}
+            </Chip>
+          ))}
+          {lib.canOpenFolders && (
+            <Chip
+              on={false}
+              onClick={() => void lib.addFolder().then((err) => err && setNotice(err))}
+            >
+              {t("+ 폴더 열기")}
+            </Chip>
+          )}
         </ChipGroup>
         <div className="panel__actions library__actions">
-          <button type="button" data-k="library-import" onClick={() => fileInput.current?.click()}>
+          <button
+            type="button"
+            data-k="library-import"
+            disabled={folderBlocked}
+            onClick={() => fileInput.current?.click()}
+          >
             <Icon d={ICON.fileOpen} />
             {t("가져오기")}
           </button>
           <button
             type="button"
             data-k="library-new"
+            disabled={folderBlocked}
             onClick={() =>
               void lib.create(t("새 DB")).then((e) => e && navigate(`/library/${e.id}`))
             }
@@ -180,6 +208,35 @@ export function LibraryScreen() {
           }}
         />
       </div>
+
+      {source && source.kind !== "browser" && (
+        <p className="panel__hint libfolder" data-k="library-folder">
+          {source.access === "granted"
+            ? t(
+                "폴더의 .db 파일이 보입니다. 이름 · 커버는 폴더의 zenyth-library.json 에 함께 둡니다.",
+              )
+            : source.access === "missing"
+              ? t("폴더를 찾을 수 없습니다. 옮겼거나 지웠을 수 있습니다.")
+              : t("이 폴더를 다시 쓰려면 허용이 필요합니다.")}{" "}
+          {source.access !== "granted" && source.access !== "missing" && (
+            <button
+              type="button"
+              className="linkish"
+              data-k="library-grant"
+              onClick={() => void lib.grantFolder(source.id).then((err) => err && setNotice(err))}
+            >
+              {t("폴더 다시 허용")}
+            </button>
+          )}{" "}
+          <button
+            type="button"
+            className="linkish"
+            onClick={() => void lib.removeFolder(source.id).then((err) => err && setNotice(err))}
+          >
+            {t("라이브러리에서 빼기")}
+          </button>
+        </p>
+      )}
 
       {notice && (
         <p className="panel__hint" role="status" data-k="library-notice">
@@ -365,12 +422,12 @@ export function LibraryScreen() {
         }}
       />
 
-      {lib.trashed.length > 0 && (
+      {trashed.length > 0 && (
         <div className="panel__fold">
-          <Disclosure id="lib-trash" level={3} title={t("휴지통 ({n})", { n: lib.trashed.length })}>
+          <Disclosure id="lib-trash" level={3} title={t("휴지통 ({n})", { n: trashed.length })}>
             <p className="panel__hint">{t("30일이 지나면 저절로 지워집니다.")}</p>
             <ul className="libtrash">
-              {lib.trashed.map((e) => (
+              {trashed.map((e) => (
                 <li key={e.id} className="libtrash__row">
                   <span className="libtrash__title">{e.title}</span>
                   <span className="libtrash__date tnum">{fmtDate(e.trashedAt!)}</span>

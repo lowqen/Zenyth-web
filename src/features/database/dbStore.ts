@@ -22,7 +22,6 @@ import {
   journalOf,
   type LibraryMetaRow,
 } from "../../data/library";
-import { browserSource } from "../library/browserSource";
 import {
   ensureActive,
   getEntry,
@@ -30,6 +29,9 @@ import {
   resolveActive,
   selectEntry,
 } from "../library/library";
+import { isFolderSource, type LibrarySource } from "../library/source";
+import { resolveSource } from "../library/sources";
+import { TauriFolderSource } from "../library/tauriSource";
 import { CoordMapper } from "../../engine/engine-protocol";
 import { engineFs, onDbLine, onEngineBooted, useEngineStore } from "../../engine/engine-state";
 import { isNativeVariant } from "../../engine/engine-client";
@@ -202,6 +204,11 @@ interface DbState {
    * 바꾸지 않는다. 엔진 폴더의 DB(데스크톱 Z4)를 쓰는 중이면 쓸 수 없다.
    */
   switchTo: (id: string) => Promise<string | null>;
+  /**
+   * 붙은 DB 를 잠깐 놓는다 — 저장 · 접고(`compact`) 엔진에서 뗀다. 붙은 파일의 이름을 바꾸기 전(엔진이 쥔 파일 ·
+   * 다음 저장이 옛 이름을 되살리지 않게). 다시 붙이기는 `attach`.
+   */
+  release: () => Promise<string | null>;
 }
 
 // ── 엔진과의 길 ───────────────────────────────────────────────────────
@@ -270,22 +277,64 @@ function claimForWrite(): string | null {
  */
 const claimForSave = engineHeld;
 
+/**
+ * 항목의 소스 — 폴더를 라이브러리에서 뺐거나 웹 폴더의 권한이 풀렸으면(다시 찾아온 탭) 까닭을 던진다. 붙이기 ·
+ * 저장의 `catch` 가 그 글을 그대로 보인다.
+ */
+async function sourceForEntry(e: LibraryMetaRow): Promise<LibrarySource> {
+  const src = await resolveSource(e.source);
+  if (!src) throw new Error(t("«{name}» 의 폴더를 열 수 없습니다", { name: e.title }));
+  if (isFolderSource(src)) {
+    const a = await src.access();
+    if (a === "missing") throw new Error(t("폴더 «{name}» 이(가) 없습니다", { name: src.label }));
+    if (a !== "granted")
+      throw new Error(
+        t("폴더 «{name}» 을(를) 다시 허용해야 합니다. 라이브러리에서 폴더 칩을 누르세요", {
+          name: src.label,
+        }),
+      );
+  }
+  return src;
+}
+
 /** 항목의 본 파일과 저널(본 파일 없는 저널은 없는 것으로 — 엔진도 버린다). */
 async function entryFiles(
   e: LibraryMetaRow | null,
 ): Promise<{ base: Blob | null; journal: Blob | null }> {
   if (!e || !db()) return { base: null, journal: null };
-  const [base, journal] = await Promise.all([
-    browserSource.open(e.file),
-    browserSource.open(journalOf(e.file)),
-  ]);
+  const src = await sourceForEntry(e);
+  const [base, journal] = await Promise.all([src.open(e.file), src.open(journalOf(e.file))]);
   return { base, journal: base ? journal : null };
+}
+
+/** 항목의 본 파일 · 저널 크기 — 읽지 않는다(폴더 소스). 닿을 수 없으면 0. */
+async function entrySizes(e: LibraryMetaRow | null): Promise<{ base: number; journal: number }> {
+  if (!e || !db()) return { base: 0, journal: 0 };
+  try {
+    const src = await resolveSource(e.source);
+    if (!src || (isFolderSource(src) && (await src.access()) !== "granted"))
+      return { base: 0, journal: 0 };
+    const [b, j] = await Promise.all([src.stat(e.file), src.stat(journalOf(e.file))]);
+    return { base: b?.size ?? 0, journal: b ? (j?.size ?? 0) : 0 };
+  } catch {
+    return { base: 0, journal: 0 };
+  }
+}
+
+/** 네이티브(로컬) 엔진이 이 항목을 경로로 직접 열 수 있는가 — 데스크톱 폴더 소스. 원격 엔진은 폴더가 없다. */
+async function nativeFolderOf(e: LibraryMetaRow | null): Promise<TauriFolderSource | null> {
+  if (!e || useEngineStore.getState().engine.variant !== "native") return null;
+  const src = await resolveSource(e.source);
+  return src instanceof TauriFolderSource ? src : null;
 }
 
 const activeOf = (e: LibraryMetaRow | null) => (e ? { id: e.id, title: e.title } : null);
 
-/** 지금 엔진 메모리 FS 에 넣은 항목(`browser` 쪽) — 저장은 이 항목의 파일에 쓴다. */
-let attached: { id: string; file: string } | null = null;
+/**
+ * 지금 붙은 라이브러리 항목 — 웹 엔진이면 메모리 FS 에 넣은 항목(저장은 이 항목의 파일에 쓴다), 네이티브 엔진이면
+ * 경로로 연 폴더 항목(`native`). 파일 이름은 저장할 때 항목에서 다시 읽는다(붙인 채로 이름을 바꿀 수 있다).
+ */
+let attached: { id: string; native?: boolean } | null = null;
 
 /**
  * Dexie 에 놓인 본 파일과 같은 엔진 FS 파일의 정체 — 다음 저장이 본 파일을 다시 실을지 가른다.
@@ -361,6 +410,74 @@ export const useDbStore = create<DbState>((set, get) => {
     }
   };
 
+  /**
+   * 데스크톱 폴더의 DB 를 네이티브 엔진에 붙인다(L4) — `YXSETDATABASE <절대 경로>` 가 엔진 설정의 DB 경로를 바꾸고
+   * 바로 연다(복사 없음). `usedatabase 1` 은 보내지 않는다 — 같은 경로를 한 번 더 열게 된다(Rapfi `setDatabase` 가
+   * 저장소를 직접 갈아 끼운다). 저장은 엔진이 그 파일에 한다.
+   */
+  const attachFolderFile = async (
+    e: LibraryMetaRow,
+    src: TauriFolderSource,
+  ): Promise<string | null> => {
+    set({
+      status: "attaching",
+      message: null,
+      location: "engine",
+      engineSavedAt: null,
+      active: activeOf(e),
+    });
+    try {
+      ch().resetPairing();
+      const s = get().settings;
+      const path = src.pathOf(e.file);
+      useEngineStore.getState().send(info("database_readonly", s.readonly ? 1 : 0), {
+        kind: "raw",
+        line: `YXSETDATABASE ${path}`,
+      });
+      const hello = await ch().request(queryOne([]), untilOne, NATIVE_ATTACH_TIMEOUT_MS);
+      const err = replyError(hello);
+      if (err) throw new Error(err);
+      attached = { id: e.id, native: true };
+      const sz = await entrySizes(e);
+      baseSize = sz.base;
+      journalSize = sz.journal;
+      set({
+        status: "on",
+        dirty: false,
+        engineSavedAt: Date.now(),
+        enginePath: get().enginePath ?? path,
+        stored: sz.base ? { size: storedSize(), savedAt: e.updatedAt } : null,
+      });
+      note(t("붙임: 폴더의 DB {path}", { path }));
+      return null;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      set({ status: "error", message: msg });
+      note(t("붙이기 실패: {msg}", { msg }));
+      return msg;
+    }
+  };
+
+  /** 네이티브 엔진이 폴더의 파일에 저장한 뒤 — 정체가 바뀌었으면 갈고(통계를 다시 센다), 크기를 다시 잰다. */
+  const recordNativeSave = async () => {
+    const e = attached?.native ? await getEntry(attached.id) : null;
+    if (!e) return;
+    try {
+      const src = await resolveSource(e.source);
+      const fp = await src?.fingerprint(e.file);
+      if (!fp) return;
+      const same =
+        e.fingerprint && e.fingerprint.size === fp.size && e.fingerprint.tail === fp.tail;
+      await recordSaved(e.id, fp.mtime || Date.now(), same ? undefined : fp);
+      const sz = await entrySizes(e);
+      baseSize = sz.base;
+      journalSize = sz.journal;
+      set({ stored: { size: storedSize(), savedAt: fp.mtime || Date.now() } });
+    } catch {
+      /* 표시만 늦는다 — 다음 맞추기가 다시 잰다 */
+    }
+  };
+
   /** 엔진 폴더에 CSV 를 쓰게 한다 — 엔진이 쓴 파일 이름을 돌려준다. */
   const exportCsvInEngineFolder = async (): Promise<{ savedTo: string } | { error: string }> => {
     const claim = claimForWrite();
@@ -422,12 +539,12 @@ export const useDbStore = create<DbState>((set, get) => {
 
     loadStored: async () => {
       const e = await resolveActive();
-      const { base, journal } = await entryFiles(e);
-      baseSize = base?.size ?? 0;
-      journalSize = journal?.size ?? 0;
+      const sz = await entrySizes(e);
+      baseSize = sz.base;
+      journalSize = sz.journal;
       set({
         active: activeOf(e),
-        stored: e && base ? { size: storedSize(), savedAt: e.updatedAt } : null,
+        stored: e && sz.base ? { size: storedSize(), savedAt: e.updatedAt } : null,
       });
     },
 
@@ -438,7 +555,13 @@ export const useDbStore = create<DbState>((set, get) => {
         return t("엔진이 떠 있지 않습니다. 엔진을 먼저 시작하세요");
       // 데스크톱 Z4: 네이티브 · 원격 엔진은 DB 파일을 제 폴더(원격이면 서버)에서 연다. 넣고 뺄 바이트가 없다 —
       // `usedatabase 1` 이 엔진 설정(`config.toml` `[database] url`)의 파일을 열고, 저장은 엔진이 그 파일에 쓴다.
-      if (engineOwnsFile()) return attachEngineFile();
+      // L4: 붙을 항목이 데스크톱 폴더의 것이면 그 파일을 경로로 연다(`YXSETDATABASE`).
+      if (engineOwnsFile()) {
+        attached = null;
+        const e = await resolveActive();
+        const folder = await nativeFolderOf(e);
+        return folder && e ? attachFolderFile(e, folder) : attachEngineFile();
+      }
       set({ status: "attaching", message: null, location: "browser" });
       try {
         attached = null;
@@ -470,7 +593,7 @@ export const useDbStore = create<DbState>((set, get) => {
         const hello = await ch().request(queryOne([]), untilOne, ATTACH_TIMEOUT_MS);
         const err = replyError(hello);
         if (err) throw new Error(err);
-        attached = e ? { id: e.id, file: e.file } : null;
+        attached = e ? { id: e.id } : null;
         set({
           status: "on",
           dirty: false,
@@ -519,7 +642,10 @@ export const useDbStore = create<DbState>((set, get) => {
         const r = await engineFs(compact ? "compact" : "save", DB_FILE, undefined, knownBase);
         if (r.ok && r.native) {
           set({ engineSavedAt: Date.now(), dirty: false });
-          note(`${why}: ${get().enginePath ?? DB_FILE} (${t("엔진 폴더")})`);
+          if (attached?.native) {
+            await recordNativeSave();
+            note(`${why}: ${get().enginePath ?? DB_FILE}`);
+          } else note(`${why}: ${get().enginePath ?? DB_FILE} (${t("엔진 폴더")})`);
           return null;
         }
         if (get().location === "engine")
@@ -527,17 +653,18 @@ export const useDbStore = create<DbState>((set, get) => {
         // 본 파일을 싣지 않은 답은 「우리가 가진 것과 같다」는 뜻이다 — 정체가 없으면 믿을 수 없다.
         if (!r.ok || (!r.bytes && !r.sig))
           return r.error ?? t("엔진이 DB 파일을 돌려주지 않았습니다");
-        const d = db() ? attached : null;
-        const savedAt = Date.now();
+        // 붙인 뒤 이름이 바뀌었을 수 있다 — 파일 이름은 항목에서 다시 읽는다.
+        const d = db() && attached ? await getEntry(attached.id) : null;
+        let savedAt = Date.now();
         const { bytes, journal } = r;
         if (d) {
-          await browserSource.writeAtomic(
-            [
-              ...(bytes ? [{ name: d.file, data: new Blob([bytes as BlobPart]) }] : []),
-              { name: journalOf(d.file), data: journal ? new Blob([journal as BlobPart]) : null },
-            ],
-            savedAt,
-          );
+          const src = await sourceForEntry(d);
+          await src.writeAtomic([
+            ...(bytes ? [{ name: d.file, data: new Blob([bytes as BlobPart]) }] : []),
+            { name: journalOf(d.file), data: journal ? new Blob([journal as BlobPart]) : null },
+          ]);
+          // 바꾼 시각은 소스가 정한다(폴더는 파일 시스템) — 정체의 `mtime` 을 거기에 맞춘다(다음 맞추기가 다시 재지 않게).
+          savedAt = (await src.stat(d.file))?.mtime ?? savedAt;
           await recordSaved(d.id, savedAt, bytes ? fingerprintBytes(bytes, savedAt) : undefined);
         }
         knownBase = r.sig ?? null;
@@ -681,14 +808,17 @@ export const useDbStore = create<DbState>((set, get) => {
       const e = await ensureActive();
       if (!e) return t("이 브라우저는 저장소(IndexedDB)를 쓸 수 없습니다");
       const blob = data instanceof Blob ? data : new Blob([data as BlobPart]);
-      const savedAt = Date.now();
-      await browserSource.writeAtomic(
-        [
+      let savedAt = Date.now();
+      try {
+        const src = await sourceForEntry(e);
+        await src.writeAtomic([
           { name: e.file, data: blob },
           { name: journalOf(e.file), data: null },
-        ],
-        savedAt,
-      );
+        ]);
+        savedAt = (await src.stat(e.file))?.mtime ?? savedAt;
+      } catch (err) {
+        return err instanceof Error ? err.message : String(err);
+      }
       await recordSaved(e.id, savedAt, await fingerprintOf(blob, savedAt));
       baseSize = blob.size;
       journalSize = 0;
@@ -711,10 +841,16 @@ export const useDbStore = create<DbState>((set, get) => {
       }
       const e = await resolveActive();
       if (e && db()) {
-        await browserSource.writeAtomic([
-          { name: e.file, data: null },
-          { name: journalOf(e.file), data: null },
-        ]);
+        try {
+          await (
+            await sourceForEntry(e)
+          ).writeAtomic([
+            { name: e.file, data: null },
+            { name: journalOf(e.file), data: null },
+          ]);
+        } catch (err) {
+          return err instanceof Error ? err.message : String(err);
+        }
         await recordSaved(e.id, Date.now(), null);
       }
       baseSize = journalSize = 0;
@@ -725,9 +861,15 @@ export const useDbStore = create<DbState>((set, get) => {
 
     switchTo: async (id) => {
       if (get().status === "attaching") return t("이미 붙이는 중입니다");
-      if (get().location === "engine" && get().status !== "off") return engineFileNote();
       const next = await getEntry(id);
       if (!next) return t("라이브러리에 없는 DB 입니다");
+      // 네이티브 · 원격 엔진은 제 파일을 연다 — 바꿔 붙일 수 있는 것은 데스크톱 폴더의 DB(경로로 연다)뿐이다.
+      const engineFile =
+        engineOwnsFile() || (get().location === "engine" && get().status !== "off");
+      if (engineFile && !(await nativeFolderOf(next)))
+        return useEngineStore.getState().engine.variant === "native"
+          ? t("데스크톱 엔진은 폴더의 DB 만 붙일 수 있습니다. 라이브러리에서 폴더를 여세요")
+          : engineFileNote();
       const wasOn = get().status === "on";
       if (wasOn && attached?.id === id) {
         await selectEntry(id);
@@ -748,9 +890,28 @@ export const useDbStore = create<DbState>((set, get) => {
       await selectEntry(id);
       await get().loadStored();
       note(t("DB 바꿈: {title}", { title: next.title }));
+      // 데스크톱 폴더의 DB 는 열면 바로 붙인다 — 엔진의 설정 DB 대신 이 파일이어야 한다.
+      if (engineOwnsFile()) {
+        const st = useEngineStore.getState().status;
+        return st === "ready" || st === "searching" ? get().attach() : null;
+      }
       const st = useEngineStore.getState().status;
       const engineUp = st === "ready" || st === "searching";
       if (wasOn || (get().settings.enabled && engineUp)) return get().attach();
+      return null;
+    },
+
+    release: async () => {
+      if (get().status !== "on") return null;
+      const why = claimForWrite();
+      if (why) return why;
+      if (!get().settings.readonly) {
+        const err = await get().save(t("이름 바꾸기 전 저장"), true);
+        if (err) return err;
+      }
+      useEngineStore.getState().send(info("usedatabase", 0));
+      attached = null;
+      set({ status: "off", view: null });
       return null;
     },
   };

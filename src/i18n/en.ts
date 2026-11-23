@@ -1673,4 +1673,32 @@ export const EN: Readonly<Record<string, string>> = {
   "작업 전 저장": "Saved before the task",
   "작업 중인 DB 는 지울 수 없습니다": "A DB in use cannot be deleted",
   "합친 DB": "Merged DB",
+  "«{name}» 의 폴더를 열 수 없습니다": "Cannot open the folder of «{name}»",
+  "폴더 «{name}» 이(가) 없습니다": "The folder «{name}» is missing",
+  "폴더 «{name}» 을(를) 다시 허용해야 합니다. 라이브러리에서 폴더 칩을 누르세요":
+    "The folder «{name}» needs permission again. Tap its chip in the library",
+  "붙임: 폴더의 DB {path}": "Opened: folder DB {path}",
+  "데스크톱 엔진은 폴더의 DB 만 붙일 수 있습니다. 라이브러리에서 폴더를 여세요":
+    "The desktop engine can only open DBs in a folder. Open a folder in the library",
+  "이름 바꾸기 전 저장": "Saved before renaming",
+  "파일 이름도 같이 바꾸기": "Rename the file too",
+  "파일: {from} → {to}": "File: {from} → {to}",
+  "파일: {name} (그대로)": "File: {name} (unchanged)",
+  "라이브러리에 없는 폴더입니다": "This folder is not in the library",
+  "폴더: {name}": "Folder: {name}",
+  "+ 폴더 열기": "+ Open folder",
+  "폴더의 .db 파일이 보입니다. 이름 · 커버는 폴더의 zenyth-library.json 에 함께 둡니다.":
+    "Shows the .db files in this folder. Names and covers are kept in its zenyth-library.json.",
+  "폴더를 찾을 수 없습니다. 옮겼거나 지웠을 수 있습니다.":
+    "Cannot find the folder. It may have been moved or deleted.",
+  "이 폴더를 다시 쓰려면 허용이 필요합니다.": "Allow access again to use this folder.",
+  "폴더 다시 허용": "Allow folder again",
+  "라이브러리에서 빼기": "Remove from library",
+  "DB 를 저장하는 중입니다. 끝난 뒤에 다시 하세요":
+    "The DB is being saved. Try again when it finishes",
+  "다른 프로그램이 파일을 쓰는 중이라 파일 이름은 그대로 두었습니다. 다음에 다시 시도합니다":
+    "Another program is using the file, so its name was kept. It will be retried later",
+  "폴더를 쓸 권한을 받지 못했습니다": "Permission to use the folder was not granted",
+  "붙어 있는 DB 의 폴더는 뺄 수 없습니다. 다른 DB 를 먼저 여세요":
+    "Cannot remove the folder of the open DB. Open another DB first",
 };

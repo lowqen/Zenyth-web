@@ -72,7 +72,7 @@ describe("BrowserSource", () => {
     ]);
     await src.trash("lib/a");
     expect((await src.list()).map((f) => f.name)).toEqual(["lib/b"]);
-    await src.restore("lib/a");
+    await src.restore(".trash/lib/a", "lib/a");
     expect(await size("lib/a.journal")).toBe(40);
 
     await src.trash("lib/a");

@@ -1,5 +1,11 @@
 import { db, type RapfiDb } from "../../data/db";
-import { BROWSER_SOURCE_ID, journalOf, type LibraryMetaRow } from "../../data/library";
+import {
+  BROWSER_SOURCE_ID,
+  fingerprintOf,
+  journalOf,
+  type Fingerprint,
+  type LibraryMetaRow,
+} from "../../data/library";
 import type { FileWrite, LibraryFileInfo, LibraryManifest, LibrarySource } from "./source";
 
 /**
@@ -35,6 +41,16 @@ export class BrowserSource implements LibrarySource {
     return (await this.d().dbfiles.get(name))?.data ?? null;
   }
 
+  async stat(name: string): Promise<LibraryFileInfo | null> {
+    const r = await this.d().dbfiles.get(name);
+    return r ? { name, size: r.data.size, mtime: r.savedAt } : null;
+  }
+
+  async fingerprint(name: string): Promise<Fingerprint | null> {
+    const r = await this.d().dbfiles.get(name);
+    return r ? fingerprintOf(r.data, r.savedAt) : null;
+  }
+
   /** 바꾼 시각 — 정체(`fingerprint`)의 `mtime`. 없으면 null. */
   async mtime(name: string): Promise<number | null> {
     return (await this.d().dbfiles.get(name))?.savedAt ?? null;
@@ -58,14 +74,19 @@ export class BrowserSource implements LibrarySource {
     });
   }
 
-  async trash(name: string): Promise<void> {
+  async trash(name: string): Promise<string> {
     const d = this.d();
     await d.transaction("rw", d.dbfiles, () => this.move(d, name, TRASH + name, Date.now()));
+    return TRASH + name;
   }
 
   /** 휴지통에서 되돌린다 — 그 자리에 새 파일이 생겼으면 실패. */
-  async restore(name: string): Promise<void> {
-    await this.rename(TRASH + name, name);
+  async restore(trashName: string, name: string): Promise<void> {
+    await this.rename(trashName, name);
+  }
+
+  async purge(trashName: string): Promise<void> {
+    await this.d().dbfiles.bulkDelete([trashName, journalOf(trashName)]);
   }
 
   /** 휴지통에서 `before` 보다 먼저 지운 파일을 아주 지운다. 지운 수. */

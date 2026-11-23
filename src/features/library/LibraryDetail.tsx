@@ -14,6 +14,7 @@ import { CoverSheet } from "./CoverSheet";
 import { SplitSheet } from "./SplitSheet";
 import { DbCover } from "./DbCover";
 import { coverKeyOf } from "./cover";
+import { fileNameFor } from "./fileName";
 import { fmtBytes, fmtCount, fmtDate, mainRule, positionsText, ruleLabel } from "./format";
 import { movesOfKey, openingMoves, useLibraryStore } from "./libraryStore";
 import { PositionThumb } from "./PositionThumb";
@@ -47,6 +48,7 @@ export function LibraryDetail({
   const [notice, setNotice] = useState<string | null>(null);
   const [allRoots, setAllRoots] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [renameFile, setRenameFile] = useState(true);
 
   const stats = entry.stats;
   const size = lib.sizes[entry.id] ?? 0;
@@ -54,6 +56,16 @@ export function LibraryDetail({
   const note = lib.notes[entry.id];
   const key = coverKeyOf(entry.cover, stats);
   const attached = dbs.active?.id === entry.id && dbs.status === "on";
+  // 폴더 소스(L4)는 파일 이름도 같이 바꾸는 것이 기본(§0 결정 4) — 시트가 거른 이름을 미리 보인다.
+  const inFolder = entry.source !== "browser";
+  const filePreview = inFolder
+    ? fileNameFor(
+        title.trim() || entry.title,
+        lib.entries
+          .filter((e) => e.source === entry.source && e.id !== entry.id)
+          .map((e) => e.file),
+      )
+    : "";
 
   const go = async (moves: Parameters<typeof lib.open>[1], to: string) => {
     if (busy) return;
@@ -219,6 +231,7 @@ export function LibraryDetail({
     stats ? positionsText(stats.records) : null,
     size ? fmtBytes(size) : null,
     `${t("마지막 저장")} ${fmtDate(entry.updatedAt)}`,
+    inFolder ? entry.file : null,
   ].filter(Boolean) as string[];
 
   return (
@@ -390,7 +403,7 @@ export function LibraryDetail({
               className="cta"
               disabled={!title.trim()}
               onClick={() => {
-                void lib.rename(entry.id, title);
+                void lib.rename(entry.id, title, renameFile).then((n) => n && setNotice(n));
                 setRenaming(false);
               }}
             >
@@ -409,16 +422,35 @@ export function LibraryDetail({
               onChange={(e) => setTitle(e.currentTarget.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && title.trim()) {
-                  void lib.rename(entry.id, title);
+                  void lib.rename(entry.id, title, renameFile).then((n) => n && setNotice(n));
                   setRenaming(false);
                 }
               }}
             />
           </span>
         </label>
-        <p className="panel__hint">
-          {t("이 브라우저의 DB 는 이름만 바뀝니다. 파일 이름은 따로 없습니다.")}
-        </p>
+        {inFolder ? (
+          <>
+            <label className="libcheck">
+              <input
+                type="checkbox"
+                checked={renameFile}
+                data-k="rename-file"
+                onChange={(e) => setRenameFile(e.currentTarget.checked)}
+              />
+              {t("파일 이름도 같이 바꾸기")}
+            </label>
+            <p className="panel__hint tnum" data-k="rename-preview">
+              {renameFile
+                ? t("파일: {from} → {to}", { from: entry.file, to: filePreview })
+                : t("파일: {name} (그대로)", { name: entry.file })}
+            </p>
+          </>
+        ) : (
+          <p className="panel__hint">
+            {t("이 브라우저의 DB 는 이름만 바뀝니다. 파일 이름은 따로 없습니다.")}
+          </p>
+        )}
       </Sheet>
 
       <SplitSheet
