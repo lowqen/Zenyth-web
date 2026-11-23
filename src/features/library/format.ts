@@ -55,3 +55,9 @@ export const fmtDate = (ms: number) =>
     month: "short",
     day: "numeric",
   });
+
+/** 합친 DB 의 기본 이름 — «A + B», 넷 이상이면 «A + B 외 n». */
+export function defaultMergeTitle(titles: readonly string[]): string {
+  if (titles.length <= 3) return titles.join(" + ");
+  return t("{names} 외 {n}", { names: titles.slice(0, 2).join(" + "), n: titles.length - 2 });
+}

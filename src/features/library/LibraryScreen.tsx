@@ -13,6 +13,7 @@ import { DbCover } from "./DbCover";
 import { coverKeyOf } from "./cover";
 import { fmtBytes, fmtDate, mainRule, positionsText } from "./format";
 import { LibraryDetail } from "./LibraryDetail";
+import { MergeSheet } from "./MergeSheet";
 import { useLibraryStore, type LibrarySort } from "./libraryStore";
 
 /**
@@ -61,6 +62,12 @@ export function LibraryScreen() {
   const [view, setView] = useState<ViewPrefs>(readView);
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [merging, setMerging] = useState(false);
+  // 길게 누르기(터치) — 0.5초면 고르기를 켜고 뒤따르는 클릭은 삼킨다
+  const press = useRef<{ timer: number; x: number; y: number; fired: boolean } | null>(null);
+  const endPress = () => {
+    if (press.current) clearTimeout(press.current.timer);
+  };
 
   useEffect(() => {
     void useDbStore.getState().loadStored();
@@ -97,6 +104,7 @@ export function LibraryScreen() {
 
   const openDetail = (e: LibraryMetaRow) =>
     navigate(`/library/${e.id}`, { replace: split && !!id });
+  const selecting = lib.selected.length > 0;
   const quickOpen = async (e: LibraryMetaRow) => {
     setNotice(null);
     const err = await lib.open(e.id, null);
@@ -205,27 +213,57 @@ export function LibraryScreen() {
         </section>
       )}
 
-      <div className="library__tools">
-        <Segmented
-          label={t("정렬")}
-          value={view.sort}
-          options={[
-            { value: "recent", label: t("최근") },
-            { value: "name", label: t("이름") },
-            { value: "size", label: t("크기") },
-          ]}
-          onChange={(sort) => setPrefs({ sort })}
-        />
-        <Segmented
-          label={t("보기")}
-          value={view.list ? "list" : "grid"}
-          options={[
-            { value: "grid", label: t("격자") },
-            { value: "list", label: t("목록") },
-          ]}
-          onChange={(v) => setPrefs({ list: v === "list" })}
-        />
-      </div>
+      {selecting ? (
+        <div className="libselect" role="toolbar" aria-label={t("고른 DB")} data-k="library-select">
+          <span className="libselect__count tnum">
+            {t("{n}개 선택", { n: lib.selected.length })}
+          </span>
+          <div className="panel__actions panel__actions--compact">
+            <button
+              type="button"
+              className="button--primary"
+              data-k="library-merge"
+              disabled={lib.selected.length < 2 || !!lib.job}
+              onClick={() => setMerging(true)}
+            >
+              <Icon d={ICON.merge} />
+              {t("합치기")}
+            </button>
+            <button
+              type="button"
+              className="btn--danger"
+              onClick={() => void lib.trashMany(lib.selected).then((err) => err && setNotice(err))}
+            >
+              {t("지우기")}
+            </button>
+            <button type="button" className="ghostbtn" onClick={lib.clearSelection}>
+              {t("취소")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="library__tools">
+          <Segmented
+            label={t("정렬")}
+            value={view.sort}
+            options={[
+              { value: "recent", label: t("최근") },
+              { value: "name", label: t("이름") },
+              { value: "size", label: t("크기") },
+            ]}
+            onChange={(sort) => setPrefs({ sort })}
+          />
+          <Segmented
+            label={t("보기")}
+            value={view.list ? "list" : "grid"}
+            options={[
+              { value: "grid", label: t("격자") },
+              { value: "list", label: t("목록") },
+            ]}
+            onChange={(v) => setPrefs({ list: v === "list" })}
+          />
+        </div>
+      )}
 
       {lib.loaded && sorted.length === 0 && (
         <p className="panel__hint">{t("아직 DB 가 없습니다. 가져오거나 새로 만드세요.")}</p>
@@ -235,13 +273,48 @@ export function LibraryScreen() {
         {sorted.map((e) => {
           const on = dbs.active?.id === e.id && dbs.status === "on";
           const scanning = lib.scan?.id === e.id;
+          const picked = lib.selected.includes(e.id);
+          const working = lib.job?.ids.includes(e.id) ?? false;
           return (
-            <li key={e.id} className="libgrid__item" data-on={on || undefined}>
+            <li
+              key={e.id}
+              className="libgrid__item"
+              data-on={on || undefined}
+              data-picked={picked || undefined}
+              data-selecting={selecting || undefined}
+            >
               <button
                 type="button"
                 className="libgrid__card"
                 aria-current={detail?.id === e.id ? "true" : undefined}
-                onClick={() => openDetail(e)}
+                aria-pressed={selecting ? picked : undefined}
+                onPointerDown={(ev) => {
+                  if (ev.pointerType === "mouse") return;
+                  endPress();
+                  const p = { timer: 0, x: ev.clientX, y: ev.clientY, fired: false };
+                  p.timer = window.setTimeout(() => {
+                    p.fired = true;
+                    lib.toggleSelect(e.id);
+                  }, 500);
+                  press.current = p;
+                }}
+                onPointerMove={(ev) => {
+                  const p = press.current;
+                  if (p && Math.hypot(ev.clientX - p.x, ev.clientY - p.y) > 10) endPress();
+                }}
+                onPointerUp={endPress}
+                onPointerCancel={endPress}
+                onContextMenu={(ev) => {
+                  if (press.current?.fired || selecting) ev.preventDefault();
+                }}
+                onClick={() => {
+                  if (press.current?.fired) {
+                    press.current = null;
+                    return;
+                  }
+                  if (selecting) lib.toggleSelect(e.id);
+                  else void openDetail(e);
+                }}
               >
                 <DbCover k={coverKeyOf(e.cover, e.stats)} seed={e.cover.seed} />
                 <span className="libgrid__text">
@@ -253,8 +326,19 @@ export function LibraryScreen() {
                   </span>
                 </span>
                 {on && <span className="libgrid__on">{t("붙음")}</span>}
+                {working && <span className="libgrid__on libgrid__busy">{t("작업 중")}</span>}
               </button>
-              {!on && (
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={picked}
+                className="libgrid__check"
+                aria-label={t("{title} 고르기", { title: e.title })}
+                onClick={() => lib.toggleSelect(e.id)}
+              >
+                <Icon d={ICON.check} />
+              </button>
+              {!on && !selecting && (
                 <button
                   type="button"
                   className="libgrid__play"
@@ -269,6 +353,17 @@ export function LibraryScreen() {
           );
         })}
       </ul>
+
+      <MergeSheet
+        ids={lib.selected}
+        open={merging}
+        onClose={() => setMerging(false)}
+        onDone={(made) => {
+          setMerging(false);
+          setNotice(t("«{name}» 로 합쳤습니다", { name: made.title }));
+          void navigate(`/library/${made.id}`, { replace: split && !!id });
+        }}
+      />
 
       {lib.trashed.length > 0 && (
         <div className="panel__fold">
@@ -343,7 +438,11 @@ function UndoBar() {
   return (
     <div className="libundo" role="status" data-k="library-undo">
       <span>{t("«{title}» 을(를) 휴지통으로 옮겼습니다", { title: undo.title })}</span>
-      <button type="button" className="linkish" onClick={() => void restore(undo.id)}>
+      <button
+        type="button"
+        className="linkish"
+        onClick={() => void Promise.all(undo.ids.map((id) => restore(id)))}
+      >
         {t("되돌리기")}
       </button>
     </div>

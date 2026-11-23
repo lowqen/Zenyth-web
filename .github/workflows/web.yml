@@ -221,6 +221,7 @@ jobs:
           # W7 — 합성 .rif(RenjuNet 기보가 아니다 — 라이선스)를 보드에 떨어뜨려 변환 · 랭킹 · 오프닝 통계.
           # W10 — 영어 화면에 한글이 새지 않는가 · 대시 금지 · 가로 넘침 · 24px 터치 타깃 · 명암비 ·
           # 언어 전환 유지 · 보드 키보드 착수.
+          # 라이브러리 L3 — 합성 yixindb 를 가져와 나누기(주형별 · 옮기기) · 합치기를 워커 · IndexedDB 로.
           - shard: 화면 · 정석 · RIF · 다국어
             engine: false
             run: |
@@ -228,6 +229,7 @@ jobs:
               pnpm exec tsx scripts/joseki-smoke.ts
               pnpm exec tsx scripts/rif-smoke.ts
               pnpm exec tsx scripts/i18n-smoke.ts
+              pnpm exec tsx scripts/library-smoke.ts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup

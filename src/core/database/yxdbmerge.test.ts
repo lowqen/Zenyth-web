@@ -39,7 +39,7 @@ const sortRecs = (recs: Rec[]) =>
 /** 주형 몇 개의 대표 수에서 뻗은 수순 — 모든 접두 국면, 결정적인 무작위 값 · 주석. 엔진 순서 + 메타데이터. */
 function corpus(): Rec[] {
   let s = 7;
-  const rnd = (n: number) => ((s = (s * 1103515245 + 12345) & 0x7fffffff), s % n);
+  const rnd = (n: number) => ((s = (Math.imul(s, 1103515245) + 12345) & 0x7fffffff), s % n);
   const map = new Map<string, Rec>();
   const add = (line: readonly Move[]) => {
     for (let i = 0; i <= line.length; i++) {

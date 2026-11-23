@@ -27,7 +27,19 @@ import {
   trashEntry,
   updateEntry,
 } from "./library";
-import { scanLibraryFile, type LibraryScan } from "./libraryWorker";
+import type { SplitBase, SplitCounts } from "../../core/database/yxdbsplit";
+import {
+  commitMerge,
+  commitSplit,
+  previewMerge,
+  previewSplit,
+  type MergePrepared,
+  type OpHandle,
+  type OpsEnv,
+  type SplitCommit,
+} from "./libraryOps";
+import { runLibraryJob, scanLibraryFile, type LibraryScan } from "./libraryWorker";
+import type { MergeJobOptions } from "./protocol";
 
 /**
  * 라이브러리 화면의 상태(라이브러리 계획 §6 · L2) — 항목 목록 · 파일 크기 · 통계 세기 · 휴지통, 그리고 «열기» 동선.
@@ -48,6 +60,17 @@ export type ScanNote = "memory" | "alloc" | "unordered" | "error";
 
 export type LibrarySort = "recent" | "name" | "size";
 
+/** 병합 · 분리 작업(L3) — 한 번에 하나. 입력 항목은 이름 바꾸기 · 지우기만 잠긴다(«작업 중»). */
+export interface LibraryJobState {
+  kind: "merge" | "split";
+  ids: string[];
+  phase: string;
+  fraction: number;
+}
+
+/** 작업의 끝 — 값, 까닭, 또는 취소(`error: null`). */
+export type OpResult<T> = { ok: true; value: T } | { ok: false; error: string | null };
+
 interface LibraryState {
   loaded: boolean;
   entries: LibraryMetaRow[];
@@ -57,8 +80,11 @@ interface LibraryState {
   scan: ScanState | null;
   /** 항목 id → 색인을 건너뛴 까닭(이번 세션). */
   notes: Record<string, ScanNote>;
-  /** 마지막에 지운 항목 — 10초 되돌리기. */
-  undo: { id: string; title: string; at: number } | null;
+  /** 마지막에 지운 항목(들) — 10초 되돌리기. */
+  undo: { ids: string[]; title: string; at: number } | null;
+  job: LibraryJobState | null;
+  /** 여러 개 고르기 — 고른 순서(합치기의 기본 순서, 맨 앞이 기준). */
+  selected: string[];
 
   load: () => Promise<void>;
   create: (title: string) => Promise<LibraryMetaRow | null>;
@@ -66,6 +92,25 @@ interface LibraryState {
   rename: (id: string, title: string) => Promise<void>;
   setCover: (id: string, cover: LibraryCover) => Promise<void>;
   trash: (id: string) => Promise<string | null>;
+  /** 고른 것을 한꺼번에 휴지통으로 — 붙어 있거나 작업 중인 DB 는 건너뛴다. 건너뛴 까닭 또는 null. */
+  trashMany: (ids: readonly string[]) => Promise<string | null>;
+  toggleSelect: (id: string) => void;
+  clearSelection: () => void;
+  mergePreview: (
+    ids: readonly string[],
+    options: MergeJobOptions,
+  ) => Promise<OpResult<MergePrepared>>;
+  merge: (
+    prep: MergePrepared,
+    title: string,
+    trashOriginals: boolean,
+  ) => Promise<OpResult<LibraryMetaRow>>;
+  splitPreview: (
+    id: string,
+    base: SplitBase | null,
+  ) => Promise<OpResult<{ counts: SplitCounts; size: number }>>;
+  split: (id: string, commit: SplitCommit) => Promise<OpResult<LibraryMetaRow[]>>;
+  cancelJob: () => void;
   restore: (id: string) => Promise<void>;
   purge: (id: string) => Promise<void>;
   exportFile: (id: string) => Promise<{ file: Blob; name: string } | { error: string }>;
@@ -78,6 +123,7 @@ interface LibraryState {
 
 let current: LibraryScan | null = null;
 let pumping = false;
+let jobHandle: OpHandle<unknown> | null = null;
 
 async function fileSize(file: string): Promise<number> {
   const [base, journal] = await Promise.all([
@@ -138,6 +184,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
     pumping = true;
     try {
       for (;;) {
+        if (get().job) break; // 병합 · 분리가 줄을 쓰는 동안은 쉰다 — 끝나면 다시 부른다
         const next = get().entries.find(
           (e) => !e.stats && (get().sizes[e.id] ?? 0) > 0 && get().notes[e.id] !== "error",
         );
@@ -193,6 +240,49 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
     }));
   };
 
+  /**
+   * 병합 · 분리 하나를 돌린다 — 세던 통계는 멈추고(줄을 비운다), 붙은 DB 가 끼면 먼저 저장 · 접는다(쉬는 파일 불변식).
+   * 끝나면 목록을 다시 읽고 통계 세기를 잇는다.
+   */
+  const runOp = async <T>(
+    kind: LibraryJobState["kind"],
+    ids: readonly string[],
+    make: (env: OpsEnv) => OpHandle<T>,
+  ): Promise<OpResult<T>> => {
+    if (get().job) return { ok: false, error: t("다른 작업이 진행 중입니다") };
+    current?.cancel();
+    set({ job: { kind, ids: [...ids], phase: "prepare", fraction: 0 } });
+    try {
+      const dbs = useDbStore.getState();
+      if (dbs.active && ids.includes(dbs.active.id) && dbs.status === "on") {
+        const err = await dbs.save(t("작업 전 저장"), true);
+        if (err) return { ok: false, error: err };
+      }
+      const h = make({
+        run: runLibraryJob,
+        journalHeader: JOURNAL_HEADER,
+        onProgress: (p) =>
+          set((s) => (s.job ? { job: { ...s.job, phase: p.phase, fraction: p.fraction } } : s)),
+      });
+      jobHandle = h;
+      return { ok: true, value: await h.promise };
+    } catch (e) {
+      if (e instanceof YxdbCancelled) return { ok: false, error: null };
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    } finally {
+      jobHandle = null;
+      set({ job: null });
+      await refresh();
+      void pump();
+    }
+  };
+
+  /** 지금 붙은(또는 붙는 중인) 항목 — 휴지통 · 옮기기에서 뺀다. */
+  const attachedId = () => {
+    const dbs = useDbStore.getState();
+    return dbs.active && dbs.status !== "off" ? dbs.active.id : null;
+  };
+
   return {
     loaded: false,
     entries: [],
@@ -201,6 +291,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
     scan: null,
     notes: {},
     undo: null,
+    job: null,
+    selected: [],
 
     load: async () => {
       if (!db()) return set({ loaded: true });
@@ -234,7 +326,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
 
     rename: async (id, title) => {
       const clean = title.trim();
-      if (!clean) return;
+      if (!clean || get().job?.ids.includes(id)) return;
       await updateEntry(id, { title: clean, updatedAt: Date.now() });
       set((s) => ({ entries: s.entries.map((e) => (e.id === id ? { ...e, title: clean } : e)) }));
       if (useDbStore.getState().active?.id === id)
@@ -250,19 +342,107 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
       const dbs = useDbStore.getState();
       if (readActiveId() === id && dbs.status !== "off")
         return t("붙어 있는 DB 는 지울 수 없습니다. 다른 DB 를 먼저 여세요");
+      if (get().job?.ids.includes(id)) return t("작업 중인 DB 는 지울 수 없습니다");
       const e = await getEntry(id);
       if (!e) return null;
       if (get().scan?.id === id) current?.cancel();
       await trashEntry(id);
       if (dbs.active?.id === id) await dbs.loadStored();
-      set({ undo: { id, title: e.title, at: Date.now() } });
+      set((s) => ({
+        undo: { ids: [id], title: e.title, at: Date.now() },
+        selected: s.selected.filter((x) => x !== id),
+      }));
       await refresh();
       return null;
     },
 
+    trashMany: async (ids) => {
+      const att = attachedId();
+      const busy = get().job?.ids ?? [];
+      const done: string[] = [];
+      let title = "";
+      for (const id of ids) {
+        if (id === att || busy.includes(id)) continue;
+        const e = await getEntry(id);
+        if (!e) continue;
+        if (get().scan?.id === id) current?.cancel();
+        await trashEntry(id);
+        done.push(id);
+        title = e.title;
+      }
+      if (done.length)
+        set({
+          undo: {
+            ids: done,
+            title: done.length === 1 ? title : t("{n}개", { n: done.length }),
+            at: Date.now(),
+          },
+        });
+      set({ selected: [] });
+      await refresh();
+      return done.length < ids.length ? t("붙어 있거나 작업 중인 DB 는 남겼습니다") : null;
+    },
+
+    toggleSelect: (id) =>
+      set((s) => ({
+        selected: s.selected.includes(id)
+          ? s.selected.filter((x) => x !== id)
+          : [...s.selected, id],
+      })),
+
+    clearSelection: () => set({ selected: [] }),
+
+    mergePreview: (ids, options) => runOp("merge", ids, (env) => previewMerge(ids, options, env)),
+
+    merge: async (prep, title, trashOriginals) => {
+      const base = get().entries.find((e) => e.id === prep.ids[0]);
+      const r = await runOp("merge", prep.ids, (env) =>
+        commitMerge(
+          prep,
+          {
+            title: title.trim() || t("합친 DB"),
+            cover: base?.cover ?? { mode: "eclipse", seed: 0 },
+            trashOriginals,
+            attachedId: attachedId(),
+          },
+          env,
+        ),
+      );
+      if (!r.ok) return r;
+      const trashed = r.value.trashed;
+      set({
+        selected: [],
+        ...(trashed.length
+          ? {
+              undo: {
+                ids: trashed,
+                title: t("원본 {n}개", { n: trashed.length }),
+                at: Date.now(),
+              },
+            }
+          : {}),
+      });
+      return { ok: true, value: r.value.entry };
+    },
+
+    splitPreview: (id, base) => runOp("split", [id], (env) => previewSplit(id, base, env)),
+
+    split: async (id, commit) => {
+      if (commit.move && attachedId() === id)
+        return { ok: false, error: t("붙어 있는 DB 에서는 옮길 수 없습니다. 복사로 나누세요") };
+      const r = await runOp("split", [id], (env) => commitSplit(id, commit, env));
+      return r.ok ? { ok: true, value: r.value.entries } : r;
+    },
+
+    cancelJob: () => jobHandle?.cancel(),
+
     restore: async (id) => {
       await restoreEntry(id);
-      if (get().undo?.id === id) set({ undo: null });
+      const u = get().undo;
+      if (u?.ids.includes(id)) {
+        const ids = u.ids.filter((x) => x !== id);
+        set({ undo: ids.length ? { ...u, ids } : null });
+      }
       await refresh();
       void pump();
     },

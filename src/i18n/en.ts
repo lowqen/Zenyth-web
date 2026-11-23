@@ -1583,4 +1583,94 @@ export const EN: Readonly<Record<string, string>> = {
   "붙어 있는 DB 는 지울 수 없습니다. 다른 DB 를 먼저 여세요":
     "The open DB cannot be deleted. Open another DB first",
   "라이브러리에서 {n}수 국면으로": "From the Library: {n} {n|move|moves}",
+  "대조하는 중": "Verifying",
+  "쓰는 중": "Writing",
+  "정렬하는 중": "Sorting",
+  "준비 중": "Preparing",
+  "{n}개로 나눴습니다": "Split into {n} {n|DB|DBs}",
+  나누기: "Split",
+  "{n}개 선택": "{n} selected",
+  "{title} 고르기": "Select {title}",
+  "«{name}» 로 합쳤습니다": "Merged into «{name}»",
+  "고른 DB": "Selected DBs",
+  "작업 중": "Working",
+  합치기: "Merge",
+  "{title} 아래로": "Move {title} down",
+  "{title} 위로": "Move {title} up",
+  "값이 다른 것": "Different values",
+  "같은 글은 하나로 둡니다.": "Identical text is kept once.",
+  "겹칠 때": "Overlaps",
+  겹침: "Overlapping",
+  "규칙 · 판이 섞여 있습니다. 국면 키에 규칙이 있어 합칠 수는 있습니다.":
+    "Rules or board sizes are mixed. Positions carry their rule, so they can still be merged.",
+  "기준 우선": "Base first",
+  기준: "Base",
+  "깊이가 큰 쪽, 같으면 승패가 정해진 쪽, 그래도 같으면 기준.":
+    "The deeper record; if equal, the solved one; if still equal, the base.",
+  다음: "Next",
+  "더 깊은 기록(권장)": "Deeper record (recommended)",
+  "맨 위 DB 의 기록을 씁니다. 거기 없는 국면만 다른 DB 에서.":
+    "Uses the top DB's records. Other DBs only add positions it lacks.",
+  "맨 위가 기준입니다. 겹치는 국면을 정할 때 앞섭니다.":
+    "The top DB is the base. It wins when positions overlap.",
+  "멈추고 닫기": "Stop and close",
+  "붙어 있는 DB 는 남깁니다.": "The open DB is kept.",
+  "붙어 있는 DB 는 먼저 저장하고 접은 뒤 합칩니다.":
+    "The open DB is saved and compacted before merging.",
+  순서: "Order",
+  "원본을 휴지통으로": "Move originals to the trash",
+  이전: "Back",
+  "주석 이어 붙이기": "Join comments",
+  합계: "Total",
+  "휴지통에서 30일 안에 되돌릴 수 있습니다.": "They can be restored from the trash for 30 days.",
+  "{k}개 주형 · 미분류 {u}": "{k} {k|opening|openings} · unclassified {u}",
+  "{n}수 국면 아래": "Below the {n} {n|move|moves} position",
+  "«{name}» 에 남는 것": "Left in «{name}»",
+  "결과 {a} + 남는 것 {b} = 원본 {c} ✓": "Results {a} + left {b} = original {c} ✓",
+  "결과 {a} · 원본 {c} 은 그대로": "Results {a} · original {c} unchanged",
+  "규칙 · 판 {n}가지가 섞여 있습니다": "{n} rules or board sizes are mixed",
+  "규칙 · 판": "Rule and board",
+  나머지: "The rest",
+  "돌 수 순서로 저장된 파일이 아니라 주형을 셀 수 없습니다.":
+    "Openings cannot be counted: the file is not saved in stone count order.",
+  "묶어 한 파일": "One file",
+  "붙어 있는 DB 는 먼저 저장하고 접은 뒤 나눕니다.":
+    "The open DB is saved and compacted before splitting.",
+  "승패가 정해진(W · L · D) 국면 {n}": "Solved (W · L · D) positions: {n}",
+  옮기기: "Move",
+  "원본 그대로(권장, 복사)": "Keep the original (recommended, copy)",
+  "원본에는 남는 {n} 만 둡니다. 원본 사본은 휴지통에 백업됩니다.":
+    "The original keeps only the remaining {n}. A copy of the original is backed up to the trash.",
+  "원본에서 빼기(옮기기)": "Take out of the original (move)",
+  "원본에서 빼서 옮길까요? 원본 사본은 휴지통에 백업됩니다.":
+    "Move these positions out of the original? A copy of the original is backed up to the trash.",
+  "원본은 바꾸지 않고 고른 국면을 새 DB 로 복사합니다.":
+    "Copies the chosen positions to new DBs and leaves the original as it is.",
+  "이 국면 아래": "Below this position",
+  "이 기기의 메모리로는 주형을 셀 수 없습니다.":
+    "Not enough memory on this device to count openings.",
+  "주형 {n}개": "{n} {n|opening|openings}",
+  "주형마다 한 파일": "One file per opening",
+  주형별: "By opening",
+  "지금 판 {m}수 국면과 그 아래 {n} (대칭 포함)":
+    "The {m} {m|move|moves} position on the board and below: {n} (symmetries included)",
+  "판에 돌을 놓으면 그 국면 아래를 나눌 수 있습니다.":
+    "Place stones on the board to split below that position.",
+  "풀린 국면": "Solved positions",
+  "풀린 국면만": "Solved positions only",
+  "{names} 외 {n}": "{names} and {n} more",
+  "{name} (나누기 전)": "{name} (before split)",
+  "«{name}» 은 아직 저장된 파일이 없습니다": "«{name}» has no saved file yet",
+  "«{name}» 의 저널에 접히지 않은 변경이 있습니다. DB 를 붙인 뒤 저장하세요":
+    "«{name}» has unfolded changes in its journal. Open the DB and save it first",
+  "미리 본 뒤에 DB 가 바뀌었습니다. 다시 미리 보세요":
+    "A DB changed after the preview. Preview again",
+  "다른 작업이 진행 중입니다": "Another task is running",
+  "붙어 있거나 작업 중인 DB 는 남겼습니다": "The open DB and DBs in use were kept",
+  "붙어 있는 DB 에서는 옮길 수 없습니다. 복사로 나누세요":
+    "Cannot move out of the open DB. Split by copying",
+  "원본 {n}개": "{n} {n|original|originals}",
+  "작업 전 저장": "Saved before the task",
+  "작업 중인 DB 는 지울 수 없습니다": "A DB in use cannot be deleted",
+  "합친 DB": "Merged DB",
 };

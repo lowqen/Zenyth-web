@@ -6725,6 +6725,325 @@ a.slink:hover {
   transform: translateY(-50%);
 }
 
+/* 여러 개 고르기(L3) — 데스크톱은 hover 체크 원, 터치는 길게 누르기. 고르는 동안은 늘 보인다. */
+.libgrid__check {
+  position: absolute;
+  top: var(--space-m);
+  right: var(--space-m);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: transparent;
+  background: color-mix(in srgb, var(--c-surface) 85%, transparent);
+  border: 2px solid var(--c-outline);
+  border-radius: 50%;
+  transition: opacity var(--motion-quick) ease-out;
+}
+.libgrid__check .icon {
+  width: 20px;
+  height: 20px;
+}
+.libgrid__check[aria-checked="true"] {
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+@media (hover: hover) {
+  .libgrid__check {
+    opacity: 0;
+  }
+  .libgrid__item:hover .libgrid__check,
+  .libgrid__check:focus-visible,
+  .libgrid__item[data-selecting] .libgrid__check {
+    opacity: 1;
+  }
+}
+@media (hover: none) {
+  .libgrid__item:not([data-selecting]) .libgrid__check {
+    display: none;
+  }
+}
+.libgrid__item[data-picked] .dbcover {
+  outline: 3px solid var(--c-primary);
+  outline-offset: 2px;
+}
+.libgrid--list .libgrid__check {
+  top: 50%;
+  right: calc(var(--space-m) + 56px);
+  transform: translateY(-50%);
+}
+.libgrid__busy {
+  color: var(--c-on-secondary-container);
+  background: var(--c-secondary-container);
+}
+.libselect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-m);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-s) var(--space-s) var(--space-s) var(--space-l);
+  background: var(--c-secondary-container);
+  border-radius: var(--radius-xl);
+}
+.libselect__count {
+  font: var(--type-title-small);
+  color: var(--c-on-secondary-container);
+}
+
+/* 합치기 · 나누기 시트(L3). */
+.libflow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-l);
+  min-width: 0;
+}
+.libsteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-l);
+  margin: 0;
+  padding: 0;
+  font: var(--type-label-large);
+  color: var(--c-on-surface-variant);
+  list-style: none;
+}
+.libsteps li {
+  display: flex;
+  gap: var(--space-s);
+  align-items: center;
+}
+.libsteps__n {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font: var(--type-label-medium);
+  border: 1px solid var(--c-outline-variant);
+  border-radius: 50%;
+}
+.libsteps li[aria-current] {
+  color: var(--c-on-surface);
+}
+.libsteps li[aria-current] .libsteps__n,
+.libsteps li[data-done] .libsteps__n {
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+.libmerge,
+.libsplit,
+.libpick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.libmerge__row,
+.libsplit__row {
+  display: flex;
+  gap: var(--space-l);
+  align-items: center;
+  padding: var(--space-s) var(--space-m);
+  background: var(--c-card);
+  border-radius: var(--radius-l);
+}
+.libmerge__row .dbcover,
+.libsplit__row .dbcover,
+.libresult .dbcover {
+  flex: none;
+  width: 48px;
+  border-radius: var(--radius-m);
+}
+.libmerge__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.libmerge__title {
+  display: flex;
+  gap: var(--space-s);
+  align-items: center;
+  overflow: hidden;
+  font: var(--type-title-small);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.libmerge__sub,
+.libsplit__n,
+.libpick__n {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.libmerge__move {
+  display: flex;
+  flex: none;
+}
+.libwarn {
+  margin: 0;
+  padding: var(--space-m) var(--space-l);
+  font: var(--type-body-medium);
+  color: var(--c-on-surface);
+  background: var(--c-surface-container-high);
+  border-left: 3px solid var(--c-caution);
+  border-radius: var(--radius-s);
+}
+.libcrit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+.libchoice {
+  background: var(--c-card);
+  border: 1px solid transparent;
+  border-radius: var(--radius-l);
+}
+.libchoice[data-on] {
+  border-color: var(--c-primary);
+}
+.libchoice__head {
+  display: flex;
+  gap: var(--space-l);
+  align-items: flex-start;
+  width: 100%;
+  padding: var(--space-l);
+  text-align: left;
+  border-radius: inherit;
+}
+.libchoice__head:disabled {
+  opacity: 0.55;
+}
+.libchoice__dot {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  border: 2px solid var(--c-outline);
+  border-radius: 50%;
+}
+.libchoice[data-on] .libchoice__dot {
+  border: 6px solid var(--c-primary);
+}
+.libchoice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.libchoice__title {
+  font: var(--type-title-small);
+  color: var(--c-on-surface);
+}
+.libchoice__sub {
+  font: var(--type-body-small);
+  color: var(--c-on-surface-variant);
+}
+.libchoice__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  padding: 0 var(--space-l) var(--space-l);
+}
+.libpick {
+  max-height: 280px;
+  overflow-y: auto;
+}
+.libpick__row {
+  display: flex;
+  gap: var(--space-m);
+  align-items: center;
+  min-height: 44px;
+}
+.libpick__row .dbcover {
+  flex: none;
+  width: 32px;
+  border-radius: var(--radius-s);
+}
+.libpick__name {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-body-medium);
+}
+.libswitch {
+  display: flex;
+  gap: var(--space-l);
+  align-items: center;
+  justify-content: space-between;
+  font: var(--type-body-large);
+}
+.libswitch > span:first-child {
+  display: flex;
+  flex-direction: column;
+}
+.libsum {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-m);
+  margin: 0;
+}
+.libsum > div {
+  padding: var(--space-m) var(--space-l);
+  background: var(--c-card);
+  border-radius: var(--radius-l);
+}
+.libsum dt {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.libsum dd {
+  margin: 0;
+  font: var(--type-title-large);
+}
+.libresult {
+  display: flex;
+  gap: var(--space-l);
+  align-items: center;
+}
+.libresult__name {
+  flex: 1;
+  min-width: 0;
+}
+.libsplit__field {
+  flex: 1;
+  min-width: 0;
+}
+/* 공통 `.field__input`(숫자 칸, 오른쪽 정렬)이 뒤에 와 `--text` 를 덮는다 — 라이브러리 시트의 이름 칸만 바로잡는다. */
+.libflow .field__input--text,
+.libdetail .field__input--text {
+  font: var(--type-body-large);
+  text-align: left;
+}
+.libsplit__rest {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-body-medium);
+  color: var(--c-on-surface-variant);
+}
+.libcheck {
+  margin: 0;
+  font: var(--type-label-large);
+  color: var(--c-on-surface);
+}
+.libjob {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.libjob__label {
+  font: var(--type-label-medium);
+  color: var(--c-on-surface-variant);
+}
+.libconfirm {
+  padding: var(--space-l);
+  background: var(--c-surface-container-high);
+  border-radius: var(--radius-l);
+}
+
 /* 휴지통 · 되돌리기. */
 .libtrash {
   display: flex;

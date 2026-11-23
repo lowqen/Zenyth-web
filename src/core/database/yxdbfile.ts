@@ -246,6 +246,17 @@ export function ruleBoardName(rule: number, w: number, h: number): string {
   return w === h ? `${r}-${w}` : `${r}-${w}x${h}`;
 }
 
+/** `ruleBoardName` 을 거꾸로 — 모르는 이름이면 null. */
+export function parseRuleBoard(name: string): { rule: number; w: number; h: number } | null {
+  const m = /^([a-z]+?)(\d+)?-(\d+)(?:x(\d+))?$/.exec(name);
+  if (!m) return null;
+  const rule =
+    m[2] !== undefined && m[1] === "rule" ? Number(m[2]) : RULE_NAMES.indexOf(m[1]! + (m[2] ?? ""));
+  if (rule < 0) return null;
+  const w = Number(m[3]);
+  return { rule, w, h: m[4] !== undefined ? Number(m[4]) : w };
+}
+
 /** 메타데이터 레코드(너비 · 높이 0)인가. */
 export const isMetaKey = (b: Uint8Array, keyOff: number, keyLen: number): boolean =>
   keyLen >= 3 && b[keyOff + 1] === 0 && b[keyOff + 2] === 0;

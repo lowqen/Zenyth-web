@@ -11,6 +11,7 @@ import type { LibraryMetaRow } from "../../data/library";
 import { t } from "../../i18n/i18n";
 import { useDbStore } from "../database/dbStore";
 import { CoverSheet } from "./CoverSheet";
+import { SplitSheet } from "./SplitSheet";
 import { DbCover } from "./DbCover";
 import { coverKeyOf } from "./cover";
 import { fmtBytes, fmtCount, fmtDate, mainRule, positionsText, ruleLabel } from "./format";
@@ -42,6 +43,7 @@ export function LibraryDetail({
   const [renaming, setRenaming] = useState(false);
   const [title, setTitle] = useState(entry.title);
   const [covering, setCovering] = useState(false);
+  const [splitting, setSplitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [allRoots, setAllRoots] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -349,6 +351,15 @@ export function LibraryDetail({
           </button>
           <button
             type="button"
+            data-k="library-split"
+            disabled={size === 0 || !!lib.job}
+            onClick={() => setSplitting(true)}
+          >
+            <Icon d={ICON.split} />
+            {t("나누기")}
+          </button>
+          <button
+            type="button"
             className="btn--danger"
             data-k="library-trash"
             onClick={() =>
@@ -409,6 +420,16 @@ export function LibraryDetail({
           {t("이 브라우저의 DB 는 이름만 바뀝니다. 파일 이름은 따로 없습니다.")}
         </p>
       </Sheet>
+
+      <SplitSheet
+        entry={entry}
+        open={splitting}
+        onClose={() => setSplitting(false)}
+        onDone={(made) => {
+          setSplitting(false);
+          setNotice(t("{n}개로 나눴습니다", { n: made.length }));
+        }}
+      />
 
       <CoverSheet
         entry={entry}

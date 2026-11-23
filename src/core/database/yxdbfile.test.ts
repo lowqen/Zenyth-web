@@ -312,3 +312,17 @@ describe("키 순서 · 정규화", () => {
     }
   });
 });
+
+describe("parseRuleBoard", () => {
+  it("ruleBoardName 을 거꾸로", async () => {
+    const { parseRuleBoard, ruleBoardName } = await import("./yxdbfile");
+    for (const [r, w, h] of [
+      [2, 15, 15],
+      [0, 20, 20],
+      [1, 15, 20],
+      [7, 9, 9],
+    ] as const)
+      expect(parseRuleBoard(ruleBoardName(r, w, h))).toEqual({ rule: r, w, h });
+    expect(parseRuleBoard("weird")).toBeNull();
+  });
+});
