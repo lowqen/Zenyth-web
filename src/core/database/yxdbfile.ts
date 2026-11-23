@@ -350,15 +350,17 @@ export interface YxdbWriterOptions {
   compress?: boolean;
   /** LZ4 블록 크기(KB). 기본 4096. */
   blockKB?: 64 | 256 | 1024 | 4096;
+  /** 쓰기 버퍼(KB). 기본 1024 — 여러 파일을 한꺼번에 쓰는 분리는 줄인다. */
+  bufferKB?: number;
 }
 
 /**
  * yixindb 를 흘려 쓴다. 레코드 수는 머리에 먼저 적으므로 미리 알아야 한다(병합 · 분리는 미리 보기에서 센다).
- * 들고 있는 메모리는 1MB 쓰기 버퍼 + LZ4 블록 하나.
+ * 들고 있는 메모리는 쓰기 버퍼(기본 1MB) + LZ4 블록 하나.
  */
 export class YxdbWriter {
   private readonly enc: Lz4FrameEncoder | null;
-  private readonly buf = new Uint8Array(1 << 20);
+  private readonly buf: Uint8Array;
   private len = 0;
   private written = 0;
   private finished = false;
@@ -368,6 +370,7 @@ export class YxdbWriter {
     private readonly sink: (chunk: Uint8Array) => void,
     opts: YxdbWriterOptions = {},
   ) {
+    this.buf = new Uint8Array(Math.max(4, opts.bufferKB ?? 1024) << 10);
     this.enc = (opts.compress ?? true) ? new Lz4FrameEncoder(sink, opts.blockKB ?? 4096) : null;
     const h = new Uint8Array(4);
     new DataView(h.buffer).setUint32(0, count >>> 0, true);
@@ -419,12 +422,26 @@ export class YxdbWriter {
 
   /** 레코드 하나 — 읽은 레코드를 그대로 옮길 때(`readYxdb` 의 인자 모양). */
   record(b: Uint8Array, keyOff: number, keyLen: number, valOff: number, valLen: number): void {
+    this.recordKV(b, keyOff, keyLen, b, valOff, valLen);
+  }
+
+  /** 레코드 하나 — 키와 값이 다른 버퍼에 있을 때(병합이 고른 값). */
+  recordKV(
+    kb: Uint8Array,
+    keyOff: number,
+    keyLen: number,
+    vb: Uint8Array,
+    valOff: number,
+    valLen: number,
+  ): void {
     if (this.finished) throw new Error("yixindb: 이미 닫힘");
     if (keyLen < 3 || keyLen > 0xffff || valLen > 0xffff) throw new Error("yixindb: 레코드 길이");
+    if (this.written >= this.count)
+      throw new Error(`yixindb: 레코드 수가 머리보다 많음(${this.count})`);
     this.u16(keyLen);
-    this.put(b, keyOff, keyLen);
+    this.put(kb, keyOff, keyLen);
     this.u16(valLen);
-    this.put(b, valOff, valLen);
+    this.put(vb, valOff, valLen);
     this.written++;
   }
 

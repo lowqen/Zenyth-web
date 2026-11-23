@@ -82,6 +82,18 @@ export interface ScanOptions {
   rootsTop?: number;
   /** LZ4 내용 체크섬 확인(기본 꺼짐). */
   verify?: boolean;
+  /**
+   * 2차 통과에서 **모든 레코드**마다 그 주형(0..25, 26 = 미분류) — 분리(L3)가 쓴다. 메타데이터는 -1, 특수 · 분류
+   * 밖(규칙 · 판)은 26, 같은 국면이 또 나오면 처음 것의 주형. 색인을 건너뛰면 부르지 않는다.
+   */
+  onClassified?: (
+    buf: Uint8Array,
+    keyOff: number,
+    keyLen: number,
+    valOff: number,
+    valLen: number,
+    opening: number,
+  ) => void;
   onProgress?: (p: ScanProgress) => void;
   isCancelled?: () => boolean;
 }
@@ -296,14 +308,23 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
   const ql = new Int32Array(1024);
   const qs = new Int32Array(1024);
   records = 0;
+  const onCls = opts.onClassified;
   await readYxdb(
     blob,
-    (b, ko, kl) => {
-      if (!hasher.load(b, ko, kl)) return; // 특수 — 색인에 없다
+    (b, ko, kl, vo, vl) => {
+      if (!hasher.load(b, ko, kl)) {
+        // 특수 — 색인에 없다
+        onCls?.(b, ko, kl, vo, vl, isMetaKey(b, ko, kl) ? -1 : UNCLASSIFIED);
+        return;
+      }
       hasher.hash();
       hasher.canon();
       const own = idx.find(hasher.hi, hasher.lo);
-      if (own < 0 || idx.visited(own)) return; // 같은 국면이 또 — 처음 것만
+      if (own < 0 || idx.visited(own)) {
+        // 같은 국면이 또 — 처음 것만 센다
+        onCls?.(b, ko, kl, vo, vl, own < 0 ? UNCLASSIFIED : idx.openingOf(own));
+        return;
+      }
       records++;
       const cls = classifiable(hasher.rule, hasher.w) && countOrdered;
       const n = hasher.n;
@@ -338,6 +359,7 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
       const o =
         !cls || n < 3 ? UNCLASSIFIED : n === 3 ? classifyKey(hasher) : op < 0 ? UNCLASSIFIED : op;
       idx.setOpening(own, o);
+      onCls?.(b, ko, kl, vo, vl, o);
       if (cls) {
         counts[o]!++;
         classified++;
