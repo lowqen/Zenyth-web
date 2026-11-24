@@ -119,8 +119,38 @@ export const isDbFileName = (name: string) =>
  * 함께 옮긴다. `base` 의 짝이면 붙은 꼬리(`.journal` 따위)를 돌려준다.
  */
 export function companionSuffix(base: string, name: string): string | null {
-  if (name.length <= base.length || name.slice(0, base.length).toLowerCase() !== base.toLowerCase())
+  if (
+    name.length > base.length &&
+    name.slice(0, base.length).toLowerCase() === base.toLowerCase()
+  ) {
+    const rest = name.slice(base.length);
+    if (/^\.(journal|bak\d*|backup\d*|\d+)$/i.test(rest)) return rest;
+  }
+  return backupTail(base, name);
+}
+
+/**
+ * 엔진 번호 백업 — DB1 `makeBackupFilePath` 는 `<줄기>_bak<N><확장자>` 로 쓴다(`연구.db` → `연구_bak1.db`). 꼬리는
+ * `_bak1.db` 처럼 확장자까지이고, `withTail` 이 본 파일의 줄기에 붙인다.
+ */
+function backupTail(base: string, name: string): string | null {
+  if (!/\.db$/i.test(base)) return null;
+  const stem = base.slice(0, -3);
+  if (name.length <= stem.length || name.slice(0, stem.length).toLowerCase() !== stem.toLowerCase())
     return null;
-  const rest = name.slice(base.length);
-  return /^\.(journal|bak\d*|backup\d*|\d+)$/i.test(rest) ? rest : null;
+  const rest = name.slice(stem.length);
+  return /^_bak\d+\.db$/i.test(rest) ? rest : null;
+}
+
+/** 짝 꼬리를 본 파일 이름에 붙인다 — `.journal` 따위는 뒤에, 번호 백업(`_bak1.db`)은 줄기에. */
+export const withTail = (base: string, tail: string): string =>
+  tail.startsWith("_") ? base.replace(/\.db$/i, "") + tail : base + tail;
+
+/**
+ * 폴더의 `.db` 가운데 엔진 번호 백업인가 — 본 파일(`<줄기>.db`)이 같은 폴더에 있을 때만. 그러면 항목이 아니라 그
+ * 본 파일의 짝이다(이름 바꾸기 · 휴지통이 함께 옮긴다). `names` 는 폴더 파일 이름을 NFC · 소문자로.
+ */
+export function isEngineBackup(name: string, names: ReadonlySet<string>): boolean {
+  const m = /^(.*)_bak\d+\.db$/i.exec(name);
+  return !!m && names.has(`${m[1]}.db`.normalize("NFC").toLowerCase());
 }

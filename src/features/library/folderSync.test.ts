@@ -135,6 +135,25 @@ describe("reconcile", () => {
     });
   });
 
+  it("엔진 번호 백업(<줄기>_bak1.db)은 본 파일이 있으면 항목이 아니다 — 예전에 항목이 된 것은 숨는다", async () => {
+    const files = [
+      file("연구.db", 7),
+      file("연구_bak1.db", 6),
+      file("연구_bak2.db", 5),
+      file("외톨이_bak1.db", 4),
+    ];
+    const old = entry("old", "연구_bak1.db", { fingerprint: fp(6, "t-6") });
+    const r = await run([old], files);
+    // 본 파일 없는 백업(외톨이_bak1.db)은 그대로 DB — 사용자가 되살릴 수 있게
+    expect(
+      r.rows
+        .filter((x) => !x.missingSince)
+        .map((x) => x.file)
+        .sort(),
+    ).toEqual(["연구.db", "외톨이_bak1.db"]);
+    expect(r.rows.find((x) => x.id === "old")!.missingSince).toBe(NOW);
+  });
+
   it("대소문자만 바뀐 파일 이름을 따라간다", async () => {
     const r = await run(
       [entry("a", "a.db", { fingerprint: fp(10, "t-10", 1) })],

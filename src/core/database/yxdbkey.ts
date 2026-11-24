@@ -12,6 +12,10 @@ import { move, type Move } from "../model/move";
  *   국면끼리도 충돌한다(PoC 첫 시도에서 실제로 났다).
  *
  * 칸 = `(x << 5) | y` (32줄까지). 크기 순서가 (x, y) 바이트 memcmp 순서와 같다.
+ *
+ * - **규칙 · 판 크기 소금**(L5-0, 2026-11-24): 해시는 빈 판에서 0 이 아니라 `ruleSalt(rule, w)` 에서 시작한다 — 8 변환
+ *   모두에 같은 값이라 정규화 · 부모 해시는 그대로 맞고, 같은 돌의 렌주 · 표준 · 자유(또는 다른 판) 국면이 한 국면으로
+ *   합쳐지지 않는다. 안드로이드 `YxdbKey.kt` 와 같은 식(교차 골든이 대조).
  */
 
 export const MAX_BOARD = 32;
@@ -35,6 +39,25 @@ const ZL = new Int32Array(2 * CELLS);
     ZH[i] = Number(BigInt.asIntN(32, z >> 32n));
     ZL[i] = Number(BigInt.asIntN(32, z));
   }
+}
+
+const SALT = new Map<number, [number, number]>();
+
+/** (규칙, 판 크기)의 해시 시작값 — splitmix64 한 걸음, 씨 = `"RULE" << 16 | rule << 8 | w`. */
+export function ruleSalt(rule: number, w: number): [number, number] {
+  const k = ((rule & 0xff) << 8) | (w & 0xff);
+  let s = SALT.get(k);
+  if (!s) {
+    const M = (1n << 64n) - 1n;
+    let z = ((0x52554c45n << 16n) | BigInt(k)) & M;
+    z = (z + 0x9e3779b97f4a7c15n) & M;
+    z = ((z ^ (z >> 30n)) * 0xbf58476d1ce4e5b9n) & M;
+    z = ((z ^ (z >> 27n)) * 0x94d049bb133111ebn) & M;
+    z ^= z >> 31n;
+    s = [Number(BigInt.asIntN(32, z >> 32n)), Number(BigInt.asIntN(32, z))];
+    SALT.set(k, s);
+  }
+  return s;
 }
 
 /** 변환 t 로 (x, y) 를 옮긴다 — s = 판 크기 - 1. */
@@ -136,7 +159,8 @@ export class KeyHasher {
     if (w === 0 || w > MAX_BOARD || b[off + 2] !== w) return false;
     const n = (len - 3) >> 1;
     const cells = this.cells;
-    let lcp = w === this.w ? this.preValid : 0;
+    // 규칙 · 판이 바뀌면 시작값(소금)부터 다르다
+    let lcp = w === this.w && b[off] === this.rule ? this.preValid : 0;
     for (let i = 0, p = off + 3; i < n; i++, p += 2) {
       const x = b[p]!;
       const y = b[p + 1]!;
@@ -171,6 +195,13 @@ export class KeyHasher {
     const n = this.n;
     const nb = this.nb;
     let i = this.preValid;
+    if (i === 0) {
+      const [sh, sl] = ruleSalt(this.rule, this.w);
+      for (let t = 0; t < 16; t += 2) {
+        pre[t] = sh;
+        pre[t + 1] = sl;
+      }
+    }
     let o = i * 16;
     for (; i < n; i++) {
       const z = ((i < nb ? 0 : CELLS) + cells[i]!) * 16;

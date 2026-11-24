@@ -1,6 +1,7 @@
 import { FOLDER_TRASH, MANIFEST_FILE, fingerprintOf, type Fingerprint } from "../../data/library";
 import {
   companionSuffix,
+  withTail,
   parseManifest,
   renderManifest,
   type FileWrite,
@@ -203,14 +204,15 @@ export class FsaFolderSource implements FolderSource {
     if (!caseOnly && (await this.exists(to))) throw new Error(`exists: ${to}`);
     const tails = await this.companions(this.dir, from);
     for (const sfx of tails)
-      if (!caseOnly && (await this.exists(to + sfx))) throw new Error(`exists: ${to + sfx}`);
+      if (!caseOnly && (await this.exists(withTail(to, sfx))))
+        throw new Error(`exists: ${withTail(to, sfx)}`);
     for (const [a, b] of [["", ""], ...tails.map((s) => [s, s])] as const) {
       if (caseOnly) {
         // 대소문자만 다른 이름 — 임시 이름을 거쳐 두 번(같은 이름으로 보는 파일 시스템).
-        const tmp = `${from}${a}.zenyth-rename`;
-        await this.moveOne(this.dir, from + a, this.dir, tmp);
-        await this.moveOne(this.dir, tmp, this.dir, to + b);
-      } else await this.moveOne(this.dir, from + a, this.dir, to + b);
+        const tmp = `${withTail(from, a)}.zenyth-rename`;
+        await this.moveOne(this.dir, withTail(from, a), this.dir, tmp);
+        await this.moveOne(this.dir, tmp, this.dir, withTail(to, b));
+      } else await this.moveOne(this.dir, withTail(from, a), this.dir, withTail(to, b));
     }
   }
 
@@ -223,7 +225,8 @@ export class FsaFolderSource implements FolderSource {
     const token = `${Date.now()}-${name}`;
     const tails = await this.companions(this.dir, name);
     await this.moveOne(this.dir, name, bin, token);
-    for (const sfx of tails) await this.moveOne(this.dir, name + sfx, bin, token + sfx);
+    for (const sfx of tails)
+      await this.moveOne(this.dir, withTail(name, sfx), bin, withTail(token, sfx));
     return token;
   }
 
@@ -232,7 +235,8 @@ export class FsaFolderSource implements FolderSource {
     if (await this.exists(name)) throw new Error(`exists: ${name}`);
     const tails = await this.companions(bin, trashName);
     await this.moveOne(bin, trashName, this.dir, name);
-    for (const sfx of tails) await this.moveOne(bin, trashName + sfx, this.dir, name + sfx);
+    for (const sfx of tails)
+      await this.moveOne(bin, withTail(trashName, sfx), this.dir, withTail(name, sfx));
   }
 
   async purge(trashName: string): Promise<void> {
@@ -245,7 +249,7 @@ export class FsaFolderSource implements FolderSource {
     }
     const tails = await this.companions(bin, trashName);
     await this.remove(bin, trashName);
-    for (const sfx of tails) await this.remove(bin, trashName + sfx);
+    for (const sfx of tails) await this.remove(bin, withTail(trashName, sfx));
   }
 
   async readManifest(): Promise<LibraryManifest> {

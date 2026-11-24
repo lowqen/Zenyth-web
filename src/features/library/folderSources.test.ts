@@ -86,6 +86,37 @@ describe("FsaFolderSource", () => {
     expect(text(dir.node.files.get("B.db.journal")!.data)).toBe("J");
   });
 
+  it("엔진 번호 백업(<줄기>_bak1.db)도 짝 — 이름 바꾸기 · 휴지통 · 되돌리기를 따라간다", async () => {
+    const dir = fakeFsaDir();
+    const src = new FsaFolderSource("f", dir);
+    await src.writeAtomic([
+      { name: "a.db", data: new Blob([bytes("A")]) },
+      { name: "a_bak1.db", data: new Blob([bytes("B1")]) },
+      { name: "A_BAK2.db", data: new Blob([bytes("B2")]) },
+      { name: "ab_bak1.db", data: new Blob([bytes("X")]) },
+    ]);
+    await src.rename("a.db", "연구.db");
+    expect([...dir.node.files.keys()].sort()).toEqual([
+      "ab_bak1.db",
+      "연구.db",
+      "연구_BAK2.db",
+      "연구_bak1.db",
+    ]);
+    const token = await src.trash("연구.db");
+    const bin = dir.node.dirs.get(".zenyth-trash")!;
+    expect([...bin.files.keys()].sort()).toEqual(
+      [token, token.replace(/\.db$/, "_bak1.db"), token.replace(/\.db$/, "_BAK2.db")].sort(),
+    );
+    await src.restore(token, "연구.db");
+    expect([...dir.node.files.keys()].sort()).toEqual([
+      "ab_bak1.db",
+      "연구.db",
+      "연구_BAK2.db",
+      "연구_bak1.db",
+    ]);
+    expect(text(dir.node.files.get("연구_bak1.db")!.data)).toBe("B1");
+  });
+
   it("휴지통은 폴더 안 .zenyth-trash — 되돌리기 · 아주 지우기", async () => {
     const dir = fakeFsaDir();
     const src = new FsaFolderSource("f", dir);
@@ -132,11 +163,12 @@ describe("TauriFolderSource", () => {
       { name: "a.db.journal", data: new Blob([bytes("j")]) },
     ]);
     expect(text(files.get("a.db")!.data)).toBe("hello");
+    await src.writeAtomic([{ name: "a_bak1.db", data: new Blob([bytes("b")]) }]);
     expect(await src.trash("a.db")).toBe("a.db");
     expect(files.size).toBe(0);
-    expect(bin.size).toBe(2);
+    expect(bin.size).toBe(3);
     await src.restore("a.db", "a.db");
-    expect([...files.keys()].sort()).toEqual(["a.db", "a.db.journal"]);
+    expect([...files.keys()].sort()).toEqual(["a.db", "a.db.journal", "a_bak1.db"]);
     await src.writeManifest({ version: 1, entries: [] });
     expect((await src.readManifest()).entries).toEqual([]);
     expect(await src.access()).toBe("granted");

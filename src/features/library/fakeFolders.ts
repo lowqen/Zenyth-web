@@ -1,5 +1,5 @@
 import type { FsaDir, FsaFile } from "./fsaSource";
-import type { LibraryFileInfo } from "./source";
+import { companionSuffix, type LibraryFileInfo, withTail } from "./source";
 import type { FolderBridge } from "./tauriSource";
 
 /**
@@ -117,11 +117,9 @@ export function fakeBridge(dirs: Record<string, Map<string, { data: Uint8Array; 
     if (!m) throw new Error(`폴더가 없습니다: ${dir}`);
     return m;
   };
-  const companions = (m: Map<string, unknown>, base: string) =>
-    [...m.keys()].filter(
-      (k) =>
-        k !== base && /^\.(journal|bak\d*|\d+)$/i.test(k.slice(base.length)) && k.startsWith(base),
-    );
+  /** 셸 `companions` 와 같은 규칙(웹 `companionSuffix`) — 짝 꼬리 목록. */
+  const tails = (m: Map<string, unknown>, base: string) =>
+    [...m.keys()].map((k) => companionSuffix(base, k)).filter((t): t is string => t !== null);
   const bridge: FolderBridge = {
     pickFolder: async () => Object.keys(dirs)[0] ?? null,
     exists: async (dir) => dir in dirs,
@@ -158,14 +156,15 @@ export function fakeBridge(dirs: Record<string, Map<string, { data: Uint8Array; 
       const m = of(dir);
       if (!m.has(from)) throw new Error(`missing: ${from}`);
       if (m.has(to)) throw new Error(`exists: ${to}`);
-      for (const k of [from, ...companions(m, from)]) {
-        m.set(to + k.slice(from.length), m.get(k)!);
+      for (const t of ["", ...tails(m, from)]) {
+        const k = withTail(from, t);
+        m.set(withTail(to, t), m.get(k)!);
         m.delete(k);
       }
     },
     trash: async (dir, name) => {
       const m = of(dir);
-      for (const k of [name, ...companions(m, name)]) {
+      for (const k of [name, ...tails(m, name).map((t) => withTail(name, t))]) {
         bin.set(`${dir}|${k}`, m.get(k)!);
         m.delete(k);
       }
@@ -174,7 +173,7 @@ export function fakeBridge(dirs: Record<string, Map<string, { data: Uint8Array; 
       const m = of(dir);
       for (const k of [...bin.keys()]) {
         const [d, n] = k.split("|") as [string, string];
-        if (d === dir && (n === name || n.startsWith(`${name}.`))) {
+        if (d === dir && (n === name || companionSuffix(name, n) !== null)) {
           m.set(n, bin.get(k)!);
           bin.delete(k);
         }
@@ -182,7 +181,11 @@ export function fakeBridge(dirs: Record<string, Map<string, { data: Uint8Array; 
     },
     purge: async (dir, name) => {
       for (const k of [...bin.keys()])
-        if (k === `${dir}|${name}` || k.startsWith(`${dir}|${name}.`)) bin.delete(k);
+        if (
+          k === `${dir}|${name}` ||
+          (k.startsWith(`${dir}|`) && companionSuffix(name, k.slice(dir.length + 1)) !== null)
+        )
+          bin.delete(k);
     },
   };
   return { bridge, bin, calls };

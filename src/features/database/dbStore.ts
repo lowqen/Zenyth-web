@@ -412,8 +412,8 @@ export const useDbStore = create<DbState>((set, get) => {
 
   /**
    * 데스크톱 폴더의 DB 를 네이티브 엔진에 붙인다(L4) — `YXSETDATABASE <절대 경로>` 가 엔진 설정의 DB 경로를 바꾸고
-   * 바로 연다(복사 없음). `usedatabase 1` 은 보내지 않는다 — 같은 경로를 한 번 더 열게 된다(Rapfi `setDatabase` 가
-   * 저장소를 직접 갈아 끼운다). 저장은 엔진이 그 파일에 한다.
+   * 바로 연다(복사 없음). `usedatabase 1` 은 보내지 않는다(Rapfi `setDatabase` 가 저장소를 직접 갈아 끼운다). 앞에
+   * `usedatabase 0` 으로 옛 저장소를 먼저 놓는다 — 두 DB 가 동시에 메모리에 들지 않게. 저장은 엔진이 그 파일에 한다.
    */
   const attachFolderFile = async (
     e: LibraryMetaRow,
@@ -430,10 +430,14 @@ export const useDbStore = create<DbState>((set, get) => {
       ch().resetPairing();
       const s = get().settings;
       const path = src.pathOf(e.file);
-      useEngineStore.getState().send(info("database_readonly", s.readonly ? 1 : 0), {
-        kind: "raw",
-        line: `YXSETDATABASE ${path}`,
-      });
+      // `usedatabase 0` 먼저 — Rapfi `setDatabase` 는 새 저장소를 만든 **뒤에** 옛 것을 놓아(인자가 먼저 평가된다) 그대로
+      // 보내면 두 DB 가 한꺼번에 메모리에 든다(L5-0 확인). 옛 것이 없으면 아무 일도 하지 않는다.
+      useEngineStore
+        .getState()
+        .send(info("usedatabase", 0), info("database_readonly", s.readonly ? 1 : 0), {
+          kind: "raw",
+          line: `YXSETDATABASE ${path}`,
+        });
       const hello = await ch().request(queryOne([]), untilOne, NATIVE_ATTACH_TIMEOUT_MS);
       const err = replyError(hello);
       if (err) throw new Error(err);

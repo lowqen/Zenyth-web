@@ -103,7 +103,8 @@ describe("데스크톱 폴더의 DB — 네이티브 엔진", () => {
     expect(s.location).toBe("engine");
     expect(s.active).toEqual({ id: "A", title: "A" });
     expect(raw).toEqual([`YXSETDATABASE ${DIR}\\a.db`]);
-    expect(infos).toEqual(["database_readonly 0"]);
+    // 옛 저장소(엔진 설정이 미리 연 DB)를 먼저 놓는다 — 두 DB 가 한꺼번에 메모리에 들지 않게
+    expect(infos).toEqual(["usedatabase 0", "database_readonly 0"]);
     expect(fsOps).toEqual([]);
     expect(s.stored?.size).toBe(4);
   });
@@ -114,7 +115,7 @@ describe("데스크톱 폴더의 DB — 네이티브 엔진", () => {
     infos = [];
     expect(await useDbStore.getState().switchTo("B")).toBeNull();
     expect(fsOps).toEqual(["compact"]);
-    expect(infos).toEqual(["usedatabase 0", "database_readonly 0"]);
+    expect(infos).toEqual(["usedatabase 0", "usedatabase 0", "database_readonly 0"]);
     expect(raw).toEqual([`YXSETDATABASE ${DIR}\\b.db`]);
     expect(useDbStore.getState().active?.id).toBe("B");
   });

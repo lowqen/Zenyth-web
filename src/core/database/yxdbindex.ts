@@ -13,6 +13,9 @@ import {
   type BlobLike,
 } from "./yxdbfile";
 import { KeyHasher, keyToHex } from "./yxdbkey";
+import { INDEX_VERSION } from "./yxdbstats";
+
+export { INDEX_VERSION, statsCurrent } from "./yxdbstats";
 
 /**
  * yixindb 통계 · 색인 — 라이브러리 워커(`library.worker.ts`)가 돌린다(라이브러리 계획 §4 · §5).
@@ -53,6 +56,8 @@ export interface DbRoot {
 export interface DbStats {
   /** 국면 레코드 수(메타데이터 제외). */
   records: number;
+  /** 이 통계를 낸 색인의 판(`INDEX_VERSION`). 없으면 1. */
+  indexVersion?: number;
   /** `renju-15` 따위 → 국면 수. 섞였는지 본다. */
   rules: Record<string, number>;
   labels: DbLabels;
@@ -176,6 +181,7 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
     rules: {},
     labels: { W: 0, L: 0, D: 0, other: 0 },
     commented: 0,
+    indexVersion: INDEX_VERSION,
   };
   // 규칙 · 판(rule | w << 8 | h << 16)별 국면 수와 마지막 돌 수 — 엔진 파일은 같은 규칙이 이어지므로 지금
   // 묶음만 지역 변수로 세고, 묶음이 바뀔 때 Map 에 넣는다

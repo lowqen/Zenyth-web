@@ -15,7 +15,7 @@ import {
   YxdbRecordParser,
   YxdbWriter,
 } from "./yxdbfile";
-import { canonicalKey, decodeKey, KeyHasher, keyOfMoves, transform } from "./yxdbkey";
+import { canonicalKey, decodeKey, KeyHasher, keyOfMoves, ruleSalt, transform } from "./yxdbkey";
 import { move, type Move } from "../model/move";
 
 const enc = (s: string) => new TextEncoder().encode(s);
@@ -291,6 +291,30 @@ describe("키 순서 · 정규화", () => {
       h.canon();
       expect([h.hi, h.lo]).toEqual([bh, bl]);
     }
+  });
+
+  it("같은 돌이라도 규칙 · 판 크기가 다르면 해시가 다르다(소금) — 고정값은 안드로이드와 같다", () => {
+    const moves = [move(7, 7), move(8, 6), move(9, 9)];
+    const h = new KeyHasher();
+    const seen: string[] = [];
+    for (const [rule, w] of [
+      [2, 15],
+      [1, 15],
+      [0, 15],
+      [0, 20],
+      [2, 15],
+    ] as const) {
+      const k = keyOfMoves(rule, w, moves);
+      h.load(k, 0, k.length);
+      h.hash();
+      h.canon();
+      seen.push(`${h.hi}:${h.lo}`);
+    }
+    expect(new Set(seen).size).toBe(4);
+    expect(seen[4]).toBe(seen[0]); // 접두 재사용 뒤에도 렌주 15 는 처음과 같다
+    // 안드로이드 YxdbCodecTest.ruleSaltVector 와 같은 값
+    const [sh, sl] = ruleSalt(2, 15);
+    expect(((BigInt(sh >>> 0) << 32n) | BigInt(sl >>> 0)).toString(16)).toBe("f8e1fdffa82a22c5");
   });
 
   it("부모 후보 해시 = 그 부모 정규 키의 해시", () => {

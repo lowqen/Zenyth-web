@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { YxdbCancelled } from "../../core/database/yxdbfile";
 import type { DbStats, ScanPhase, ScanResult } from "../../core/database/yxdbindex";
+import { statsCurrent } from "../../core/database/yxdbstats";
 import { decodeKey, hexToKey } from "../../core/database/yxdbkey";
 import { representative } from "../../core/opening/opening26";
 import type { Move } from "../../core/model/move";
@@ -325,7 +326,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
       for (;;) {
         if (get().job) break; // 병합 · 분리가 줄을 쓰는 동안은 쉰다 — 끝나면 다시 부른다
         const next = get().entries.find(
-          (e) => !e.stats && (get().sizes[e.id] ?? 0) > 0 && get().notes[e.id] !== "error",
+          (e) =>
+            !statsCurrent(e.stats) && (get().sizes[e.id] ?? 0) > 0 && get().notes[e.id] !== "error",
         );
         if (!next) break;
         await scanOne(next);

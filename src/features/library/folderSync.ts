@@ -8,7 +8,7 @@ import {
   type LibraryEntry,
   type LibraryMetaRow,
 } from "../../data/library";
-import { isDbFileName, type LibraryFileInfo, type LibrarySource } from "./source";
+import { isDbFileName, isEngineBackup, type LibraryFileInfo, type LibrarySource } from "./source";
 import { sourceOf } from "./sources";
 
 /**
@@ -48,7 +48,9 @@ export async function reconcile({
   now = Date.now(),
 }: ReconcileInput): Promise<{ rows: LibraryMetaRow[]; changed: boolean }> {
   let changed = false;
-  const dbFiles = files.filter((f) => isDbFileName(f.name));
+  const lowerNames = new Set(files.map((f) => f.name.normalize("NFC").toLowerCase()));
+  // 엔진 번호 백업(`<줄기>_bak1.db`)은 본 파일의 짝 — 항목으로 세우지 않는다(예전에 항목이 된 것은 «없어짐»으로 숨는다).
+  const dbFiles = files.filter((f) => isDbFileName(f.name) && !isEngineBackup(f.name, lowerNames));
   const byName = new Map(dbFiles.map((f) => [f.name.normalize("NFC").toLowerCase(), f]));
   const claimed = new Set<string>();
   const key = (n: string) => n.normalize("NFC").toLowerCase();
