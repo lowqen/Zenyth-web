@@ -68,7 +68,10 @@ function value(i: number): Uint8Array {
 
 function writeDb(keys: Uint8Array[], compress: boolean): Uint8Array {
   const chunks: Uint8Array[] = [];
-  const w = new YxdbWriter(keys.length + 1, (c) => chunks.push(c.slice()), { compress, blockKB: 64 });
+  const w = new YxdbWriter(keys.length + 1, (c) => chunks.push(c.slice()), {
+    compress,
+    blockKB: 64,
+  });
   const meta = metaRecord();
   w.recordKV(meta.key, 0, meta.key.length, meta.value, 0, meta.value.length);
   keys.forEach((k, i) => {
@@ -86,7 +89,8 @@ const sortKeys = (keys: Uint8Array[]) =>
 const mixed = new Map<string, Uint8Array>();
 for (let o = 0; o < 26; o++) {
   const branches = 1 + (o % 3);
-  for (let b = 0; b < branches; b++) prefixes(2, 15, walk(representative(o), 15, 4 + rnd(9)), mixed);
+  for (let b = 0; b < branches; b++)
+    prefixes(2, 15, walk(representative(o), 15, 4 + rnd(9)), mixed);
 }
 // 3돌이 비표준(천원이 아닌 개시) — 미분류로 이어진다
 prefixes(2, 15, walk([move(3, 3)], 15, 6), mixed);
@@ -127,7 +131,9 @@ async function emit(name: string, keys: Uint8Array[], compress: boolean) {
     openingsSkipped: r.openingsSkipped ?? null,
   };
   writeFileSync(join(out, `${name}.json`), JSON.stringify(golden, null, 1) + "\n");
-  console.log(`${name}: ${keys.length} 국면 · ${bytes.length} B · 뿌리 ${r.stats.roots?.length ?? 0}`);
+  console.log(
+    `${name}: ${keys.length} 국면 · ${bytes.length} B · 뿌리 ${r.stats.roots?.length ?? 0}`,
+  );
 }
 
 await emit("mixed", mixedKeys, true);
