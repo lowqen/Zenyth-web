@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../../data/db";
 import { journalOf, newBrowserEntry } from "../../data/library";
 import { BrowserSource } from "./browserSource";
@@ -124,7 +124,13 @@ describe("항목 고르기", () => {
     const b = (await createEntry("B"))!;
     expect(await selectEntry("nope")).toBe(false);
     expect(readActiveId()).toBe(b.id);
-    expect(await selectEntry(a.id)).toBe(true);
+    // 연 시각이 B 를 만든 시각과 같은 ms 면 순서가 비긴다 — 시계를 1초 뒤로
+    const later = vi.spyOn(Date, "now").mockReturnValue(Date.now() + 1000);
+    try {
+      expect(await selectEntry(a.id)).toBe(true);
+    } finally {
+      later.mockRestore();
+    }
     expect(readActiveId()).toBe(a.id);
     expect((await listEntries())[0]!.id).toBe(a.id);
   });
