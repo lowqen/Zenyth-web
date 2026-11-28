@@ -171,6 +171,28 @@ describe("scanYxdb", () => {
     expect(rev.stats.roots![0]!.start).toBe(r.stats.roots![0]!.start);
   });
 
+  it("뿌리 키가 상한을 넘어 버려도 다시 읽어 같은 키 — 해시 표가 덮인 뒤라 레코드 번호로 맞춘다", async () => {
+    for (const order of ["engine", "reversed"] as const) {
+      const blob = blobOf(buildRecs(order));
+      const r = await scanYxdb(blob);
+      const d = await scanYxdb(blob, { rootKeyCap: 0 });
+      expect(d.stats.roots).toEqual(r.stats.roots);
+      expect(d.stats.roots!.every((x) => x.key.length > 0)).toBe(true);
+    }
+    // 뿌리가 여럿이고 위 몇 개만 — 크기 순으로 고른 슬롯과 키가 어긋나지 않는다
+    const lines: Move[][] = [];
+    const seeds = [move(0, 3), move(1, 5), move(2, 9), move(3, 11), move(4, 13)]; // 서로 대칭이 아닌 자리
+    seeds.forEach((sd, i) => {
+      const line = [sd, move(7, 7), move(8, 8), move(6, 9), move(9, 5)].slice(0, i + 1);
+      for (let k = 1; k <= line.length; k++) lines.push(line.slice(0, k));
+    });
+    const blob = blobOf(recsOf(lines));
+    const r = await scanYxdb(blob, { rootsTop: 3 });
+    const d = await scanYxdb(blob, { rootsTop: 3, rootKeyCap: 0 });
+    expect(r.stats.roots!.map((x) => x.subtree)).toEqual([5, 4, 3]);
+    expect(d.stats.roots).toEqual(r.stats.roots);
+  });
+
   it("메모리 관문 — 넘으면 통계만", async () => {
     const r = await scanYxdb(blobOf(buildRecs()), { maxIndexBytes: 1000 });
     expect(r.indexSkipped).toBe("memory");

@@ -26,7 +26,7 @@ export { INDEX_VERSION, statsCurrent } from "./yxdbstats";
  * | 배열 | 폭 | 쓰임 |
  * |---|---|---|
  * | 슬롯 `[hi, lo, info]` | 4 + 4 + 4 | 대칭 해시(정렬) · 주형 · 돌 수 — 2차 통과 뒤 hi 는 부분 트리 크기, lo 는 순서 목록 |
- * | `parent` | 4 | 첫 부모의 슬롯(뿌리 · 부분 트리) |
+ * | `parent` | 4 | 첫 부모의 슬롯(뿌리 · 부분 트리). 뿌리는 `~레코드 번호` — 뿌리 키를 다시 읽을 때 맞춘다 |
  * | 비트맵 | 1 ~ 2 | 없는 부모 후보를 메모리까지 가지 않고 거른다(2차 통과 뒤 놓는다) |
  *
  * 1. 1차 통과: 통계 + 해시. 해시를 윗비트 통에 제자리로 나눠(American flag sort) 통 안을 삽입 정렬.
@@ -96,6 +96,8 @@ export interface ScanOptions {
   maxIndexBytes?: number;
   /** 뿌리 상위 몇 개. 기본 32. */
   rootsTop?: number;
+  /** 2차 통과에서 모아 둘 뿌리 키의 어림 바이트 상한. 넘으면 버리고 끝에 한 번 더 읽는다. 기본 8MB(시험이 줄인다). */
+  rootKeyCap?: number;
   /** LZ4 내용 체크섬 확인(기본 꺼짐). */
   verify?: boolean;
   /**
@@ -325,7 +327,8 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
   const rootKeys = new Map<number, string>(); // 슬롯 → 키
   let rootKeyBytes = 0;
   let rootKeysDropped = false;
-  const ROOT_KEY_CAP = 8 << 20;
+  const ROOT_KEY_CAP = opts.rootKeyCap ?? 8 << 20;
+  let rec = -1; // 레코드 번호(특수 · 겹침까지 모두) — 뿌리는 parent 에 ~rec 로 적는다
   const counts = new Array<number>(OPENINGS + 1).fill(0);
   let classified = 0; // 렌주 · 표준 15줄 국면 수
   const qh = new Int32Array(1024);
@@ -336,6 +339,7 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
   await readYxdb(
     blob,
     (b, ko, kl, vo, vl) => {
+      rec++;
       if (!hasher.load(b, ko, kl)) {
         // 특수 — 색인에 없다
         onCls?.(b, ko, kl, vo, vl, isMetaKey(b, ko, kl) ? -1 : UNCLASSIFIED);
@@ -382,7 +386,7 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
           op = pj;
         }
       }
-      parent[own] = first;
+      parent[own] = first < 0 ? ~rec : first;
       const o =
         !cls || n < 3 ? UNCLASSIFIED : n === 3 ? classifyKey(hasher) : op < 0 ? UNCLASSIFIED : op;
       idx.setOpening(own, o);
@@ -415,7 +419,7 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
   const size = idx.subtreeSizes();
   const top: { s: number; size: number }[] = [];
   for (let sl = 0, m = idx.m; sl < m; sl++) {
-    if (parent[sl] !== -1 || !idx.visited(sl)) continue;
+    if (parent[sl]! >= 0 || !idx.visited(sl)) continue;
     const z = size(sl);
     if (top.length === rootsTop && z <= top[top.length - 1]!.size) continue;
     let i = top.length;
@@ -423,18 +427,24 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
     top.splice(i, 0, { s: sl, size: z });
     if (top.length > rootsTop) top.pop();
   }
-  // 뿌리 키 — 2차에서 모아 둔 것, 넘쳤으면 한 번 더 읽어 필요한 것만
+  // 뿌리 키 — 2차에서 모아 둔 것, 넘쳤으면 한 번 더 읽어 필요한 것만. 해시 표는 부분 트리 크기로 덮였으니
+  // 찾기(`find`)는 못 쓴다 — 2차에서 parent 에 적어 둔 레코드 번호로 맞춘다
   if (rootKeysDropped && top.length > 0) {
-    const want = new Set(top.map((t) => t.s));
+    const want = new Map<number, number>(); // 레코드 번호 → 슬롯
+    let last = 0;
+    for (const t of top) {
+      const r = ~parent[t.s]!;
+      want.set(r, t.s);
+      last = Math.max(last, r);
+    }
+    let at = -1;
     await readYxdb(
       blob,
       (b, ko, kl) => {
-        if (!hasher.load(b, ko, kl)) return;
-        hasher.hash();
-        hasher.canon();
-        const sl = idx.find(hasher.hi, hasher.lo);
-        if (want.delete(sl)) rootKeys.set(sl, keyToHex(b, ko, kl));
-        if (want.size === 0) return false;
+        at++;
+        const sl = want.get(at);
+        if (sl !== undefined) rootKeys.set(sl, keyToHex(b, ko, kl));
+        if (at >= last) return false;
       },
       { onChunk: (loaded, total) => progress("roots", loaded / total), isCancelled: cancelled },
     );
