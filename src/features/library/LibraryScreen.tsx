@@ -438,11 +438,7 @@ export function LibraryScreen() {
                     <button type="button" onClick={() => void lib.restore(e.id)}>
                       {t("되돌리기")}
                     </button>
-                    <button
-                      type="button"
-                      className="btn--danger"
-                      onClick={() => setPurging(e.id)}
-                    >
+                    <button type="button" className="btn--danger" onClick={() => setPurging(e.id)}>
                       {t("완전 삭제")}
                     </button>
                   </span>

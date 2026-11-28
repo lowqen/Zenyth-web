@@ -1578,7 +1578,8 @@ export const EN: Readonly<Record<string, string>> = {
   "휴지통 ({n})": "Trash ({n})",
   "30일이 지나면 저절로 지워집니다.": "Items are deleted for good after 30 days.",
   "완전 삭제": "Delete permanently",
-  "«{name}» 파일이 지워집니다. 되돌릴 수 없습니다.": "«{name}» and its file are deleted. This cannot be undone.",
+  "«{name}» 파일이 지워집니다. 되돌릴 수 없습니다.":
+    "«{name}» and its file are deleted. This cannot be undone.",
   "왼쪽에서 DB 를 고르세요.": "Pick a DB on the left.",
   "비어 있음": "Empty",
   "«{title}» 을(를) 휴지통으로 옮겼습니다": "Moved «{title}» to the trash",
