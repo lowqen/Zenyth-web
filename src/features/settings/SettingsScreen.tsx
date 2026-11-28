@@ -97,7 +97,7 @@ function AutoBootControl() {
   );
 }
 
-/** «DB 열 때 시작 국면»(L5-6 P3) — 항목마다 한 줄, 언어 줄과 같은 모양. */
+/** «DB 열 때 시작 국면»(L5-6 P3) — 셋 중 하나, 다른 고르기 줄(`Segmented`)과 같은 모양. */
 function LibraryOpenAtControl() {
   const mode = useStartMode((s) => s.mode);
   const set = useStartMode((s) => s.set);
@@ -107,23 +107,12 @@ function LibraryOpenAtControl() {
     empty: t("빈 판"),
   };
   return (
-    <div className="radiorows" role="radiogroup" aria-label={t("DB 열 때 시작 국면")}>
-      {START_MODES.map((m) => (
-        <button
-          key={m}
-          type="button"
-          role="radio"
-          aria-checked={mode === m}
-          className="radiorow"
-          onClick={() => set(m)}
-        >
-          <span className="radiorow__label">{label[m]}</span>
-          <span className="checkcircle" aria-hidden="true">
-            <Icon d={ICON.check} />
-          </span>
-        </button>
-      ))}
-    </div>
+    <Segmented
+      label={t("DB 열 때 시작 국면")}
+      value={mode}
+      options={START_MODES.map((m) => ({ value: m, label: label[m] }))}
+      onChange={set}
+    />
   );
 }
 
