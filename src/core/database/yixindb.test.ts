@@ -158,11 +158,17 @@ describe("집계", () => {
     a.consume(`DATABASE 7 7 ${pack("w39")} 0 0 0 0`);
     a.consume(`DATABASE 6 8 ${pack("63%")} 0 0 0 0 x`);
     a.consume("DATABASE 5 5 -1 0 0 0 1");
+    a.consume("DATABASE 4 4 0 0 0 0 0");
     expect(a.consume("DATABASE DONE")?.kind).toBe("done");
     const s = a.snapshot();
-    expect(s.cells.size).toBe(2);
+    // 라벨 없는 기록(-1, LABEL_NONE)은 길목으로 남고, 태그 0 · 글 없는 칸은 지운다(L5-6 P3).
+    expect(s.cells.size).toBe(3);
     expect(s.cells.get(moveKey(m("H8")))?.tag).toBe("W39");
+    expect(s.cells.get(moveKey(m("H8")))?.waypoint).toBeUndefined();
     expect(s.cells.get(moveKey(m("I9")))?.text).toBe("x");
+    const way = [...s.cells.values()].filter((c) => c.waypoint);
+    expect(way).toHaveLength(1);
+    expect(way[0]!.tag).toBe("");
     a.consume("DATABASE REFRESH");
     expect(a.snapshot().cells.size).toBe(0);
   });

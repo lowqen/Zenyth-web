@@ -7,6 +7,7 @@ import { ICON } from "../../components/icon-paths";
 import { downloadBlob } from "../../app/download";
 import { ABBR, COUNT, nameOf, labelOf } from "../../core/opening/opening26";
 import { DEFAULT_SIZE } from "../../core/model/move";
+import { RULE_LABEL } from "../../core/model/rules";
 import type { LibraryMetaRow } from "../../data/library";
 import { t } from "../../i18n/i18n";
 import { useDbStore } from "../database/dbStore";
@@ -16,8 +17,18 @@ import { DbCover } from "./DbCover";
 import { coverKeyOf } from "./cover";
 import { fileNameFor } from "./fileName";
 import { fmtBytes, fmtCount, fmtDate, mainRule, positionsText, ruleLabel } from "./format";
-import { movesOfKey, openingMoves, useLibraryStore } from "./libraryStore";
+import {
+  mainRuleOf,
+  movesOfKey,
+  openingMoves,
+  startMovesOf,
+  useLibraryStore,
+} from "./libraryStore";
 import { PositionThumb } from "./PositionThumb";
+import { useStartMode } from "./startMode";
+import { ConfirmBox } from "../../components/ConfirmBox";
+import { useGameStore } from "../board/gameStore";
+import { useBoardStore } from "../board/boardStore";
 
 /**
  * 라이브러리 상세(라이브러리 계획 §6 «상세 · 열람 동선», 조건 ③) — 물든 머리(큰 커버 · 이름 눌러 바꾸기) · 칩 ·
@@ -77,6 +88,37 @@ export function LibraryDetail({
     navigate(to);
   };
 
+  // 규칙이 다른 DB(L5-6 P3) — 엔진은 기록을 규칙별로 찾으므로 이대로 열면 DB 가 비어 보인다. 편집기는 묻지 않는다.
+  const rule = useGameStore((s) => s.rule);
+  const boardSize = useBoardStore((s) => s.render.size);
+  const dbRule = mainRuleOf(stats);
+  const [clash, setClash] = useState<{ moves: Parameters<typeof lib.open>[1]; to: string } | null>(
+    null,
+  );
+  const ask = (moves: Parameters<typeof lib.open>[1], to: string) => {
+    if (moves !== null && dbRule && (dbRule.rule !== rule || dbRule.size !== boardSize))
+      return setClash({ moves, to });
+    void go(moves, to);
+  };
+  const canSwitch = !!dbRule && dbRule.size === boardSize;
+  const switchAndGo = () => {
+    const c = clash;
+    setClash(null);
+    if (!c || !dbRule) return;
+    const g = useGameStore.getState();
+    g.setRule(dbRule.rule);
+    if (useGameStore.getState().rule !== dbRule.rule)
+      return setNotice(useGameStore.getState().ruleNotice ?? t("규칙을 바꾸지 못했습니다"));
+    void go(c.moves, c.to);
+  };
+
+  // «기록 시작점» — «이 DB 열기»가 판에 놓는 곳(설정 ▸ 일반 ▸ 라이브러리)
+  const mode = useStartMode((s) => s.mode);
+  const startMoves = startMovesOf(stats, DEFAULT_SIZE, mode);
+  const rootMoves = startMovesOf(stats, DEFAULT_SIZE, "root");
+  const branched =
+    mode === "branch" && !!startMoves && !!rootMoves && startMoves.length > rootMoves.length;
+
   const openings = stats?.openings;
   const classified = openings ? openings.slice(0, COUNT).reduce((a, b) => a + b, 0) : 0;
   const unclassified = openings?.[COUNT] ?? 0;
@@ -108,7 +150,7 @@ export function LibraryDetail({
                 type="button"
                 className="libopenings__row"
                 disabled={busy}
-                onClick={() => void go(openingMoves(r.i), "/board")}
+                onClick={() => ask(openingMoves(r.i), "/board")}
                 title={t("{name} 대표 국면을 판에서 엽니다", { name: labelOf(r.i) })}
               >
                 <DbCover k={r.i} />
@@ -155,7 +197,7 @@ export function LibraryDetail({
                 className="libroots__row"
                 disabled={busy || !moves}
                 title={moves ? t("이 국면을 판에서 엽니다") : t("이 판 크기에서는 열 수 없습니다")}
-                onClick={() => moves && void go(moves, "/board")}
+                onClick={() => moves && ask(moves, "/board")}
               >
                 {moves ? (
                   <PositionThumb moves={moves} size={DEFAULT_SIZE} />
@@ -282,7 +324,7 @@ export function LibraryDetail({
             className="button--primary"
             disabled={busy}
             data-k="library-open"
-            onClick={() => void go("start", "/board")}
+            onClick={() => ask("start", "/board")}
           >
             <Icon d={ICON.play} />
             {t("이 DB 열기")}
@@ -295,6 +337,81 @@ export function LibraryDetail({
           {notice}
         </p>
       )}
+      {clash && dbRule && (
+        <ConfirmBox
+          className="panel libdetail__section"
+          text={t(
+            "이 DB 는 대부분 {db} 국면인데 지금 판은 {board} 입니다. 이대로 열면 엔진이 DB 의 기록을 찾지 못합니다.",
+            {
+              db: ruleLabel(`${dbRule.rule}-${dbRule.size}`),
+              board: ruleLabel(`${rule}-${boardSize}`),
+            },
+          )}
+          confirmLabel={
+            canSwitch
+              ? t("{rule}로 바꿔 열기", { rule: RULE_LABEL[dbRule.rule] })
+              : t("그대로 열기")
+          }
+          cancelLabel={t("취소")}
+          onConfirm={() => {
+            if (canSwitch) return switchAndGo();
+            const c = clash;
+            setClash(null);
+            void go(c.moves, c.to);
+          }}
+          onCancel={() => setClash(null)}
+        >
+          {canSwitch && (
+            <div className="panel__actions">
+              <button
+                type="button"
+                onClick={() => {
+                  const c = clash;
+                  setClash(null);
+                  void go(c.moves, c.to);
+                }}
+              >
+                {t("그대로 열기")}
+              </button>
+            </div>
+          )}
+        </ConfirmBox>
+      )}
+      {startMoves && (
+        <section className="panel libdetail__section" aria-label={t("기록 시작점")}>
+          <h3 className="panel__title">{t("기록 시작점")}</h3>
+          <ul className="libroots">
+            <li>
+              <button
+                type="button"
+                className="libroots__row"
+                disabled={busy}
+                data-k="library-start"
+                onClick={() => ask("start", "/board")}
+              >
+                <PositionThumb moves={startMoves} size={DEFAULT_SIZE} />
+                <span className="libroots__text">
+                  <span className="libroots__title">
+                    {startMoves.length === 0
+                      ? t("빈 판에서 엽니다")
+                      : t("{n}수 국면에서 엽니다", { n: startMoves.length })}
+                  </span>
+                  <span className="libroots__sub">
+                    {mode === "root"
+                      ? t("가장 큰 뿌리 국면")
+                      : mode === "empty"
+                        ? t("늘 빈 판에서 (설정 ▸ 일반)")
+                        : branched
+                          ? t("기록이 갈라지는 곳. 그 앞은 엔진이 지나며 남긴 빈 기록입니다")
+                          : t("기록이 갈라지는 곳")}
+                  </span>
+                </span>
+                <Icon d={ICON.chevron} className="libroots__chev" />
+              </button>
+            </li>
+          </ul>
+        </section>
+      )}
       {scanLine}
 
       {rootsFirst ? rootsSection : openingSection}
@@ -304,7 +421,7 @@ export function LibraryDetail({
         <h3 className="panel__title">{t("열기")}</h3>
         <p className="panel__hint">{t("통계가 없어도 늘 열 수 있습니다.")}</p>
         <div className="panel__actions">
-          <button type="button" disabled={busy} onClick={() => void go([], "/board")}>
+          <button type="button" disabled={busy} onClick={() => ask([], "/board")}>
             {t("빈 판에서 열기")}
           </button>
           <button type="button" disabled={busy} onClick={() => void go(null, "/library/edit")}>

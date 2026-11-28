@@ -114,7 +114,13 @@ export function DatabaseScreen() {
 
   const render: BoardRender = useMemo(() => {
     const tags = new Map<number, { label: string; kind: TagKind; winRatePct?: number }>();
-    if (snap) for (const [k, c] of snap.cells) tags.set(k, dbCellTag(c, s.settings.showBoardText));
+    const waypoints = new Set<number>();
+    if (snap)
+      for (const [k, c] of snap.cells) {
+        if (c.waypoint && !c.text) {
+          if (s.settings.showWaypoints) waypoints.add(k);
+        } else tags.set(k, dbCellTag(c, s.settings.showBoardText));
+      }
     const candidates = new Map<number, "live" | "done">();
     if (picked) candidates.set(moveKey(picked, board.size), "live");
     return {
@@ -125,8 +131,9 @@ export function DatabaseScreen() {
       lastMove: stones.at(-1) ?? null,
       tags,
       candidates,
+      waypoints,
     };
-  }, [snap, picked, board, stones, s.settings.showBoardText]);
+  }, [snap, picked, board, stones, s.settings.showBoardText, s.settings.showWaypoints]);
 
   const occupied = new Set(stones.map((m) => moveKey(m, board.size)));
   const value = snap
@@ -507,6 +514,14 @@ export function DatabaseScreen() {
                 label={t("칸 글자를 태그보다 먼저")}
                 on={s.settings.showBoardText}
                 onChange={(showBoardText) => void s.setSettings({ showBoardText })}
+              />
+            </div>
+            <div className="review__row">
+              <span className="review__label">{t("DB 길목 표시")}</span>
+              <Switch
+                label={t("DB 길목 표시")}
+                on={s.settings.showWaypoints}
+                onChange={(showWaypoints) => void s.setSettings({ showWaypoints })}
               />
             </div>
             <div className="review__row">

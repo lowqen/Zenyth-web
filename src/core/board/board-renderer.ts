@@ -45,6 +45,8 @@ export interface BoardRender {
   blocked: ReadonlySet<number>;
   /** 모양 표식(`BoardMark`) — `moveKey` → 표식. 돌이 놓인 점에는 그리지 않는다. */
   marks: ReadonlyMap<number, BoardMark>;
+  /** 값 없는 DB 기록(엔진이 지나며 남긴 길목) — 둘 차례 돌 색의 작은 속 빈 고리(L5-6 P3). */
+  waypoints?: ReadonlySet<number>;
   /** settings.txt 14행. */
   showNumbers: boolean;
   palette: TagPalette;
@@ -466,6 +468,27 @@ export function drawDynamic(
   }
   for (const [m, mark] of corner) {
     drawMark(ctx, cx(m) + r * 0.62, cy(m) - r * 0.62, r * 0.34, mark, skin.line, hair);
+  }
+  // 값 없는 DB 기록 — 칸의 약 4분의 1 크기 고리, 둘 차례 돌 색 위에 어느 나무에서도 보이게 반대색 테
+  if (render.waypoints?.size) {
+    const black = render.stones.length % 2 === 0;
+    const rr = g.step * 0.13;
+    const w = g.step * 0.055;
+    for (const key of render.waypoints) {
+      if (occupied.has(key) || render.tags.get(key)?.label || render.marks.has(key)) continue;
+      const m = fromKey(key, render.size);
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = black ? skin.whiteHigh : skin.blackRim;
+      ctx.lineWidth = w + hair * 1.6;
+      circle(ctx, cx(m), cy(m), rr);
+      ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = black ? skin.blackLow : skin.whiteHigh;
+      ctx.lineWidth = w;
+      circle(ctx, cx(m), cy(m), rr);
+      ctx.stroke();
+    }
   }
 
   // 최선수: 어두운 후광 위의 밝은 링. 맨 나무 위에 앉는 만큼 어두운 값 칩 위에도

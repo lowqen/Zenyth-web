@@ -5,6 +5,7 @@ import { statsCurrent } from "../../core/database/yxdbstats";
 import { decodeKey, hexToKey } from "../../core/database/yxdbkey";
 import { representative } from "../../core/opening/opening26";
 import type { Move } from "../../core/model/move";
+import type { PlayRule } from "../../core/model/rules";
 import { db } from "../../data/db";
 import {
   BROWSER_SOURCE_ID,
@@ -48,6 +49,7 @@ import {
 import { runLibraryJob, scanLibraryFile, type LibraryScan } from "./libraryWorker";
 import type { MergeJobOptions } from "./protocol";
 import { isFolderSource, type SourceAccess } from "./source";
+import { useStartMode, type StartMode } from "./startMode";
 import {
   addFolder,
   canOpenFolders,
@@ -230,12 +232,29 @@ async function roomFor(bytes: number): Promise<string | null> {
  * DB 의 기록이 시작되는 국면 — 이 판 크기로 읽히는 가장 큰 뿌리의 시작점(가장 무거운 자식이 90% 이상인 동안
  * 내려간 곳, 색인 판 3), 없으면 그 뿌리. 통계(뿌리)가 없으면 null.
  */
-export function startMovesOf(stats: DbStats | undefined, size: number): Move[] | null {
+export function startMovesOf(
+  stats: DbStats | undefined,
+  size: number,
+  mode: StartMode = "branch",
+): Move[] | null {
+  if (mode === "empty") return [];
   for (const r of stats?.roots ?? []) {
     const m = movesOfKey(r.key, size);
-    if (m) return (r.start ? movesOfKey(r.start, size) : null) ?? m;
+    if (!m) continue;
+    if (mode === "root") return m;
+    return (r.start ? movesOfKey(r.start, size) : null) ?? m;
   }
   return null;
+}
+
+/**
+ * DB 의 국면이 가장 많은 규칙(`stats.rules` 의 `renju-15` …)과 정사각 판 크기 — 통계가 없거나 아는 규칙이 아니면
+ * null. «이 DB 열기»가 판의 규칙과 다르면 묻는다(L5-6 P3, 앱 `LibraryPositions.mainRuleOf`).
+ */
+export function mainRuleOf(stats: DbStats | undefined): { rule: PlayRule; size: number } | null {
+  const top = Object.entries(stats?.rules ?? {}).sort((a, b) => b[1] - a[1])[0];
+  const m = top && /^(freestyle|standard|renju)-(\d+)$/.exec(top[0]);
+  return m ? { rule: m[1] as PlayRule, size: Number(m[2]) } : null;
 }
 
 export function movesOfKey(hex: string, size: number): Move[] | null {
@@ -752,6 +771,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
           ? startMovesOf(
               get().entries.find((e) => e.id === id)?.stats,
               useBoardStore.getState().render.size,
+              useStartMode.getState().mode,
             )
           : moves;
       if (target) {
@@ -760,9 +780,11 @@ export const useLibraryStore = create<LibraryState>((set, get) => {
         useGameStore.getState().loadMoves(target, {
           name: title,
           what:
-            moves === "start"
-              ? t("라이브러리에서 «{title}»의 시작 국면({n}수)으로", { title, n: target.length })
-              : t("라이브러리에서 {n}수 국면으로", { n: target.length }),
+            moves === "start" && target.length === 0
+              ? t("라이브러리에서 «{title}», 빈 판에서 시작", { title })
+              : moves === "start"
+                ? t("라이브러리에서 «{title}»의 시작 국면({n}수)으로", { title, n: target.length })
+                : t("라이브러리에서 {n}수 국면으로", { n: target.length }),
         });
       }
       await refresh();

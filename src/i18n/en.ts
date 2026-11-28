@@ -1707,4 +1707,24 @@ export const EN: Readonly<Record<string, string>> = {
   "폴더를 쓸 권한을 받지 못했습니다": "Permission to use the folder was not granted",
   "붙어 있는 DB 의 폴더는 뺄 수 없습니다. 다른 DB 를 먼저 여세요":
     "Cannot remove the folder of the open DB. Open another DB first",
+  // L5-6 P3 — 시작 국면 · 길목 · 규칙 불일치
+  "DB 길목 표시": "Show DB waypoints",
+  "규칙을 바꾸지 못했습니다": "Could not change the rule",
+  "이 DB 는 대부분 {db} 국면인데 지금 판은 {board} 입니다. 이대로 열면 엔진이 DB 의 기록을 찾지 못합니다.":
+    "Most of this DB is {db}, but the board is {board}. Opened as is, the engine will not find the DB's records.",
+  "{rule}로 바꿔 열기": "Switch to {rule} and open",
+  "그대로 열기": "Open as is",
+  "기록 시작점": "Where records start",
+  "빈 판에서 엽니다": "Opens on an empty board",
+  "{n}수 국면에서 엽니다": "Opens at move {n}",
+  "가장 큰 뿌리 국면": "The largest root position",
+  "늘 빈 판에서 (설정 ▸ 일반)": "Always an empty board (Settings ▸ General)",
+  "기록이 갈라지는 곳. 그 앞은 엔진이 지나며 남긴 빈 기록입니다":
+    "Where the records branch. The moves before it are empty records the engine left while searching",
+  "기록이 갈라지는 곳": "Where the records branch",
+  "라이브러리에서 «{title}», 빈 판에서 시작":
+    "From the library: «{title}», starting on an empty board",
+  "가장 큰 뿌리": "Largest root",
+  "DB 열 때 시작 국면": "Start position when opening a DB",
+  "«이 DB 열기»가 판에 놓는 곳": "Where «Open this DB» puts the board",
 };

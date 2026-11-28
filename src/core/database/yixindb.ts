@@ -259,6 +259,11 @@ export interface DbCell {
   depth: number;
   bound: DbBound;
   hasComment: boolean;
+  /**
+   * 라벨 없는 기록(`DATABASE x y -1`, Rapfi `LABEL_NONE`) — 엔진이 조회할 때마다 남기는 길목이라 진짜 기록으로
+   * 이어진다. Yixin 은 그 칸에 DB 칸 그림을 그린다(main.c:1987) — 판은 작은 고리로(L5-6 P3). 값은 없다.
+   */
+  waypoint?: boolean;
 }
 
 /** 값 쪽이 읽는 글자 — 태그가 먼저, 없으면 칸 글자(main.c `evalbar_update_from_db`). */
@@ -351,7 +356,7 @@ export class DbAggregator {
         const move = this.fromWire(r.row, r.col);
         const tag = decodeTag(r.tag);
         const k = moveKey(move, this.size);
-        if (!tag && !r.text) this.cells.delete(k);
+        if (!tag && !r.text && r.tag >= 0) this.cells.delete(k);
         else
           this.cells.set(k, {
             move,
@@ -361,6 +366,7 @@ export class DbAggregator {
             depth: r.depth,
             bound: r.bound,
             hasComment: r.hasComment,
+            ...(r.tag < 0 && !tag ? { waypoint: true } : {}),
           });
         break;
       }

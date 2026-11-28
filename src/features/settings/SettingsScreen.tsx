@@ -29,6 +29,7 @@ import { useAdminTools } from "../joseki/admin";
 import { MAPPED_IDS } from "../../core/settings/desktop-bridge";
 import { ALL_SPECS } from "../../core/settings/desktop-settings";
 import { msg, pick, setLang, t, useLang, type Lang } from "../../i18n/i18n";
+import { START_MODES, useStartMode, type StartMode } from "../library/startMode";
 import { useStagger } from "../../components/useStagger";
 
 /**
@@ -93,6 +94,36 @@ function AutoBootControl() {
       on={on}
       onChange={(autoBoot) => update({ autoBoot })}
     />
+  );
+}
+
+/** «DB 열 때 시작 국면»(L5-6 P3) — 항목마다 한 줄, 언어 줄과 같은 모양. */
+function LibraryOpenAtControl() {
+  const mode = useStartMode((s) => s.mode);
+  const set = useStartMode((s) => s.set);
+  const label: Record<StartMode, string> = {
+    branch: t("기록이 갈라지는 곳"),
+    root: t("가장 큰 뿌리"),
+    empty: t("빈 판"),
+  };
+  return (
+    <div className="radiorows" role="radiogroup" aria-label={t("DB 열 때 시작 국면")}>
+      {START_MODES.map((m) => (
+        <button
+          key={m}
+          type="button"
+          role="radio"
+          aria-checked={mode === m}
+          className="radiorow"
+          onClick={() => set(m)}
+        >
+          <span className="radiorow__label">{label[m]}</span>
+          <span className="checkcircle" aria-hidden="true">
+            <Icon d={ICON.check} />
+          </span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -508,6 +539,16 @@ const ROWS: readonly RowSpec[] = [
       "컴퓨터 흑 백 사람 진영 착수 시간 레벨 level timeout_turn 룰셋 규칙 렌주 개시 오프닝 RIF 교환 swap 분석 시간 후보 nbest pv 멀티 PV 정지 최선수",
     wide: true,
     Control: BoardTabsControl,
+  },
+  {
+    id: "libraryOpenAt",
+    page: "general",
+    group: msg("라이브러리"),
+    label: msg("DB 열 때 시작 국면"),
+    note: msg("«이 DB 열기»가 판에 놓는 곳"),
+    keywords: "라이브러리 library db 데이터베이스 시작 국면 뿌리 root start 열기 open 빈 판",
+    wide: true,
+    Control: LibraryOpenAtControl,
   },
   {
     id: "theme",

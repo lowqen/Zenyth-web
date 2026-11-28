@@ -283,15 +283,28 @@ function useAnalysisOverlay(mode: BoardMode): void {
   const analysis = useCurrentAnalysis();
   const db = useBoardDb();
   const dbShowText = useDbStore((s) => s.settings.showBoardText);
+  const dbWaypoints = useDbStore((s) => s.settings.showWaypoints);
+  const setWaypoints = useBoardStore((s) => s.setWaypoints);
   const overlay = useMemo(() => {
     if (mode !== "analysis") return EMPTY_SNAPSHOT;
     if (!db || db.snap.cells.size === 0) return analysis;
     const tags = new Map(analysis.tags);
     // round 는 엔진 태그를 낡은 순으로 지울 때만 쓴다 — DB 칩은 매번 새로 얹으므로 0.
-    for (const [k, c] of db.snap.cells) tags.set(k, { ...dbCellTag(c, dbShowText), round: 0 });
+    // 값 없는 기록(길목)은 칩이 아니다 — 엔진 태그를 덮지 않고 고리로 따로(L5-6 P3).
+    for (const [k, c] of db.snap.cells)
+      if (!c.waypoint || c.text) tags.set(k, { ...dbCellTag(c, dbShowText), round: 0 });
     return { ...analysis, tags };
   }, [mode, analysis, db, dbShowText]);
+  const waypoints = useMemo(() => {
+    const out = new Set<number>();
+    if (mode === "analysis" && db && dbWaypoints)
+      for (const [k, c] of db.snap.cells) if (c.waypoint && !c.text) out.add(k);
+    return out;
+  }, [mode, db, dbWaypoints]);
   useEffect(() => {
     applyAnalysis(overlay);
   }, [overlay, applyAnalysis]);
+  useEffect(() => {
+    setWaypoints(waypoints);
+  }, [waypoints, setWaypoints]);
 }

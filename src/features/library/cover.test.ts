@@ -4,7 +4,7 @@ import { keyOfMoves, keyToHex } from "../../core/database/yxdbkey";
 import { RULE_RENJU } from "../../core/database/yxdbfile";
 import { move } from "../../core/model/move";
 import { coverKeyOf, dominantOpening } from "./cover";
-import { movesOfKey, startMovesOf } from "./libraryStore";
+import { mainRuleOf, movesOfKey, startMovesOf } from "./libraryStore";
 
 const stats = (openings?: number[]): DbStats => ({
   records: 10,
@@ -79,5 +79,22 @@ describe("DB 의 시작 국면", () => {
     const out = startMovesOf({ ...stats(), roots }, 15)!;
     expect(out).toHaveLength(5);
     expect(keyToHex(keyOfMoves(RULE_RENJU, 15, out))).toBe(roots[0]!.start);
+    // 설정 «DB 열 때 시작 국면»(L5-6 P3): 뿌리 그대로 · 늘 빈 판
+    expect(startMovesOf({ ...stats(), roots }, 15, "root")).toEqual([]);
+    expect(startMovesOf({ ...stats(), roots }, 15, "branch")).toHaveLength(5);
+    expect(startMovesOf(undefined, 15, "empty")).toEqual([]);
+  });
+});
+
+describe("DB 의 주 규칙", () => {
+  it("국면이 가장 많은 규칙과 판 크기 — 모르는 규칙 · 통계 없음은 null", () => {
+    expect(mainRuleOf(stats())).toEqual({ rule: "renju", size: 15 });
+    expect(mainRuleOf({ ...stats(), rules: { "renju-15": 3, "freestyle-20": 7 } })).toEqual({
+      rule: "freestyle",
+      size: 20,
+    });
+    expect(mainRuleOf({ ...stats(), rules: { "swap1-15": 9 } })).toBeNull();
+    expect(mainRuleOf({ ...stats(), rules: {} })).toBeNull();
+    expect(mainRuleOf(undefined)).toBeNull();
   });
 });

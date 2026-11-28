@@ -48,6 +48,9 @@ interface BoardState {
   /** 렌주 금수 목록. 엔진의 `FORBID` 가 채운다(W4). */
   forbidden: readonly Move[];
   setForbidden: (cells: readonly Move[]) => void;
+
+  /** 값 없는 DB 기록의 고리(L5-6 P3) — 분석 오버레이(`useAnalysisOverlay`)가 DB 모습을 따라 채운다. */
+  setWaypoints: (keys: ReadonlySet<number>) => void;
 }
 
 /** 분석 오버레이를 비운 상태. 국면이 바뀌는 모든 곳이 이걸 얹는다. */
@@ -126,6 +129,13 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     })),
 
   clearAnalysis: () => set((s) => ({ render: { ...s.render, ...CLEARED } })),
+
+  setWaypoints: (waypoints) =>
+    set((s) =>
+      (s.render.waypoints?.size ?? 0) === 0 && waypoints.size === 0
+        ? s
+        : { render: { ...s.render, waypoints } },
+    ),
 
   setStones: (stones, future = []) =>
     set((s) => ({

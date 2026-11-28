@@ -114,6 +114,8 @@ export interface DbSettings {
   autoSaveMinutes: number;
   /** 칸 글자를 태그보다 먼저 그린다 — settings.txt 34행. */
   showBoardText: boolean;
+  /** 값 없는 기록(엔진이 지나며 남긴 길목)을 판에 작은 고리로 — 웹 · 앱 것(L5-6 P3). */
+  showWaypoints: boolean;
   /** 일괄 삭제 확인 — settings.txt 35행. */
   confirmDeleteAll: boolean;
 }
@@ -124,6 +126,7 @@ export const DEFAULT_DB_SETTINGS: DbSettings = {
   autoSave: false,
   autoSaveMinutes: 30,
   showBoardText: true,
+  showWaypoints: true,
   confirmDeleteAll: true,
 };
 
@@ -139,6 +142,7 @@ export function sanitizeDbSettings(s: Partial<DbSettings>): DbSettings {
       ? Math.min(1440, Math.max(1, Math.round(mins)))
       : d.autoSaveMinutes,
     showBoardText: bool(s.showBoardText, d.showBoardText),
+    showWaypoints: bool(s.showWaypoints, d.showWaypoints),
     confirmDeleteAll: bool(s.confirmDeleteAll, d.confirmDeleteAll),
   };
 }
