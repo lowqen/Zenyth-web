@@ -73,7 +73,7 @@ export interface LibraryEntry {
   lastOpenedAt?: number;
   /** 휴지통에 넣은 시각(브라우저 소스는 앱 안 30일). */
   trashedAt?: number;
-  /** 휴지통 속 이름(소스가 정한다 — 되돌리기 · 아주 지우기에 쓴다). 없으면 브라우저 소스의 `.trash/<file>`. */
+  /** 휴지통 속 이름(소스가 정한다 — 되돌리기 · 완전 삭제에 쓴다). 없으면 브라우저 소스의 `.trash/<file>`. */
   trashFile?: string;
   /** 폴더에서 파일이 사라진 시각 — 앱 밖에서 지웠거나 옮겼다. 정체로 다시 짝지으면 걷고, 30일 뒤 정리한다. */
   missingSince?: number;

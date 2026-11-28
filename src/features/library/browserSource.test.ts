@@ -188,7 +188,7 @@ describe("휴지통 항목(L2)", () => {
     expect((await getEntry(e.id))?.title).toBe("빈 DB");
   });
 
-  it("아주 지우기 · 30일 정리 — 휴지통 파일과 항목이 함께 사라진다", async () => {
+  it("완전 삭제 · 30일 정리 — 휴지통 파일과 항목이 함께 사라진다", async () => {
     const a = (await createEntry("A", { select: false }))!;
     const b = (await createEntry("B", { select: false }))!;
     await src.writeAtomic([{ name: a.file, data: blob(3) }]);

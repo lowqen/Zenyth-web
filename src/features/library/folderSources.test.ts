@@ -117,7 +117,7 @@ describe("FsaFolderSource", () => {
     expect(text(dir.node.files.get("연구_bak1.db")!.data)).toBe("B1");
   });
 
-  it("휴지통은 폴더 안 .zenyth-trash — 되돌리기 · 아주 지우기", async () => {
+  it("휴지통은 폴더 안 .zenyth-trash — 되돌리기 · 완전 삭제", async () => {
     const dir = fakeFsaDir();
     const src = new FsaFolderSource("f", dir);
     await src.writeAtomic([

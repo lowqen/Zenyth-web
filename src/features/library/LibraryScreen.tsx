@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageTitle } from "../../app/PageTitle";
 import { useDesktopSplit } from "../../app/layout";
+import { ConfirmBox } from "../../components/ConfirmBox";
 import { Chip, ChipGroup, Segmented } from "../../components/controls";
 import { Disclosure } from "../../components/Disclosure";
 import { Icon } from "../../components/icons";
@@ -67,6 +68,8 @@ export function LibraryScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [merging, setMerging] = useState(false);
+  // «완전 삭제»는 되돌릴 수 없는 유일한 서재 동작 — 먼저 묻는다(L5-6 결정, 안드로이드와 같게).
+  const [purging, setPurging] = useState<string | null>(null);
   // 길게 누르기(터치) — 0.5초면 고르기를 켜고 뒤따르는 클릭은 삼킨다
   const press = useRef<{ timer: number; x: number; y: number; fired: boolean } | null>(null);
   const endPress = () => {
@@ -438,11 +441,25 @@ export function LibraryScreen() {
                     <button
                       type="button"
                       className="btn--danger"
-                      onClick={() => void lib.purge(e.id)}
+                      onClick={() => setPurging(e.id)}
                     >
-                      {t("아주 지우기")}
+                      {t("완전 삭제")}
                     </button>
                   </span>
+                  {purging === e.id && (
+                    <ConfirmBox
+                      className="libconfirm"
+                      text={t("«{name}» 파일이 지워집니다. 되돌릴 수 없습니다.", { name: e.title })}
+                      confirmLabel={t("완전 삭제")}
+                      cancelLabel={t("취소")}
+                      danger
+                      onConfirm={() => {
+                        setPurging(null);
+                        void lib.purge(e.id);
+                      }}
+                      onCancel={() => setPurging(null)}
+                    />
+                  )}
                 </li>
               ))}
             </ul>

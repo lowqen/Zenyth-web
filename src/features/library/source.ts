@@ -53,7 +53,7 @@ export interface LibrarySource {
   writeAtomic(writes: readonly FileWrite[]): Promise<void>;
   /** 덮어쓰지 않는다 — `to` 가 있으면 실패. 저널(폴더 소스는 엔진의 백업까지)도 따라간다. */
   rename(from: string, to: string): Promise<void>;
-  /** 휴지통으로 — 저널도 따라간다. 휴지통 속 이름(되돌리기 · 아주 지우기의 열쇠)을 돌려준다. */
+  /** 휴지통으로 — 저널도 따라간다. 휴지통 속 이름(되돌리기 · 완전 삭제의 열쇠)을 돌려준다. */
   trash(name: string): Promise<string>;
   /** 휴지통에서 `name` 으로 되돌린다 — 그 자리에 파일이 있으면 실패. */
   restore(trashName: string, name: string): Promise<void>;

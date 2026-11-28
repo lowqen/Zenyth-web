@@ -7072,6 +7072,10 @@ a.slink:hover {
 .libtrash__row .panel__actions {
   margin-top: 0;
 }
+/* «완전 삭제» 확인 — 그 줄 아래로 한 줄을 다 쓴다. */
+.libtrash__row .libconfirm {
+  flex-basis: 100%;
+}
 .libundo {
   position: sticky;
   bottom: var(--space-l);
