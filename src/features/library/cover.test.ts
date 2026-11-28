@@ -66,4 +66,18 @@ describe("DB 의 시작 국면", () => {
     expect(startMovesOf(stats(), 15)).toBeNull();
     expect(startMovesOf(undefined, 15)).toBeNull();
   });
+
+  it("뿌리에 시작점이 있으면 그곳(색인 판 3)", () => {
+    const deep = [move(7, 7), move(7, 6), move(7, 5), move(9, 9), move(5, 7)];
+    const roots = [
+      {
+        key: keyToHex(keyOfMoves(RULE_RENJU, 15, [])),
+        subtree: 900,
+        start: keyToHex(keyOfMoves(RULE_RENJU, 15, deep)),
+      },
+    ];
+    const out = startMovesOf({ ...stats(), roots }, 15)!;
+    expect(out).toHaveLength(5);
+    expect(keyToHex(keyOfMoves(RULE_RENJU, 15, out))).toBe(roots[0]!.start);
+  });
 });

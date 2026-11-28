@@ -226,11 +226,14 @@ async function roomFor(bytes: number): Promise<string | null> {
 }
 
 /** DB 국면 키 → 판에 놓을 수(흑 · 백을 번갈아). 판 크기가 다르거나 패스 칸이 있으면 null. */
-/** DB 의 기록이 시작되는 국면 — 이 판 크기로 읽히는 가장 큰 뿌리. 통계(뿌리)가 없으면 null. */
+/**
+ * DB 의 기록이 시작되는 국면 — 이 판 크기로 읽히는 가장 큰 뿌리의 시작점(가장 무거운 자식이 90% 이상인 동안
+ * 내려간 곳, 색인 판 3), 없으면 그 뿌리. 통계(뿌리)가 없으면 null.
+ */
 export function startMovesOf(stats: DbStats | undefined, size: number): Move[] | null {
   for (const r of stats?.roots ?? []) {
     const m = movesOfKey(r.key, size);
-    if (m) return m;
+    if (m) return (r.start ? movesOfKey(r.start, size) : null) ?? m;
   }
   return null;
 }

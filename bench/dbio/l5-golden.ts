@@ -8,6 +8,7 @@
  * - `mixed.db`      렌주 15 의 여러 주형 가지 + 표준 15 · 자유 15 · 자유 20 국면, 엔진 키 순서, LZ4
  * - `unordered.db`  같은 레코드를 섞은 것(돌 수 순서가 아님 → 주형 건너뜀), 압축 안 함
  * - `orphans.db`    부모가 빠진 국면이 섞인 것(미분류 · 뿌리 여럿), LZ4
+ * - `collapse.db`   비표준 대칭 부모(실기 Phone Copy 꼴) · 엇갈린 모임 · 빵 부스러기 외길(시작점) — 색인 판 3, LZ4
  * - `<이름>.json`   `scanYxdb` 결과(통계 + 순서 · 중복 · 특수)
  * - `classify3.txt` 천원 흑 + 백 한 점 + 흑 한 점의 모든 3돌 국면 주형(줄 = 백 칸, 글자 = 흑 칸, 0-9a-p · q = 미분류 · . = 겹침)
  */
@@ -116,6 +117,36 @@ for (let i = shuffled.length - 1; i > 0; i--) {
   [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
 }
 
+// ── collapse: 색인 판 3(L5-6) — 비표준 부모는 표가 없고, 엇갈림은 번지고, 시작점은 외길 끝 ──
+const collapse = new Map<string, Uint8Array>();
+{
+  const C = move(7, 7);
+  const a = move(7, 6);
+  const b = move(7, 5);
+  const c = move(9, 9);
+  const d = move(5, 7);
+  const S5 = [C, a, b, c, d];
+  prefixes(2, 15, S5, collapse);
+  for (let t = 0; t < 12; t++) prefixes(2, 15, walk(S5, 15, 3 + rnd(8)), collapse, 6);
+  // S5 의 다른 부모 P = 흑{C, d} 백{a, c} — 그 부모는 비표준 Q = 흑{C, d} 백{c} 뿐
+  for (const l of [
+    [C, c],
+    [C, c, d],
+    [C, a, d, c],
+  ]) {
+    const k = keyOfMoves(2, 15, l);
+    collapse.set(keyHex(k), k);
+  }
+  // 직접 · 간접 줄이 5돌에서 모인다 → 엇갈림, 그 자손도
+  const W2 = move(8, 6);
+  const B3 = move(9, 5);
+  const L1 = [C, a, b, W2, B3];
+  prefixes(2, 15, L1, collapse);
+  prefixes(2, 15, [C, W2, B3, a, b], collapse);
+  for (let t = 0; t < 4; t++) prefixes(2, 15, walk(L1, 15, 2 + rnd(4)), collapse, 6);
+}
+const collapseKeys = sortKeys([...collapse.values()]);
+
 async function emit(name: string, keys: Uint8Array[], compress: boolean) {
   const bytes = writeDb(keys, compress);
   writeFileSync(join(out, `${name}.db`), bytes);
@@ -139,6 +170,7 @@ async function emit(name: string, keys: Uint8Array[], compress: boolean) {
 await emit("mixed", mixedKeys, true);
 await emit("unordered", shuffled, false);
 await emit("orphans", orphanKeys, true);
+await emit("collapse", collapseKeys, true);
 
 // ── classify3: 천원 흑 + 백 c + 흑 d ──
 const CH = "0123456789abcdefghijklmnopq";

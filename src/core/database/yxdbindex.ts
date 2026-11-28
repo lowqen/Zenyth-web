@@ -31,9 +31,15 @@ export { INDEX_VERSION, statsCurrent } from "./yxdbstats";
  *
  * 1. 1차 통과: 통계 + 해시. 해시를 윗비트 통에 제자리로 나눠(American flag sort) 통 안을 삽입 정렬.
  * 2. 2차 통과: 레코드마다 부모 후보(마지막 둔 쪽 돌 하나씩 뺀 국면)를 찾는다. 엔진 파일은 돌 수 순서라 부모가
- *    늘 먼저 정해져 있다 — **모든 부모**의 주형을 보고 정한다: 모두 같은 주형이면 그것, 하나라도 다르거나
- *    미분류면 미분류, 부모가 없으면 미분류(§5 — 추측하지 않는다). 3돌 국면은 `opening26.classify`.
+ *    늘 먼저 정해져 있다 — **모든 부모**의 주형을 보고 정한다(색인 판 3, L5-6):
+ *    - 주형(0..25)인 부모만 표를 던진다. 표가 모두 같으면 그 주형, 다르면 **엇갈림**(`MIXED` = 27).
+ *    - 비표준 · 분류 밖 부모(26)는 표를 던지지 않는다 — 대칭 동치로 생긴 비표준 부모 하나가 표준 줄 자손 전체를
+ *      미분류로 만들던 일(실기: 807만 → 3).
+ *    - 엇갈린 부모가 하나라도 있으면 엇갈림이 이어진다. 표가 없으면(부모 없음 · 비표준만) 26.
+ *    추측하지 않는다(§5): 엇갈림도 밖으로는 미분류(26)로 낸다. 3돌 국면은 `opening26.classify`.
  * 3. 부분 트리 크기: 돌 수 큰 국면부터 첫 부모에 더한다. 부모 없는 국면 = 뿌리, 큰 순 상위 N.
+ * 4. 시작점: 뿌리에서, 가장 무거운 자식이 그 부분 트리의 `START_SHARE`(90%) 이상인 동안 내려간 국면(L5-6 결정 —
+ *    엔진이 조회하며 남긴 빈 기록 때문에 가장 큰 뿌리가 빈 판이어도, 실제 기록이 갈라지는 곳에서 연다).
  *
  * 돌 수 순서가 아닌 파일(다른 프로그램이 쓴 것)은 주형을 건너뛰고(`openingsSkipped: "unordered"`) 뿌리만 낸다.
  */
@@ -51,6 +57,11 @@ export interface DbRoot {
   key: string;
   /** 첫 부모로 이은 부분 트리의 국면 수(자기 포함). */
   subtree: number;
+  /**
+   * 시작점 키(16진) — 뿌리에서 가장 무거운 자식이 90% 이상인 동안 내려간 국면. 뿌리 자신이면 없다.
+   * 색인 판 3 부터.
+   */
+  start?: string;
 }
 
 export interface DbStats {
@@ -154,7 +165,14 @@ const bucketBits = (n: number): number =>
 const classifiable = (rule: number, w: number): boolean =>
   w === 15 && (rule === RULE_RENJU || rule === RULE_STANDARD);
 
-const UNCLASSIFIED = NONSTD; // 26
+const UNCLASSIFIED = NONSTD; // 26 — 표를 던지지 않는다
+/** 부모들의 주형이 엇갈린 국면 — 색인 안에서만. 밖(분포 · `onClassified`)으로는 26 으로 접는다. */
+const MIXED = 27;
+const outward = (o: number): number => (o === MIXED ? UNCLASSIFIED : o);
+
+/** 시작점: 가장 무거운 자식이 그 아래의 9/10 이상이면 내려간다(L5-6 결정 1). 정수로 — 앱과 같은 비교. */
+const START_NUM = 9;
+const START_DEN = 10;
 
 export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<ScanResult> {
   const t0 = performance.now();
@@ -328,7 +346,7 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
       const own = idx.find(hasher.hi, hasher.lo);
       if (own < 0 || idx.visited(own)) {
         // 같은 국면이 또 — 처음 것만 센다
-        onCls?.(b, ko, kl, vo, vl, own < 0 ? UNCLASSIFIED : idx.openingOf(own));
+        onCls?.(b, ko, kl, vo, vl, own < 0 ? UNCLASSIFIED : outward(idx.openingOf(own)));
         return;
       }
       records++;
@@ -356,18 +374,21 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
           if (j < 0) continue;
           if (first < 0) first = j;
           const pj = idx.openingOf(j);
-          if (op === -1) op = pj;
-          else if (pj !== op) op = UNCLASSIFIED;
-          if (op === UNCLASSIFIED) break;
+          if (pj === UNCLASSIFIED) continue; // 비표준 부모는 표가 없다
+          if (pj === MIXED || (op !== -1 && pj !== op)) {
+            op = MIXED;
+            break;
+          }
+          op = pj;
         }
       }
       parent[own] = first;
       const o =
         !cls || n < 3 ? UNCLASSIFIED : n === 3 ? classifyKey(hasher) : op < 0 ? UNCLASSIFIED : op;
       idx.setOpening(own, o);
-      onCls?.(b, ko, kl, vo, vl, o);
+      onCls?.(b, ko, kl, vo, vl, outward(o));
       if (cls) {
-        counts[o]!++;
+        counts[outward(o)]!++;
         classified++;
       }
       if (first < 0 && !rootKeysDropped) {
@@ -418,7 +439,55 @@ export async function scanYxdb(blob: BlobLike, opts: ScanOptions = {}): Promise<
       { onChunk: (loaded, total) => progress("roots", loaded / total), isCancelled: cancelled },
     );
   }
-  stats.roots = top.map((t) => ({ key: rootKeys.get(t.s) ?? "", subtree: t.size }));
+  // 시작점 — 뿌리와 다른 것만 키를 읽는다. 해시로 찾을 수 없으니(hi 칸 = 크기) 돌 수 · 해시 아래 반쪽 · 첫
+  // 부모의 아래 반쪽을 맞춰 본다. 규칙 하나의 돌 수 순서 파일이면 그 돌 수를 지나는 곳에서 끝난다(규칙마다
+  // 돌 수가 다시 시작한다)
+  const ends = idx.heavyEnds(top.map((t) => t.s));
+  const startKeys = new Map<number, string>();
+  const wantStart = new Set(ends.filter((e, i) => e !== top[i]!.s));
+  if (wantStart.size > 0) {
+    const oneRuleOrdered = countOrdered && Object.keys(stats.rules).length <= 1;
+    let maxN = 0;
+    const wantNs = new Set<number>();
+    for (const s of wantStart) {
+      wantNs.add(idx.stonesOf(s));
+      maxN = Math.max(maxN, idx.stonesOf(s));
+    }
+    await readYxdb(
+      blob,
+      (b, ko, kl) => {
+        if (!hasher.load(b, ko, kl)) return;
+        if (oneRuleOrdered && hasher.n > maxN) return false;
+        if (!wantNs.has(hasher.n)) return;
+        hasher.hash();
+        hasher.canon();
+        let hit = -1;
+        for (const s of wantStart)
+          if (idx.stonesOf(s) === hasher.n && idx.loOf(s) === hasher.lo) {
+            hit = s;
+            break;
+          }
+        if (hit < 0) return;
+        const pl = idx.loOf(parent[hit]!);
+        let parentOk = false;
+        for (let k = hasher.lastFrom, to = hasher.lastTo; k < to && !parentOk; k++) {
+          hasher.without(k);
+          parentOk = hasher.lo === pl;
+        }
+        if (!parentOk) return;
+        wantStart.delete(hit);
+        startKeys.set(hit, keyToHex(b, ko, kl));
+        if (wantStart.size === 0) return false;
+      },
+      { onChunk: (loaded, total) => progress("roots", loaded / total), isCancelled: cancelled },
+    );
+  }
+  stats.roots = top.map((t, i) => {
+    const root: DbRoot = { key: rootKeys.get(t.s) ?? "", subtree: t.size };
+    const start = ends[i] !== t.s ? startKeys.get(ends[i]!) : undefined;
+    if (start) root.start = start;
+    return root;
+  });
   progress("roots", 1);
   ms.roots = performance.now() - tLink;
   ms.total = performance.now() - t0;
@@ -637,9 +706,15 @@ class Index {
     }
   }
 
+  /** 돌 수 순서 목록(`subtreeSizes` 뒤, `heavyEnds` 까지). 못 잡았으면 null — 목록은 lo 칸에, 시작점은 없다. */
+  private order: Int32Array | null = null;
+  /** 돌 수 n 인 슬롯이 순서 목록의 [layer[n], layer[n + 1]) 에 있다. */
+  private layer: Uint32Array | null = null;
+
   /**
-   * 2차 통과 뒤 — 해시는 더 쓰지 않는다. hi 칸을 부분 트리 크기로, lo 칸을 돌 수 순서 목록으로 다시 써서
-   * 돌 수 큰 슬롯부터 첫 부모에 더한다. 크기를 읽는 함수를 돌려준다.
+   * 2차 통과 뒤 — 해시로는 더 찾지 않는다. hi 칸을 부분 트리 크기로 다시 써서 돌 수 큰 슬롯부터 첫 부모에
+   * 더한다. 돌 수 순서 목록은 따로 잡는다(레코드당 4바이트, 비트맵을 놓은 자리) — lo 칸(해시 아래 반쪽)을 시작점
+   * 키를 다시 읽을 때 맞춰 보려고 남긴다. 못 잡으면 lo 칸에 쓰고 시작점은 건너뛴다. 크기를 읽는 함수를 돌려준다.
    */
   subtreeSizes(): (s: number) => number {
     const { sl, parent } = this;
@@ -651,17 +726,93 @@ class Index {
       sl[3 * s] = 1;
       maxN = Math.max(maxN, nOf(sl[3 * s + 2]!));
     }
-    // 돌 수로 셈 정렬 — 순서 목록은 lo 칸(sl[3k + 1])에
+    let order: Int32Array | null;
+    try {
+      order = new Int32Array(m);
+    } catch {
+      order = null;
+    }
+    // 돌 수로 셈 정렬
     const cnt = new Uint32Array(maxN + 2);
     for (let s = 0; s < m; s++) cnt[nOf(sl[3 * s + 2]!) + 1]!++;
     for (let k = 0; k <= maxN; k++) cnt[k + 1]! += cnt[k]!;
-    for (let s = 0; s < m; s++) sl[3 * cnt[nOf(sl[3 * s + 2]!)]!++ + 1] = s;
-    for (let k = m - 1; k >= 0; k--) {
-      const s = sl[3 * k + 1]!;
-      const p = parent[s]!;
-      if (p >= 0) sl[3 * p]! += sl[3 * s]!;
+    const layer = cnt.slice();
+    if (order) {
+      for (let s = 0; s < m; s++) order[cnt[nOf(sl[3 * s + 2]!)]!++] = s;
+      for (let k = m - 1; k >= 0; k--) {
+        const s = order[k]!;
+        const p = parent[s]!;
+        if (p >= 0) sl[3 * p]! += sl[3 * s]!;
+      }
+      this.order = order;
+      this.layer = layer;
+    } else {
+      for (let s = 0; s < m; s++) sl[3 * cnt[nOf(sl[3 * s + 2]!)]!++ + 1] = s;
+      for (let k = m - 1; k >= 0; k--) {
+        const s = sl[3 * k + 1]!;
+        const p = parent[s]!;
+        if (p >= 0) sl[3 * p]! += sl[3 * s]!;
+      }
     }
     return (s) => sl[3 * s]! >>> 0;
+  }
+
+  /**
+   * 뿌리마다 시작점 슬롯(`subtreeSizes` 뒤) — 첫 부모로 이은 자식 가운데 가장 무거운 것이 그 아래(자기 뺀 부분
+   * 트리)의 `START_NUM / START_DEN` 이상인 동안 내려간다. 자식은 돌이 하나 많으니 한 층만 훑는다. 순서 목록이
+   * 없으면 뿌리 그대로. 끝나면 목록을 놓는다.
+   */
+  heavyEnds(roots: readonly number[]): number[] {
+    const ends = roots.slice();
+    const { order, layer, sl, parent } = this;
+    this.order = null;
+    this.layer = null;
+    if (!order || !layer) return ends;
+    const size = (s: number) => sl[3 * s]! >>> 0;
+    let active = roots.map((_, i) => i);
+    while (active.length > 0) {
+      const byNode = new Map<number, number[]>();
+      for (const i of active) {
+        const s = ends[i]!;
+        const list = byNode.get(s);
+        if (list) list.push(i);
+        else byNode.set(s, [i]);
+      }
+      const layers = new Set<number>();
+      for (const s of byNode.keys()) layers.add(nOf(sl[3 * s + 2]!) + 1);
+      const best = new Map<number, number>();
+      for (const n of layers) {
+        if (n + 1 >= layer.length) continue;
+        for (let k = layer[n]!, e = layer[n + 1]!; k < e; k++) {
+          const c = order[k]!;
+          const p = parent[c]!;
+          if (p < 0 || !byNode.has(p)) continue;
+          const b = best.get(p);
+          if (b === undefined || size(c) > size(b) || (size(c) === size(b) && c < b))
+            best.set(p, c);
+        }
+      }
+      const next: number[] = [];
+      for (const [s, is] of byNode) {
+        const c = best.get(s);
+        if (c === undefined || size(c) * START_DEN < (size(s) - 1) * START_NUM) continue;
+        for (const i of is) {
+          ends[i] = c;
+          next.push(i);
+        }
+      }
+      active = next;
+    }
+    return ends;
+  }
+
+  /** 해시 아래 반쪽(`subtreeSizes` 가 순서 목록을 따로 잡았을 때만 남는다). */
+  loOf(s: number): number {
+    return this.sl[3 * s + 1]!;
+  }
+
+  stonesOf(s: number): number {
+    return nOf(this.sl[3 * s + 2]!);
   }
 
   release(): void {
